@@ -68,9 +68,10 @@ export function toValue(c: Computed): Value {
     unit: e.unit,
     tag,
     source: c.source,
-    status: c.value == null ? 'unavailable' : 'ok',
+    status: c.value == null && !c.text ? 'unavailable' : 'ok',
     verification: e.verification,
     computedAt: c.computedAt,
     explain: e.explain,
+    text: c.text,           // категориальный факт (созвездие/«тени нет») — пробрасываем в UI
   };
 }

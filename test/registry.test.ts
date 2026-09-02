@@ -16,4 +16,9 @@ describe('registry.toValue — тег из реестра (§1.6)', () => {
     const v = toValue({ id: 'sky.sun.altitude', value: null, source: 'astronomy-engine', computedAt: 1 });
     expect(v.status).toBe('unavailable');
   });
+  it('категориальный факт: text пробрасывается в Value, status ok', () => {
+    const v = toValue({ id: 'sky.sun.constellation', value: null, source: 'x', computedAt: 1, text: 'Солнце в Деве' });
+    expect(v.text).toBe('Солнце в Деве');
+    expect(v.status).toBe('ok');            // есть text → слой не гаснет
+  });
 });
