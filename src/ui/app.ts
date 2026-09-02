@@ -6,6 +6,8 @@ import { reliktPhotons, ownRadioactivity, primordialHydrogenPercent } from '../c
 import { sunAltitude, sunAzimuth, moonAltitude } from '../compute/sky';
 import { shadowRatio } from '../compute/shadow';
 import { constellationVsSign } from '../compute/sign';
+import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
+import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
 import type { Value } from '../types';
 
 // --- Сцена ---
@@ -27,6 +29,9 @@ const bodyValues: Value[] = [
   primordialHydrogenPercent(),
   reliktPhotons(),
   ownRadioactivity(),
+  cmbVelocity(),
+  timeGradient(),
+  muonFlux(),
 ].map(toValue);
 
 const panel = document.getElementById('panel') as HTMLElement;
@@ -50,6 +55,9 @@ btn.addEventListener('click', () => {
         sunAzimuth(lat, lon, now),
         moonAltitude(lat, lon, now),
         shadowRatio(lat, lon, now),
+        magneticInclination(lat, lon, now),
+        magneticDeclination(lat, lon, now),
+        neutrinoFlux(lat, lon, now),
       ].map(toValue);
       render(sky);
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';

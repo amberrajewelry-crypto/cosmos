@@ -45,6 +45,30 @@ const REGISTRY: Record<string, Entry> = {
     label: 'Атомы старше любой звезды', unit: '%', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
     explain: 'Столько твоих атомов (по числу) — водород, синтезированный в первые минуты Вселенной.',
   },
+  'physics.cmb.velocity': {
+    label: 'Твоя скорость сквозь космос', unit: 'км/с', provisionalTag: 'ГЛОБ', verification: 'unverified',
+    explain: 'Ты «сидящий неподвижно» несёшься с этой скоростью относительно реликтового излучения. Покой — иллюзия.',
+  },
+  'physics.time.gradient': {
+    label: 'Градиент времени голова/ноги', unit: 'нс/год', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    explain: 'На столько наносекунд в год твоя голова стареет быстрее ног — пространство-время искривлено внутри тебя.',
+  },
+  'flux.muon': {
+    label: 'Мюоны сквозь тело', unit: '/мин', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    explain: 'Столько мюонов из верхней атмосферы прошивают тебя каждую минуту. Долетают только потому, что время для них течёт медленнее — они доказывают СТО собой.',
+  },
+  'flux.neutrino': {
+    label: 'Нейтрино сквозь тебя', unit: '/см²·с', provisionalTag: 'ГЛОБ', verification: 'unverified',
+    explain: 'Столько солнечных нейтрино проходит через каждый см² тебя каждую секунду, почти не касаясь.',
+  },
+  'magnetic.inclination': {
+    label: 'Наклон магнитных линий', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    explain: 'Под этим углом магнитные линии Земли протыкают тебя насквозь в твоей точке.',
+  },
+  'magnetic.declination': {
+    label: 'Магнитное склонение', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    explain: 'На столько истинный север расходится с тем, куда показывает компас в твоей точке.',
+  },
   'live.kp': {
     label: 'Kp-индекс', unit: '', provisionalTag: 'ГЛОБ', verification: 'unverified',
     explain: 'Глобальный уровень геомагнитной возмущённости.',

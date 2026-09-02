@@ -7,18 +7,22 @@ function fmt(n: number): string {
 }
 
 function card(v: Value): string {
-  // Категориальный факт (созвездие/направление): показываем text вместо числа.
-  const head = v.text
-    ? `<p class="statement">${v.text}</p>`
-    : `<div class="card-head">
-         <span class="num">${v.value == null ? '[—]' : fmt(v.value)}${v.unit ? ' ' + v.unit : ''}</span>
+  const hasNum = v.value != null;
+  // Число (если есть) + тег в шапке; чисто категориальный факт — тег уходит к заголовку.
+  const head = hasNum
+    ? `<div class="card-head">
+         <span class="num">${fmt(v.value as number)}${v.unit ? ' ' + v.unit : ''}</span>
          <span class="tag">[${v.tag}]</span>
-       </div>`;
-  const src = v.value == null && !v.text ? 'источник недоступен' : v.source;
-  const tagLine = v.text ? `<span class="tag tag-inline">[${v.tag}]</span>` : '';
+       </div>`
+    : '';
+  // text: либо самостоятельный факт (созвездие), либо примечание-направление к числу (нейтрино).
+  const note = v.text ? `<p class="statement">${v.text}</p>` : (hasNum ? '' : `<p class="statement">[—]</p>`);
+  const tagLine = hasNum ? '' : `<span class="tag tag-inline">[${v.tag}]</span>`;
+  const src = !hasNum && !v.text ? 'источник недоступен' : v.source;
   return `
   <article class="card tag-${v.tag}" aria-label="${v.label}">
     ${head}
+    ${note}
     <h2 class="label">${v.label} ${tagLine}</h2>
     <p class="explain">${v.explain}</p>
     <div class="src">${src}</div>

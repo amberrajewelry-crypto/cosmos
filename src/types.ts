@@ -19,6 +19,13 @@ export type LayerId =
   | 'body.relikt.photons'
   | 'body.radioactivity'
   | 'body.primordial.fraction'
+  | 'physics.cmb.velocity'
+  | 'physics.time.gradient'
+  | 'flux.muon'
+  | 'flux.neutrino'
+  | 'magnetic.inclination'
+  | 'magnetic.declination'
+  | 'stars.birthyear'
   | 'live.kp';
 
 // Возвращает compute/ и live/. Сырое число + провенанс. БЕЗ тега.
