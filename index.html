@@ -5,12 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>COSMOS — космос внутри тебя</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #141033; overflow: hidden; }
-      #scene { display: block; width: 100vw; height: 100vh; }
+      :root {
+        --ink: #e8e2cf;         /* тёплый пергамент */
+        --gold: #bfa14a;
+        --bg: #141033;          /* глубокий индиго, не чёрный (§4.5) */
+        --serif: Georgia, 'Times New Roman', serif;      /* нарратив (§4.6) */
+        --mono: 'SF Mono', ui-monospace, Menlo, monospace; /* прибор (§4.6) */
+      }
+      html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; color: var(--ink); }
+      #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
+
+      #panel {
+        position: fixed; top: 0; right: 0; z-index: 1;
+        width: min(380px, 92vw); height: 100vh; box-sizing: border-box;
+        padding: 24px 20px; overflow-y: auto;
+        display: flex; flex-direction: column; gap: 14px;
+      }
+      .card {
+        padding: 14px 16px; border-radius: 2px;
+        background: rgba(20, 16, 51, 0.55);
+        border: 1px solid rgba(191, 161, 74, 0.5);
+      }
+      .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+      .num { font-family: var(--mono); font-size: 20px; color: var(--gold); letter-spacing: .5px; }
+      .tag { font-family: var(--mono); font-size: 11px; opacity: .7; }
+      .label { font-family: var(--serif); font-size: 15px; font-weight: 600; margin: 8px 0 6px; }
+      .explain { font-family: var(--serif); font-size: 13px; line-height: 1.5; opacity: .9; margin: 0 0 8px; }
+      .src { font-family: var(--mono); font-size: 10px; opacity: .5; }
+
+      /* Фактура = честность (§4.4). Кодируется ФАКТУРОЙ, не цветом (§3.10). */
+      .tag-ТОЧНО   { border-style: solid;  border-width: 1.5px; }               /* плотный чёткий край */
+      .tag-ОЦЕНКА  { border-style: solid;  opacity: .92; box-shadow: inset 0 0 12px rgba(191,161,74,.08); } /* мягкий, лёгкий шум */
+      .tag-ГЛОБ    { border-style: solid;  background: transparent; }           /* только контур */
+      .tag-СПОРНО  { border-style: dashed; }                                    /* пунктир */
+      .tag-МИФ     { border-style: solid; border-color: rgba(255,255,255,.35); background: transparent; opacity: .7; } /* призрачное, мел */
     </style>
   </head>
   <body>
     <canvas id="scene"></canvas>
+    <section id="panel" aria-label="Параметры космоса внутри тебя"></section>
     <script type="module" src="/src/ui/app.ts"></script>
   </body>
 </html>

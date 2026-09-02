@@ -14,6 +14,9 @@ export type LayerId =
   | 'sky.sun.altitude'
   | 'sky.sun.azimuth'
   | 'shadow.length'
+  | 'body.relikt.photons'
+  | 'body.radioactivity'
+  | 'body.primordial.fraction'
   | 'live.kp';
 
 // Возвращает compute/ и live/. Сырое число + провенанс. БЕЗ тега.
@@ -35,4 +38,5 @@ export interface Value {
   status: Status;
   verification: VerificationStatus;
   computedAt: number;
+  explain: string;        // одна фраза объяснения (§2.5) — из реестра/контент-базы
 }
