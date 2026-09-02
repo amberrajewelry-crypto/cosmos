@@ -1,16 +1,27 @@
 import { Observer, Equator, Horizon, Body } from 'astronomy-engine';
-import type { Computed } from '../types';
+import type { Computed, LayerId } from '../types';
 
-// Сырое число высоты Солнца (°) над горизонтом. БЕЗ тега — тег присвоит реестр (§1.6).
-// Точность сверяется с JPL Horizons в A4; до этого параметр unverified → показывается как [ОЦЕНКА].
-export function sunAltitude(latDeg: number, lonDeg: number, when: Date): Computed {
-  const obs = new Observer(latDeg, lonDeg, 0);
-  const eq = Equator(Body.Sun, when, obs, true, true); // ofdate + aberration
-  const hor = Horizon(when, obs, eq.ra, eq.dec, 'normal');
-  return {
-    id: 'sky.sun.altitude',
-    value: hor.altitude,
-    source: 'astronomy-engine',
-    computedAt: Date.now(), // момент РАСЧЁТА, не наблюдения (§3.9)
-  };
+// Сырые числа неба (°) над горизонтом в точке пользователя. БЕЗ тега — тег из реестра (§1.6).
+// ofdate=true, aberration=true — корректно для локального горизонта.
+function bodyAltAz(body: Body, lat: number, lon: number, when: Date) {
+  const obs = new Observer(lat, lon, 0);
+  const eq = Equator(body, when, obs, true, true);
+  return Horizon(when, obs, eq.ra, eq.dec, 'normal');
+}
+
+function altOf(id: LayerId, body: Body, lat: number, lon: number, when: Date): Computed {
+  return { id, value: bodyAltAz(body, lat, lon, when).altitude, source: 'astronomy-engine', computedAt: Date.now() };
+}
+
+export function sunAltitude(lat: number, lon: number, when: Date): Computed {
+  return altOf('sky.sun.altitude', Body.Sun, lat, lon, when);
+}
+
+export function sunAzimuth(lat: number, lon: number, when: Date): Computed {
+  return { id: 'sky.sun.azimuth', value: bodyAltAz(Body.Sun, lat, lon, when).azimuth,
+    source: 'astronomy-engine', computedAt: Date.now() };
+}
+
+export function moonAltitude(lat: number, lon: number, when: Date): Computed {
+  return altOf('sky.moon.altitude', Body.Moon, lat, lon, when);
 }

@@ -14,8 +14,24 @@ interface Entry {
 
 const REGISTRY: Record<string, Entry> = {
   'sky.sun.altitude': {
-    label: 'Высота Солнца', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    label: 'Высота Солнца', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons Δ0.006°
     explain: 'Где над горизонтом стоит Солнце в твоей точке прямо сейчас.',
+  },
+  'sky.sun.azimuth': {
+    label: 'Азимут Солнца', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons Δ0.001°
+    explain: 'Направление на Солнце по горизонту, от Севера к Востоку.',
+  },
+  'sky.moon.altitude': {
+    label: 'Высота Луны', unit: '°', provisionalTag: 'ТОЧНО', verification: 'diverged', // A4: рефракция у горизонта Δ0.19° → [ОЦЕНКА]
+    explain: 'Где над горизонтом Луна — она тянет твоё тело приливом прямо сейчас.',
+  },
+  'sky.sun.constellation': {
+    label: 'Реальное созвездие vs знак', unit: '', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    explain: 'За две тысячи лет прецессия сдвинула небо на ~24°: знак и реальное созвездие Солнца больше не совпадают.',
+  },
+  'shadow.length': {
+    label: 'Длина твоей тени', unit: '× роста', provisionalTag: 'ТОЧНО', verification: 'verified', // точная производная верифиц. высоты Солнца
+    explain: 'Во столько раз твоя тень длиннее тебя прямо сейчас. Возьми линейку и проверь — это единственное число, которое видно глазом.',
   },
   'body.relikt.photons': {
     label: 'Реликтовые фотоны в теле', unit: 'шт', provisionalTag: 'ОЦЕНКА', verification: 'unverified',

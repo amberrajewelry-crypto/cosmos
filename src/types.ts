@@ -13,6 +13,8 @@ export type ScaleLevel =
 export type LayerId =
   | 'sky.sun.altitude'
   | 'sky.sun.azimuth'
+  | 'sky.moon.altitude'
+  | 'sky.sun.constellation'
   | 'shadow.length'
   | 'body.relikt.photons'
   | 'body.radioactivity'
@@ -25,6 +27,7 @@ export interface Computed {
   value: number | null;   // null = нет данных, слой гаснет (§3.9)
   source: string;         // «astronomy-engine», «WMM2025», «mock:kp»
   computedAt: number;     // ms epoch — момент РАСЧЁТА (для выцветания §3.9)
+  text?: string;          // категориальный факт (созвездие, направление) — вместо числа
 }
 
 // Для UI/сцены. Тег и verification — из реестра.
@@ -39,4 +42,5 @@ export interface Value {
   verification: VerificationStatus;
   computedAt: number;
   explain: string;        // одна фраза объяснения (§2.5) — из реестра/контент-базы
+  text?: string;          // категориальный факт вместо числа
 }

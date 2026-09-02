@@ -7,15 +7,19 @@ function fmt(n: number): string {
 }
 
 function card(v: Value): string {
-  const num = v.value == null ? '[—]' : fmt(v.value);
-  const src = v.value == null ? 'источник недоступен' : v.source;
+  // Категориальный факт (созвездие/направление): показываем text вместо числа.
+  const head = v.text
+    ? `<p class="statement">${v.text}</p>`
+    : `<div class="card-head">
+         <span class="num">${v.value == null ? '[—]' : fmt(v.value)}${v.unit ? ' ' + v.unit : ''}</span>
+         <span class="tag">[${v.tag}]</span>
+       </div>`;
+  const src = v.value == null && !v.text ? 'источник недоступен' : v.source;
+  const tagLine = v.text ? `<span class="tag tag-inline">[${v.tag}]</span>` : '';
   return `
   <article class="card tag-${v.tag}" aria-label="${v.label}">
-    <div class="card-head">
-      <span class="num">${num}${v.unit ? ' ' + v.unit : ''}</span>
-      <span class="tag">[${v.tag}]</span>
-    </div>
-    <h2 class="label">${v.label}</h2>
+    ${head}
+    <h2 class="label">${v.label} ${tagLine}</h2>
     <p class="explain">${v.explain}</p>
     <div class="src">${src}</div>
   </article>`;
