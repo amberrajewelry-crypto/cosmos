@@ -4,47 +4,77 @@ import type { Value } from '../types';
 // что мы ему дали. Модель склонна выдумывать правдоподобные цифры — для проекта о честности
 // это яд. Поэтому машина двухконтурная:
 //   1) промпт с жёстким запретом изобретать числа;
-//   2) пост-фильтр: любое число в ответе, которого не было во входе, → ответ на карантин.
-// Второй контур — не «на всякий случай», а гарантия: даже если модель нарушит промпт,
-// пользователь не увидит выдуманную цифру как факт.
+//   2) пост-фильтр FAIL-CLOSED: если число нельзя уверенно распарсить и сверить — ответ на карантин.
+// Ложное срабатывание (лишний карантин) допустимо; протечка выдуманного числа — нет.
 
-// Тривиальные числа, которые не считаем «выдуманными фактами»: годы, малые счётчики, проценты-рамка.
-function isTrivial(n: number): boolean {
-  if (Number.isInteger(n) && n >= 0 && n <= 12) return true;   // счётчики, месяцы, «два тысячелетия»→2
-  if (Number.isInteger(n) && n >= 1900 && n <= 2100) return true; // годы
-  return n === 100 || n === 0 || n === 1;                       // рамочные проценты/доли
+// Тривиальными считаем только 0 и 1: любой «счётчик» вроде «3 градуса» неотличим от выдуманного
+// измерения, поэтому пропускать его нельзя (урок adversarial-ревью).
+// ponytail: набор минимальный; расширять только по данным, не «на всякий случай».
+const TRIVIAL = new Set([0, 1]);
+
+const GROUP_SEP = /[   ]/g; // NBSP + узкие пробелы = разделители разрядов
+
+const MINUS = /[−–—]/g; // типографский минус/тире U+2212/2013/2014 → ASCII, иначе знак теряется
+
+// «380 000» должно читаться одним числом, а не [380, 0]. Склеиваем пробел-разряды тысяч.
+function joinThousands(s: string): string {
+  return s.replace(MINUS, '-').replace(GROUP_SEP, ' ').replace(/(\d) (?=\d{3}(?:\D|$))/g, '$1');
 }
 
-// Все числовые токены строки: «45,2°», «380 000», «6.5e10» → [45.2, 380, 0, 6.5, 10].
-// Пробел-разделитель разрядов рвём одинаково во ВХОДЕ и в ОТВЕТЕ — сравнение остаётся согласованным.
-export function extractNumbers(s: string): number[] {
-  const out: number[] = [];
-  for (const m of s.matchAll(/-?\d+(?:[.,]\d+)?/g)) {
-    const n = Number(m[0].replace(',', '.'));
-    if (Number.isFinite(n)) out.push(n);
+// Конструкции, чью истинную величину парсер не восстанавливает уверенно (степени, дроби, отношения,
+// время) → принудительный карантин. Научная нотация (e-форма) парсится ниже и сюда не входит.
+const UNPARSEABLE = /[²³¹⁰-⁹]|\d\s*\^|\d\s*[/:]\s*\d/;
+export function hasUnparseableQuantity(s: string): boolean {
+  return UNPARSEABLE.test(s);
+}
+
+export interface NumTok { value: number; text: string; }
+
+// Числовые токены со ИСХОДНЫМ текстом (точность важна для сверки) + научная нотация «6.5e10».
+export function extractNumbers(s: string): NumTok[] {
+  const joined = joinThousands(s);
+  const out: NumTok[] = [];
+  for (const m of joined.matchAll(/-?\d+(?:[.,]\d+)?(?:[eE][+-]?\d+)?/g)) {
+    const value = Number(m[0].replace(',', '.'));
+    if (Number.isFinite(value)) out.push({ value, text: m[0] });
   }
   return out;
 }
 
-// Ответное число «разрешено», если оно в пределах 2% от какого-то входного (модель округляет),
-// либо тривиально. Иначе — изобретено.
-function allowed(n: number, whitelist: number[]): boolean {
-  if (isTrivial(n)) return true;
-  return whitelist.some((w) => Math.abs(n - w) <= Math.max(Math.abs(w), 1) * 0.02);
+// Сколько знаков после запятой показано в токене — задаёт допуск округления.
+function decimalsOf(text: string): number {
+  const frac = text.replace(',', '.').split('.')[1];
+  return frac ? frac.replace(/[eE].*$/, '').length : 0;
 }
 
+// Токен разрешён, только если он равен какому-то входному числу, ПРАВИЛЬНО округлённому до своей
+// показанной точности. Знак учитывается (−47 ≠ 47). Допуск = половина последнего разряда токена:
+// целое «45» ← значение 45.23 (|Δ|≤0.5); «385000» ↛ 380000 (|Δ|=5000 ≫ 0.5) → карантин.
+function allowed(n: NumTok, whitelist: number[]): boolean {
+  if (TRIVIAL.has(n.value)) return true;
+  const tol = 0.5 * Math.pow(10, -decimalsOf(n.text));
+  return whitelist.some((w) => Math.abs(n.value - w) <= tol);
+}
+
+// Возвращает изобличающие числа (пусто = ответ чист). Непарсимая конструкция → сразу карантин.
+const QUARANTINE_SENTINEL = Number.POSITIVE_INFINITY;
 export function inventedNumbers(answer: string, context: string, values: Value[]): number[] {
+  if (hasUnparseableQuantity(answer)) return [QUARANTINE_SENTINEL];
   const whitelist = [
-    ...extractNumbers(context),
+    ...extractNumbers(context).map((t) => t.value),
     ...values.map((v) => v.value).filter((v): v is number => v != null),
+    new Date().getFullYear(), // текущий год — известный истинный факт, не выдумка
   ];
-  return extractNumbers(answer).filter((n) => !allowed(n, whitelist));
+  return extractNumbers(answer).filter((n) => !allowed(n, whitelist)).map((n) => n.value);
 }
 
-// Контекст = только то, что уже на экране (числа + пояснения). Координаты сюда НЕ попадают (§3.7):
-// шлём подписи, значения и объяснения, но не широту/долготу.
+// Координаты не должны попасть в промпт даже при небрежном вызове (§3.7) — гвардим кодом, не комментом.
+const COORD = /широт|долгот|latitude|longitude|координат/i;
+
+// Контекст = только то, что уже на экране (числа + пояснения). Строки-координаты отбрасываем.
 export function buildContext(values: Value[]): string {
   return values
+    .filter((v) => !COORD.test(v.label) && !COORD.test(v.id) && !COORD.test(v.text ?? ''))
     .map((v) => {
       const num = v.value != null ? `${v.value}${v.unit ? ' ' + v.unit : ''} [${v.tag}]` : (v.text ?? '');
       return `— ${v.label}: ${num}. ${v.explain}`.trim();
@@ -89,10 +119,14 @@ export async function ask(question: string, values: Value[]): Promise<AskResult>
   try {
     const puter = await loadPuter();
     const resp = await puter.ai.chat(prompt, { model: 'gpt-4o-mini' });
-    raw = typeof resp === 'string' ? resp : (resp?.message?.content ?? resp?.text ?? String(resp));
+    raw = typeof resp === 'string' ? resp : (resp?.message?.content ?? resp?.text ?? '');
   } catch {
     // Нет кредитов / не залогинен / SDK недоступен — движок просто выключен, это не ошибка честности.
     return { ok: false, disabled: true, text: 'Ответы пока выключены — движок появится, когда подключим.' };
+  }
+  if (!raw || raw === '[object Object]') {
+    // Модель вернула структуру, которую мы не смогли достать текстом — не выдаём мусор за ответ.
+    return { ok: false, disabled: true, text: 'Ответ пришёл в непонятном виде — попробуй ещё раз.' };
   }
   const invented = inventedNumbers(raw, context, values);
   if (invented.length) {
