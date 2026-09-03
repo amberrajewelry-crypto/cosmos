@@ -9,7 +9,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://cosmos-alpha-three.vercel.app';
 
 const vite = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { natalPage, urlFor, slug } = await vite.ssrLoadModule('/src/natal/page.ts');
+const { natalPage, urlFor, signPage, signUrl } = await vite.ssrLoadModule('/src/natal/page.ts');
+const { sunSignAndConstellation, SIGNS_RU, SIGNS_EN } = await vite.ssrLoadModule('/src/compute/sign.ts');
 
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -37,6 +38,21 @@ for (const lang of ['ru', 'en']) {
   }
 }
 
+// Группируем даты по знаку → 12 страниц знаков × 2 языка (long-tail «натальная карта {знак}»).
+const bySign = Array.from({ length: 12 }, () => []);
+for (const [month, day] of dates) {
+  const { signIndex, constellationLatin } = sunSignAndConstellation(new Date(Date.UTC(2024, month - 1, day, 12, 0, 0)));
+  bySign[signIndex].push({ month, day, constellationLatin });
+}
+let signN = 0;
+for (const lang of ['ru', 'en']) {
+  for (let i = 0; i < 12; i++) {
+    await writePage(signUrl(lang, i), signPage(i, lang, bySign[i]));
+    urls[lang].push(signUrl(lang, i));
+    signN++;
+  }
+}
+
 // Хаб-страницы для внутренней перелинковки (краулу нужен вход ко всем датам).
 function hub(lang) {
   const months = lang === 'ru' ? MONTHS_RU : MONTHS_EN;
@@ -45,7 +61,9 @@ function hub(lang) {
   const lede = lang === 'ru'
     ? 'Выбери свою дату — покажем настоящее созвездие Солнца против знака зодиака. Без астрологии, только физика.'
     : "Pick your date — we'll show the Sun's real constellation against the zodiac sign. No astrology, just physics.";
-  let body = '';
+  const signNames = lang === 'ru' ? SIGNS_RU : SIGNS_EN;
+  const signLinks = signNames.map((nm, i) => `<a href="${signUrl(lang, i)}">${nm}</a>`).join(' ');
+  let body = `<section><h2>${lang === 'ru' ? 'По знаку' : 'By sign'}</h2><div class="days">${signLinks}</div></section>`;
   for (let month = 1; month <= 12; month++) {
     const links = dates.filter(([m]) => m === month)
       .map(([m, d]) => `<a href="${urlFor(lang, m, d)}">${d}</a>`).join(' ');
@@ -71,4 +89,4 @@ ${allUrls.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join('\n')}
 await writeFile(resolve(ROOT, 'public', 'sitemap-natal.xml'), sitemap, 'utf8');
 
 await vite.close();
-console.log(`Сгенерировано ${n} страниц дат + 2 хаба + sitemap-natal.xml (${allUrls.length} URL)`);
+console.log(`Сгенерировано ${n} дат + ${signN} знаков + 2 хаба + sitemap (${allUrls.length} URL)`);

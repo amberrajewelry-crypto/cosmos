@@ -38,6 +38,8 @@
       #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
       #openHonesty { margin-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--ink); background: transparent; border: none; border-bottom: 1px dotted var(--gold); padding: 0 0 2px; cursor: pointer; opacity: .8; }
       #openHonesty:hover { opacity: 1; }
+      #natalHub { display: block; margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--gold); width: fit-content; padding: 0 0 2px; opacity: .8; }
+      #natalHub:hover { opacity: 1; }
 
       /* Страница погрешностей (§7.8) */
       #honesty { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; background: rgba(10,8,26,.9); overflow-y: auto; }
@@ -116,6 +118,7 @@
         <li><i style="background:#e6e6f5"></i>золото — слияния нейтронных звёзд</li>
       </ul>
       <button id="openHonesty">Погрешности и проверки →</button>
+      <a id="natalHub" href="/natalnaya-karta/">Натальная карта по дате рождения →</a>
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>
     <div id="honesty" hidden aria-label="Известные расхождения"></div>
