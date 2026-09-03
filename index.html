@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>" />
     <title>COSMOS — космос внутри тебя</title>
     <style>
       :root {
@@ -35,6 +36,19 @@
       #legend { list-style: none; margin: 14px 0 0; padding: 0; font-family: var(--mono); font-size: 10px; opacity: .8; }
       #legend li { display: flex; align-items: center; gap: 7px; margin: 3px 0; }
       #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+      #openHonesty { margin-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--ink); background: transparent; border: none; border-bottom: 1px dotted var(--gold); padding: 0 0 2px; cursor: pointer; opacity: .8; }
+      #openHonesty:hover { opacity: 1; }
+
+      /* Страница погрешностей (§7.8) */
+      #honesty { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; background: rgba(10,8,26,.9); overflow-y: auto; }
+      .honesty-box { position: relative; width: min(92vw, 620px); background: rgba(20,16,51,.8); border: 1px solid rgba(191,161,74,.5); border-radius: 2px; padding: 26px 28px; margin: 24px; }
+      .honesty-box h2 { font-family: var(--serif); color: var(--gold); margin: 0 0 12px; }
+      .honesty-box p { font-family: var(--serif); font-size: 14px; line-height: 1.55; }
+      .honesty-note { opacity: .8; font-size: 13px; }
+      .honesty-close { position: absolute; top: 12px; right: 14px; background: transparent; border: none; color: var(--ink); font-size: 20px; cursor: pointer; opacity: .7; }
+      .honesty-box table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-family: var(--mono); font-size: 12px; }
+      .honesty-box th, .honesty-box td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(191,161,74,.2); }
+      .honesty-box .tag { font-size: 11px; }
 
       /* Второе лицо — карта рождения (§4.7) */
       #natal { position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(10,8,26,.86); backdrop-filter: blur(2px); }
@@ -86,8 +100,10 @@
         <li><i style="background:#cc3326"></i>железо — из сверхновых</li>
         <li><i style="background:#e6e6f5"></i>золото — слияния нейтронных звёзд</li>
       </ul>
+      <button id="openHonesty">Погрешности и проверки →</button>
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>
+    <div id="honesty" hidden aria-label="Известные расхождения"></div>
     <section id="panel" aria-label="Параметры космоса внутри тебя"></section>
     <script type="module" src="/src/ui/app.ts"></script>
   </body>

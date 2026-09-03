@@ -11,6 +11,7 @@ import { constellationVsSign } from '../compute/sign';
 import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
 import { openNatal } from '../natal/natal';
+import { openHonesty } from './honesty';
 import { fetchKp } from '../live/noaa';
 import type { Value } from '../types';
 
@@ -99,3 +100,8 @@ openBtn.addEventListener('click', () => {
   const when = birth.value ? new Date(birth.value + 'T12:00:00Z') : new Date();
   openNatal(natalOverlay, when);
 });
+
+// --- Погрешности (§7.8) ---
+const honestyOverlay = document.getElementById('honesty') as HTMLElement;
+(document.getElementById('openHonesty') as HTMLButtonElement)
+  .addEventListener('click', () => openHonesty(honestyOverlay));

@@ -77,6 +77,12 @@ const REGISTRY: Record<string, Entry> = {
 
 const FALLBACK: Entry = { label: '', unit: '', provisionalTag: 'СПОРНО', verification: 'unverified', explain: '' };
 
+// Публичная таблица честности (§7.8): реестр — источник правды по верификации.
+export interface VerificationRow { label: string; provisionalTag: Tag; verification: VerificationStatus; }
+export function verificationTable(): VerificationRow[] {
+  return Object.values(REGISTRY).map((e) => ({ label: e.label, provisionalTag: e.provisionalTag, verification: e.verification }));
+}
+
 export function toValue(c: Computed): Value {
   const e = REGISTRY[c.id] ?? { ...FALLBACK, label: c.id };
   // [ТОЧНО] разрешён только для верифицированных; иначе честный даунгрейд.
