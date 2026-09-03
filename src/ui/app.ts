@@ -8,6 +8,7 @@ import { shadowRatio } from '../compute/shadow';
 import { constellationVsSign } from '../compute/sign';
 import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
+import { openNatal } from '../natal/natal';
 import type { Value } from '../types';
 
 // --- Сцена ---
@@ -66,4 +67,13 @@ btn.addEventListener('click', () => {
     () => { status.textContent = 'Без геолокации небо в твоей точке не показать. Тело — уже здесь.'; },
     { enableHighAccuracy: false, timeout: 10_000 },
   );
+});
+
+// --- Второе лицо: карта рождения на выбранную дату (§2.1, §4.8) ---
+const natalOverlay = document.getElementById('natal') as HTMLElement;
+const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
+const birth = document.getElementById('birth') as HTMLInputElement;
+openBtn.addEventListener('click', () => {
+  const when = birth.value ? new Date(birth.value + 'T12:00:00Z') : new Date();
+  openNatal(natalOverlay, when);
 });
