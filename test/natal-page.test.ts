@@ -9,14 +9,18 @@ describe('натальная страница (программатик §5.3)',
     expect(urlFor('en', 3, 9)).toBe('/en/natal-chart/03-09/');
   });
 
-  it('03.09 честно: знак Дева, реальное созвездие Лев (контр-астрология)', () => {
+  it('03.09 честно: гороскоп Дева, реальный знак Лев — позиционирование «настоящая астрология»', () => {
     const html = natalPage(9, 3, 'ru');
-    expect(html).toMatch(/знак Дева, а созвездие Лев/);
-    expect(html).toMatch(/Реальное созвездие Солнца: <b>Лев<\/b>/);
+    expect(html).toMatch(/настоящ/i);
+    expect(html).toMatch(/Твой реальный знак \(созвездие Солнца\): <b>Лев<\/b>/);
+    expect(html).toMatch(/Знак по гороскопу \(тропический\): <b>Дева<\/b>/);
+    expect(html).not.toMatch(/без астрологии|вр[её]т/i); // не бьём по интенту
   });
 
-  it('EN-версия, та же дата: Virgo vs Leo', () => {
-    expect(natalPage(9, 3, 'en')).toMatch(/sign Virgo, but constellation Leo/);
+  it('EN-версия, та же дата: гороскоп Virgo, настоящий знак Leo', () => {
+    const html = natalPage(9, 3, 'en');
+    expect(html).toMatch(/your true sign Leo|true sign.*Leo/i);
+    expect(html).toMatch(/sidereal/i);
   });
 
   it('§3.7: страница знает только дату — ни координат, ни времени рождения', () => {

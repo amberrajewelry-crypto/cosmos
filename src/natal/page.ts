@@ -34,37 +34,37 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   const t = lang === 'ru'
     ? {
         htmlLang: 'ru',
-        title: `Натальная карта родившихся ${dateStr} — знак ${sign}, а созвездие ${constellation}`,
-        desc: `Тебе говорят, что твой знак — ${sign}. Но ${dateStr} Солнце реально стоит в созвездии ${constellation}. Честная натальная карта без астрологии — только физика.`,
-        h1: `Натальная карта: рождённые ${dateStr}`,
+        title: `Настоящая натальная карта родившихся ${dateStr} — твой реальный знак ${constellation}`,
+        desc: `По гороскопу твой знак — ${sign}. Но по настоящему небу ${dateStr} Солнце стоит в созвездии ${constellation} — это твой реальный, сидерический знак. Настоящая натальная карта по звёздам.`,
+        h1: `Настоящая натальная карта: ${dateStr}`,
         lede: matches
-          ? `Редкий случай: ${dateStr} знак зодиака и настоящее созвездие Солнца совпадают — оба «${sign}».`
-          : `Тебе всю жизнь говорили: «ты ${sign}». Но ${dateStr} Солнце стоит в созвездии <b>${constellation}</b>, а не там, где знак.`,
-        why: `Почему так? Зодиак закрепили ~2000 лет назад. С тех пор из-за прецессии земной оси круг знаков разошёлся с реальными созвездиями примерно на ${precession}°. Знак «${sign}» — это участок неба, где Солнце стояло тогда. Сегодня оно там уже не стоит.`,
-        factsH: 'Что на самом деле',
-        f1: `Знак зодиака (традиция): <b>${sign}</b>`,
-        f2: `Реальное созвездие Солнца: <b>${constellation}</b>`,
-        f3: `Сдвиг зодиака от созвездий: <b>~${precession}°</b>`,
-        note: 'Расчёт: положение Солнца на полдень UTC этой даты (границы созвездий — IAU, astronomy-engine). Год рождения почти не влияет: за десятилетия Солнце по этой дате смещается меньше чем на градус.',
-        cta: 'Открыть свою живую карту космоса →',
+          ? `${dateStr} традиционный знак и настоящее созвездие Солнца совпадают — оба «${sign}». Так бывает редко.`
+          : `Гороскопы говорят, что ты ${sign}. Но по реальному положению звёзд ${dateStr} Солнце стоит в созвездии <b>${constellation}</b> — это и есть твой настоящий знак.`,
+        why: `Обычная астрология считает по зодиаку, закреплённому ~2000 лет назад. С тех пор небо сдвинулось на ${precession}° (прецессия земной оси). Настоящая, сидерическая астрология смотрит, где Солнце и звёзды находятся <b>сейчас</b> — поэтому твой реальный знак ${constellation}, а не ${sign}.`,
+        factsH: 'Твоя настоящая карта',
+        f1: `Знак по гороскопу (тропический): <b>${sign}</b>`,
+        f2: `Твой реальный знак (созвездие Солнца): <b>${constellation}</b>`,
+        f3: `Насколько небо сдвинулось: <b>~${precession}°</b>`,
+        note: 'Рассчитано по реальному положению Солнца на полдень UTC этой даты (границы созвездий — IAU). Год рождения почти не влияет: за десятилетия Солнце по этой дате смещается меньше чем на градус.',
+        cta: 'Построить свою живую карту космоса →',
         privacy: 'Эта страница ничего о тебе не знает — только дата. Твои координаты и время рождения никуда не уходят.',
         altLabel: 'In English',
       }
     : {
         htmlLang: 'en',
-        title: `Natal chart for those born ${dateStr} — sign ${sign}, but constellation ${constellation}`,
-        desc: `You are told your sign is ${sign}. But on ${dateStr} the Sun actually sits in the constellation ${constellation}. An honest natal chart with no astrology — just physics.`,
-        h1: `Natal chart: born ${dateStr}`,
+        title: `Real natal chart for those born ${dateStr} — your true sign ${constellation}`,
+        desc: `Your horoscope says ${sign}. But by the real sky, on ${dateStr} the Sun sits in the constellation ${constellation} — that is your true, sidereal sign. A real star-based natal chart.`,
+        h1: `Real natal chart: ${dateStr}`,
         lede: matches
-          ? `A rare case: on ${dateStr} the zodiac sign and the Sun's real constellation coincide — both “${sign}”.`
-          : `All your life you were told “you're a ${sign}”. But on ${dateStr} the Sun sits in the constellation <b>${constellation}</b>, not where the sign says.`,
-        why: `Why? The zodiac was fixed ~2000 years ago. Since then, precession of Earth's axis has shifted the ring of signs away from the real constellations by about ${precession}°. The sign “${sign}” marks where the Sun stood back then. Today it no longer stands there.`,
-        factsH: 'What is actually true',
-        f1: `Zodiac sign (tradition): <b>${sign}</b>`,
-        f2: `Sun's real constellation: <b>${constellation}</b>`,
-        f3: `Zodiac drift from constellations: <b>~${precession}°</b>`,
-        note: 'Computed from the Sun\'s position at noon UTC on this date (constellation boundaries: IAU, astronomy-engine). Birth year barely matters: over decades the Sun on this date moves less than a degree.',
-        cta: 'Open your live map of the cosmos →',
+          ? `On ${dateStr} the traditional sign and the Sun's real constellation coincide — both “${sign}”. That's rare.`
+          : `Horoscopes say you're a ${sign}. But by the real position of the stars, on ${dateStr} the Sun sits in the constellation <b>${constellation}</b> — that is your true sign.`,
+        why: `Ordinary astrology uses a zodiac fixed ~2000 years ago. Since then the sky has shifted by ${precession}° (axial precession). Real, sidereal astrology looks at where the Sun and stars are <b>now</b> — so your true sign is ${constellation}, not ${sign}.`,
+        factsH: 'Your real chart',
+        f1: `Horoscope sign (tropical): <b>${sign}</b>`,
+        f2: `Your true sign (Sun's constellation): <b>${constellation}</b>`,
+        f3: `How far the sky has shifted: <b>~${precession}°</b>`,
+        note: 'Computed from the Sun\'s real position at noon UTC on this date (constellation boundaries: IAU). Birth year barely matters: over decades the Sun on this date moves less than a degree.',
+        cta: 'Build your live map of the cosmos →',
         privacy: 'This page knows nothing about you — only the date. Your coordinates and birth time never leave your device.',
         altLabel: 'По-русски',
       };
@@ -171,25 +171,25 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
 
   const t = lang === 'ru'
     ? {
-        title: `Натальная карта, знак ${sign} — расшифровка без астрологии`,
-        desc: `Знак ${sign} (${span}). Но настоящее созвездие Солнца в этот период — ${realConsts.join(', ')}. Честная расшифровка: физика, а не характер.`,
-        h1: `Знак ${sign}: что на самом деле`,
-        lede: `Традиционные даты знака ${sign} — ${span}. Но из-за прецессии Солнце в эти дни стоит в созвездии ${realConsts.join(' и ')}, а не в «${sign}».`,
-        decodeH: 'Честная расшифровка',
-        decode: `«Расшифровка» знака в астрологии — это характер по дате рождения. Здесь расшифровка другая: где Солнце физически находится. Для ${sign} традиция и небо разошлись — вот доказательство по дням.`,
-        daysH: 'Выбери свой день',
-        cta: 'Открыть живую карту космоса →',
+        title: `Настоящая натальная карта, знак ${sign} — твой реальный знак по звёздам`,
+        desc: `По гороскопу ${sign} — это ${span}. Но по настоящему небу Солнце в эти дни в созвездии ${realConsts.join(', ')} — это твой реальный, сидерический знак.`,
+        h1: `Знак ${sign}: твой настоящий знак`,
+        lede: `По гороскопу даты ${sign} — ${span}. Но по реальному положению звёзд Солнце в эти дни стоит в созвездии ${realConsts.join(' и ')} — вот твой настоящий знак.`,
+        decodeH: 'Настоящая астрология',
+        decode: `Обычный гороскоп берёт знак по дате рождения. Настоящая, сидерическая астрология смотрит, где Солнце реально стоит среди звёзд. Для ${sign} гороскоп и небо разошлись — вот доказательство по дням.`,
+        daysH: 'Найди свой день',
+        cta: 'Построить живую карту космоса →',
         altLabel: 'In English',
       }
     : {
-        title: `Natal chart, ${sign} — an honest decode without astrology`,
-        desc: `The sign ${sign} (${span}). But the Sun's real constellation in this period is ${realConsts.join(', ')}. An honest decode: physics, not personality.`,
-        h1: `${sign}: what is actually true`,
-        lede: `Traditional dates for ${sign} are ${span}. But due to precession the Sun in these days sits in ${realConsts.join(' and ')}, not in “${sign}”.`,
-        decodeH: 'An honest decode',
-        decode: `A “decode” of a sign in astrology means personality by birth date. Here the decode is different: where the Sun physically is. For ${sign} tradition and sky have parted — here is the day-by-day proof.`,
-        daysH: 'Pick your day',
-        cta: 'Open the live map of the cosmos →',
+        title: `Real natal chart, ${sign} — your true sign by the stars`,
+        desc: `By horoscope ${sign} is ${span}. But by the real sky the Sun in these days sits in ${realConsts.join(', ')} — that is your true, sidereal sign.`,
+        h1: `${sign}: your true sign`,
+        lede: `By horoscope the dates for ${sign} are ${span}. But by the real position of the stars the Sun in these days sits in ${realConsts.join(' and ')} — that is your true sign.`,
+        decodeH: 'Real astrology',
+        decode: `An ordinary horoscope takes your sign by birth date. Real, sidereal astrology looks at where the Sun actually stands among the stars. For ${sign} the horoscope and the sky have parted — here is the day-by-day proof.`,
+        daysH: 'Find your day',
+        cta: 'Build the live map of the cosmos →',
         altLabel: 'По-русски',
       };
 

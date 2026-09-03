@@ -57,10 +57,10 @@ for (const lang of ['ru', 'en']) {
 function hub(lang) {
   const months = lang === 'ru' ? MONTHS_RU : MONTHS_EN;
   const brand = lang === 'ru' ? 'Космос внутри тебя' : 'The Cosmos Inside You';
-  const h1 = lang === 'ru' ? 'Натальная карта по дате рождения' : 'Natal chart by birth date';
+  const h1 = lang === 'ru' ? 'Настоящая натальная карта по дате рождения' : 'Real natal chart by birth date';
   const lede = lang === 'ru'
-    ? 'Выбери свою дату — покажем настоящее созвездие Солнца против знака зодиака. Без астрологии, только физика.'
-    : "Pick your date — we'll show the Sun's real constellation against the zodiac sign. No astrology, just physics.";
+    ? 'Выбери свою дату — покажем твой настоящий знак по реальному положению звёзд. Настоящая, сидерическая натальная карта.'
+    : "Pick your date — we'll show your true sign by the real position of the stars. A real, sidereal natal chart.";
   const signNames = lang === 'ru' ? SIGNS_RU : SIGNS_EN;
   const signLinks = signNames.map((nm, i) => `<a href="${signUrl(lang, i)}">${nm}</a>`).join(' ');
   let body = `<section><h2>${lang === 'ru' ? 'По знаку' : 'By sign'}</h2><div class="days">${signLinks}</div></section>`;
