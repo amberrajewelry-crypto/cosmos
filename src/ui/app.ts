@@ -9,6 +9,7 @@ import { constellationVsSign } from '../compute/sign';
 import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
 import { openNatal } from '../natal/natal';
+import { fetchKp } from '../live/noaa';
 import type { Value } from '../types';
 
 // --- Сцена ---
@@ -36,8 +37,13 @@ const bodyValues: Value[] = [
 ].map(toValue);
 
 const panel = document.getElementById('panel') as HTMLElement;
-function render(sky: Value[] = []) { renderPanel(panel, [...sky, ...bodyValues]); }
+let currentSky: Value[] = [];
+let liveValues: Value[] = [];
+function render() { renderPanel(panel, [...currentSky, ...bodyValues, ...liveValues]); }
 render();
+
+// Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
+fetchKp().then((c) => { liveValues = [toValue(c)]; render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;
@@ -60,7 +66,8 @@ btn.addEventListener('click', () => {
         magneticDeclination(lat, lon, now),
         neutrinoFlux(lat, lon, now),
       ].map(toValue);
-      render(sky);
+      currentSky = sky;
+      render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;
     },

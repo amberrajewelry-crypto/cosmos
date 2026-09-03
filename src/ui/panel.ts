@@ -18,7 +18,11 @@ function card(v: Value): string {
   // text: либо самостоятельный факт (созвездие), либо примечание-направление к числу (нейтрино).
   const note = v.text ? `<p class="statement">${v.text}</p>` : (hasNum ? '' : `<p class="statement">[—]</p>`);
   const tagLine = hasNum ? '' : `<span class="tag tag-inline">[${v.tag}]</span>`;
-  const src = !hasNum && !v.text ? 'источник недоступен' : v.source;
+  // §3.9: у живых значений — возраст данных, видно, что «N минут назад».
+  const isLive = /NOAA|SWPC/.test(v.source);
+  const ageMin = Math.max(0, Math.round((Date.now() - v.computedAt) / 60000));
+  const age = isLive && hasNum ? ` · обновлено ${ageMin} мин назад` : '';
+  const src = (!hasNum && !v.text ? 'источник недоступен' : v.source) + age;
   return `
   <article class="card tag-${v.tag}" aria-label="${v.label}">
     ${head}
