@@ -12,6 +12,7 @@ import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
 import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
+import { openAsk } from './ask-ui';
 import { fetchKp } from '../live/noaa';
 import type { Value } from '../types';
 
@@ -55,8 +56,19 @@ const bodyValues: Value[] = [
 const panel = document.getElementById('panel') as HTMLElement;
 let currentSky: Value[] = [];
 let liveValues: Value[] = [];
-function render() { renderPanel(panel, [...currentSky, ...bodyValues, ...liveValues]); }
+function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues]; }
+function render() { renderPanel(panel, allValues()); }
 render();
+
+// «Спросить дальше» на карточках (§2.2): один оверлей, контекст — все видимые значения.
+const askOverlay = document.getElementById('ask') as HTMLElement;
+panel.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest('.ask-more') as HTMLElement | null;
+  if (!btn) return;
+  const id = btn.dataset.ask;
+  const all = allValues();
+  openAsk(askOverlay, all.find((v) => v.id === id), all);
+});
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
 fetchKp().then((c) => { liveValues = [toValue(c)]; render(); });

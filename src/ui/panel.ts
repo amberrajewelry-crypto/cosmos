@@ -30,6 +30,7 @@ function card(v: Value): string {
     <h2 class="label">${v.label} ${tagLine}</h2>
     <p class="explain">${v.explain}</p>
     <div class="src">${src}</div>
+    <button class="ask-more" data-ask="${v.id}">спросить дальше →</button>
   </article>`;
 }
 

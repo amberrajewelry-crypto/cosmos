@@ -58,6 +58,21 @@
       .natal-cap { font-family: var(--serif); font-size: 15px; line-height: 1.5; text-align: center; max-width: 460px; margin: 14px auto 12px; }
       .natal-rotate { display: block; margin: 0 auto; font-family: var(--serif); font-size: 15px; color: var(--bg); background: var(--gold); border: none; padding: 11px 18px; border-radius: 2px; cursor: pointer; }
 
+      /* «Спросить» (§2.2) */
+      .ask-more { margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink); background: transparent; border: none; border-bottom: 1px dotted var(--gold); padding: 0 0 2px; cursor: pointer; opacity: .7; }
+      .ask-more:hover { opacity: 1; }
+      #ask { position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(10,8,26,.9); overflow-y: auto; }
+      .ask-box { position: relative; width: min(92vw, 560px); background: rgba(20,16,51,.85); border: 1px solid rgba(191,161,74,.5); border-radius: 2px; padding: 26px 28px; margin: 24px; }
+      .ask-box h2 { font-family: var(--serif); color: var(--gold); margin: 0 0 8px; }
+      .ask-hint { font-family: var(--serif); font-size: 13px; line-height: 1.5; opacity: .8; margin: 0 0 16px; }
+      .ask-close { position: absolute; top: 12px; right: 14px; background: transparent; border: none; color: var(--ink); font-size: 20px; cursor: pointer; opacity: .7; }
+      .ask-form { display: flex; gap: 8px; }
+      .ask-input { flex: 1; font-family: var(--serif); font-size: 15px; background: rgba(20,16,51,.6); color: var(--ink); border: 1px solid rgba(191,161,74,.5); padding: 10px 12px; border-radius: 2px; }
+      .ask-send { font-family: var(--serif); font-size: 14px; color: var(--bg); background: var(--gold); border: none; padding: 10px 16px; border-radius: 2px; cursor: pointer; }
+      .ask-answer { font-family: var(--serif); font-size: 15px; line-height: 1.55; margin-top: 16px; min-height: 4px; }
+      .ask-answer.ask-blocked { font-family: var(--mono); font-size: 13px; color: #cc8; opacity: .9; }
+      .ask-answer.ask-off { font-family: var(--mono); font-size: 12px; opacity: .6; }
+
       /* Панель карточек */
       #panel {
         position: fixed; top: 0; right: 0; z-index: 1;
@@ -104,6 +119,7 @@
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>
     <div id="honesty" hidden aria-label="Известные расхождения"></div>
+    <div id="ask" hidden aria-label="Спросить"></div>
     <section id="panel" aria-label="Параметры космоса внутри тебя"></section>
     <script type="module" src="/src/ui/app.ts"></script>
   </body>
