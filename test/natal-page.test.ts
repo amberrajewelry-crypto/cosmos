@@ -29,6 +29,17 @@ describe('натальная страница (программатик §5.3)',
     expect(html).toMatch(/Твои координаты и время рождения никуда не уходят/);
   });
 
+  it('FAQ уникален для даты + FAQPage-схема (против thin-content)', () => {
+    const html = natalPage(9, 3, 'ru');
+    expect(html).toMatch(/Какой мой настоящий знак, если я родился 3 сентября/);
+    expect(html).toMatch(/"@type":"FAQPage"/);
+  });
+
+  it('Змееносец-вопрос только на датах созвездия Змееносец', () => {
+    expect(natalPage(12, 5, 'ru')).toMatch(/Змееносец — правда 13-й знак/); // 5 дек = Змееносец
+    expect(natalPage(9, 3, 'ru')).not.toMatch(/13-й знак/);                  // 3 сен = Лев, без вопроса
+  });
+
   it('обязательные SEO-теги: canonical, hreflang-пара, JSON-LD', () => {
     const html = natalPage(9, 3, 'ru');
     expect(html).toMatch(/<link rel="canonical" href="https:\/\/[^"]+\/natalnaya-karta\/09-03\/">/);

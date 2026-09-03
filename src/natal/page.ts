@@ -69,6 +69,33 @@ export function natalPage(month: number, day: number, lang: Lang): string {
         altLabel: 'По-русски',
       };
 
+  // FAQ с ответами из вычисленных фактов (уникальны для каждой даты → уникальность против thin-content
+  // + право на FAQ-rich-сниппет). Ophiuchus/Змееносец — отдельный вопрос-крючок (13-й знак).
+  const isOphiuchus = constellationLatin === 'Ophiuchus';
+  const faq: Array<[string, string]> = lang === 'ru'
+    ? [
+        [`Какой мой настоящий знак, если я родился ${dateStr}?`,
+         `По реальному положению Солнца твой знак — ${constellation}. Гороскоп называет «${sign}», но небо сдвинулось на ~${precession}° за две тысячи лет.`],
+        [`Почему знак по гороскопу и настоящий знак не совпадают?`,
+         `Гороскопный зодиак закрепили около 2000 лет назад. Из-за прецессии земной оси созвездия сместились примерно на ${precession}°, поэтому Солнце сегодня стоит не там, где говорит гороскоп.`],
+        ...(isOphiuchus ? [[`Змееносец — правда 13-й знак зодиака?`,
+         `Да. Солнце ${dateStr} реально проходит через созвездие Змееносец — его гороскоп просто не учитывает, хотя астрономически это полноценное зодиакальное созвездие.`] as [string, string]] : []),
+      ]
+    : [
+        [`What is my true sign if I was born on ${dateStr}?`,
+         `By the Sun's real position your sign is ${constellation}. Horoscopes say “${sign}”, but the sky has shifted by ~${precession}° over two thousand years.`],
+        [`Why don't the horoscope sign and the true sign match?`,
+         `The horoscope zodiac was fixed about 2000 years ago. Axial precession moved the constellations by about ${precession}°, so today the Sun no longer stands where the horoscope says.`],
+        ...(isOphiuchus ? [[`Is Ophiuchus really the 13th zodiac sign?`,
+         `Yes. On ${dateStr} the Sun really passes through the constellation Ophiuchus — horoscopes simply ignore it, though astronomically it is a full zodiac constellation.`] as [string, string]] : []),
+      ];
+  const faqHtml = `<div class="faq"><h2>${lang === 'ru' ? 'Частые вопросы' : 'FAQ'}</h2>${
+    faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>`;
+  const faqLd = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+  })}</script>`;
+
   const inner = `
   <h1>${t.h1}</h1>
   <p class="lede">${t.lede}</p>
@@ -79,6 +106,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <p class="why">${t.why}</p>
+  ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>
   <p class="privacy">${t.privacy}</p>`;
 
@@ -130,6 +158,11 @@ h1{font-family:var(--mono);font-size:26px;letter-spacing:1px;color:var(--gold);m
 .days{display:flex;flex-wrap:wrap;gap:4px 10px;margin:10px 0}
 .days a{color:var(--ink);font-family:var(--mono);font-size:13px;text-decoration:none;opacity:.85}
 .days a:hover{color:var(--gold)}
+.faq{margin:26px 0}
+.faq h2{color:var(--gold);font-size:17px;margin:0 0 8px}
+.faq details{border-bottom:1px solid rgba(191,161,74,.25);padding:10px 0}
+.faq summary{cursor:pointer;font-size:16px}
+.faq p{font-size:15px;opacity:.9;margin:8px 0 0}
 </style>
 </head>
 <body>
