@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Сгенерированные натальные страницы (пересобираются в build)
+public/natalnaya-karta/
+public/en/natal-chart/
+public/sitemap-natal.xml

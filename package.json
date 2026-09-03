@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "gen": "node scripts/gen-natal.mjs",
+    "build": "tsc && node scripts/gen-natal.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:guard": "vitest run test-guard",
