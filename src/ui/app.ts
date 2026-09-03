@@ -1,5 +1,7 @@
+import * as THREE from 'three';
 import { createStage, resize } from '../scene/renderer';
 import { createFigure } from '../scene/figure';
+import { createBodyParticles } from '../scene/particles';
 import { renderPanel } from './panel';
 import { toValue } from '../registry/registry';
 import { reliktPhotons, ownRadioactivity, primordialHydrogenPercent } from '../compute/body';
@@ -15,13 +17,26 @@ import type { Value } from '../types';
 // --- Сцена ---
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
 const stage = createStage(canvas);
-stage.scene.add(createFigure());
+
+// Тело = полупрозрачная оболочка + точки, раскрашенные по происхождению вещества (§4.1/§4.3).
+const body = new THREE.Group();
+body.add(createFigure());
+body.add(createBodyParticles());
+stage.scene.add(body);
 
 function fit() { resize(stage, window.innerWidth, window.innerHeight); }
 window.addEventListener('resize', fit);
 fit();
 
+// Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let t = 0;
 (function loop() {
+  if (!reduceMotion) {
+    t += 0.008;
+    body.scale.setScalar(1 + Math.sin(t) * 0.01);
+    body.rotation.y = Math.sin(t * 0.3) * 0.18;
+  }
   stage.renderer.render(stage.scene, stage.camera);
   requestAnimationFrame(loop);
 })();

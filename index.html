@@ -32,6 +32,9 @@
       #birth { font-family: var(--mono); font-size: 12px; background: rgba(20,16,51,.6); color: var(--ink); border: 1px solid rgba(191,161,74,.5); padding: 6px 8px; border-radius: 2px; }
       #openNatal { font-family: var(--serif); font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--gold); padding: 7px 12px; border-radius: 2px; cursor: pointer; }
       #openNatal:hover { background: rgba(191,161,74,.12); }
+      #legend { list-style: none; margin: 14px 0 0; padding: 0; font-family: var(--mono); font-size: 10px; opacity: .8; }
+      #legend li { display: flex; align-items: center; gap: 7px; margin: 3px 0; }
+      #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 
       /* Второе лицо — карта рождения (§4.7) */
       #natal { position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(10,8,26,.86); backdrop-filter: blur(2px); }
@@ -77,6 +80,12 @@
         <button id="openNatal">Карта рождения ○</button>
       </div>
       <span id="status"></span>
+      <ul id="legend" aria-label="Цвет = происхождение вещества">
+        <li><i style="background:#4b40c7"></i>водород Большого взрыва</li>
+        <li><i style="background:#bfa14a"></i>C, N, O — выплавлены в звёздах</li>
+        <li><i style="background:#cc3326"></i>железо — из сверхновых</li>
+        <li><i style="background:#e6e6f5"></i>золото — слияния нейтронных звёзд</li>
+      </ul>
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>
     <section id="panel" aria-label="Параметры космоса внутри тебя"></section>
