@@ -8,12 +8,15 @@ const TTL_MS = 3 * 60 * 60 * 1000;
 let cache: { c: Computed; ts: number } | null = null;
 let inflight: Promise<Computed> | null = null; // дедуп одновременных запросов
 
-// Чистый парсер: последняя строка [time_tag, kp, ...] → число. Вынесен для теста.
+// Чистый парсер последней записи → число Kp. NOAA отдаёт массив объектов
+// {time_tag, Kp, ...}; исторический формат — массив массивов [time, kp, ...]. Держим оба.
 export function parseKp(rows: unknown): number | null {
-  if (!Array.isArray(rows) || rows.length < 2) return null;
+  if (!Array.isArray(rows) || rows.length < 1) return null;
   const last = rows[rows.length - 1];
-  if (!Array.isArray(last)) return null;
-  const kp = Number(last[1]);
+  let kp: number;
+  if (Array.isArray(last)) kp = Number(last[1]);
+  else if (last && typeof last === 'object') kp = Number((last as Record<string, unknown>).Kp ?? (last as Record<string, unknown>).kp);
+  else return null;
   return Number.isFinite(kp) ? kp : null;
 }
 
