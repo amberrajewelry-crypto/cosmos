@@ -81,7 +81,7 @@ await writePage(lang_url('en'), hub('en'));
 function lang_url(lang) { return lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'; }
 
 // Sitemap со всеми URL + hreflang-парами.
-const allUrls = [...urls.ru, ...urls.en, '/natalnaya-karta/', '/en/natal-chart/'];
+const allUrls = ['/', ...urls.ru, ...urls.en, '/natalnaya-karta/', '/en/natal-chart/'];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allUrls.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join('\n')}

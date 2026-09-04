@@ -135,6 +135,10 @@ function shell(lang: Lang, s: Shell): string {
 <meta property="og:title" content="${s.title}">
 <meta property="og:description" content="${s.desc}">
 <meta property="og:url" content="${s.selfUrl}">
+<meta property="og:image" content="${SITE}/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${s.title}">
+<meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 <style>
