@@ -16,8 +16,8 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
 
   // near = 0.1 < минимальной дистанции зума 0.5 — объект не уходит за near-clip (fix MED-6)
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1e6);
-  camera.position.set(0, 1.6, 3);
-  camera.lookAt(0, 0.85, 0);
+  camera.position.set(0, 1.0, 3.2);
+  camera.lookAt(0, 0.9, 0);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.4));
   return { renderer, scene, camera };

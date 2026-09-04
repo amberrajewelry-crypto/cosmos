@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { createStage, resize } from '../scene/renderer';
-import { createFigure } from '../scene/figure';
-import { createBodyParticles } from '../scene/particles';
+import { createBodyParticles, createStarfield } from '../scene/particles';
 import { renderPanel } from './panel';
 import { toValue } from '../registry/registry';
 import { reliktPhotons, ownRadioactivity, primordialHydrogenPercent } from '../compute/body';
@@ -20,9 +19,11 @@ import type { Value } from '../types';
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
 const stage = createStage(canvas);
 
-// Тело = полупрозрачная оболочка + точки, раскрашенные по происхождению вещества (§4.1/§4.3).
+// Далёкий звёздный фон — глубина «космоса вокруг» (не дышит вместе с телом).
+stage.scene.add(createStarfield());
+
+// Тело = человек из точек, раскрашенных по происхождению вещества (§4.1/§4.3).
 const body = new THREE.Group();
-body.add(createFigure());
 body.add(createBodyParticles());
 stage.scene.add(body);
 
