@@ -266,8 +266,8 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
 
   const t = lang === 'ru'
     ? {
-        title: `Змееносец — 13-й знак зодиака: даты, с какого по какое число, созвездие`,
-        desc: `Змееносец — реальный 13-й знак зодиака. Солнце проходит через него ${span} (${nDays} дней). Гороскоп его игнорирует, но астрономически это полноценное зодиакальное созвездие.`,
+        title: `Змееносец — 13-й знак зодиака: даты, какой месяц, характеристика, совместимость`,
+        desc: `Змееносец — реальный 13-й знак зодиака. Солнце проходит через него ${span} (${nDays} дней). Честно про даты, стихию, характеристику и совместимость — без выдуманных гороскопов.`,
         h1: `Змееносец — настоящий 13-й знак`,
         lede: `Между Скорпионом и Стрельцом Солнце реально проходит через <b>Змееносца</b> (лат. Ophiuchus). Это <b>${span}</b> — примерно ${nDays} дней. Гороскоп из 12 знаков его просто выкинул.`,
         whenH: `С какого по какое число Змееносец`,
@@ -276,18 +276,27 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
         what: `Змееносец — крупное экваториальное созвездие, изображающее человека, держащего змею. Эклиптика (путь Солнца по небу) проходит через него — поэтому Солнце астрономически бывает «в Змееносце» каждый год, как и в остальных 12 знаках.`,
         whyH: `Почему гороскоп не считает Змееносца`,
         why: `Зодиак из 12 знаков закрепили ~2000 лет назад и поделили небо на 12 равных долей по 30°. Но настоящих зодиакальных созвездий, через которые проходит Солнце, — тринадцать. Змееносец не вписался в ровную «дюжину», и его молча выкинули. Астрономически он ничем не хуже Скорпиона.`,
+        monthH: `Какой это месяц и какая стихия`,
+        month: `Змееносец — это конец ноября и первая половина декабря (${span}). А вот стихии у него <b>нет</b>: огонь, земля, воздух и вода придуманы, чтобы ровно поделить 12 знаков. Змееносец в эту систему не входил — ещё одно доказательство, что 13-й знак выкинули ради красивого числа, а не по звёздам.`,
+        charH: `Характеристика знака Змееносец — честно`,
+        char: `Готовой «характеристики Змееносца» не существует — и это честный ответ. Черты характера по знаку не подтверждаются проверками: люди одинаково узнают себя в любом описании (эффект Барнума). А у Змееносца нет даже многовековой традиции таких описаний — гороскоп его не считал. Поэтому вместо выдуманных черт «женщина-Змееносец такая, мужчина-Змееносец сякой» мы даём то, что реально твоё: точное небо над днём твоего рождения.`,
+        compatH: `Совместимость и гороскоп на 2026`,
+        compat: `Совместимость по знакам не имеет доказанной основы — ни для 12 знаков, ни для Змееносца. И предсказаний «на 2026 год» мы не пишем: их нельзя проверить. Честный «гороскоп Змееносца» — это где Солнце и планеты стоят на самом деле. Вот это и посчитаем.`,
         daysH: `Найди свой день в Змееносце`,
         cta: 'Построить свою живую карту космоса →',
         altLabel: 'In English',
         faq: [
           [`Змееносец — с какого по какое число?`, `Солнце проходит через созвездие Змееносец с ${fmt(first)} по ${fmt(last)} — примерно ${nDays} дней. Это реальные астрономические даты, не гороскопные.`],
+          [`Змееносец — это какой месяц?`, `Конец ноября — первая половина декабря: с ${fmt(first)} по ${fmt(last)}.`],
+          [`Какая стихия у Змееносца?`, `Никакой. Стихии придумали для ровной системы из 12 знаков, а Змееносец в неё не входил — поэтому «стихии Змееносца» не существует.`],
           [`Змееносец — это правда 13-й знак зодиака?`, `Да. Через него реально проходит путь Солнца (эклиптика), как и через остальные 12 созвездий. Гороскоп из 12 знаков просто не стал его включать.`],
+          [`Какая характеристика у женщины и мужчины Змееносца?`, `Проверяемой характеристики по этому (и любому) знаку нет — совпадения объясняются эффектом Барнума. Уникально в человеке не «знак», а реальное небо в его дату рождения.`],
           [`Какой знак был бы у меня, если бы считали Змееносца?`, `Если ты родился с ${fmt(first)} по ${fmt(last)}, по реальному небу твоё созвездие Солнца — Змееносец, а не Стрелец или Скорпион, как говорит гороскоп.`],
         ] as Array<[string, string]>,
       }
     : {
-        title: `Ophiuchus — the 13th zodiac sign: dates, when it starts and ends, constellation`,
-        desc: `Ophiuchus is the real 13th zodiac sign. The Sun passes through it ${span} (${nDays} days). Horoscopes ignore it, but astronomically it is a full zodiac constellation.`,
+        title: `Ophiuchus — the 13th zodiac sign: dates, month, traits, compatibility`,
+        desc: `Ophiuchus is the real 13th zodiac sign. The Sun passes through it ${span} (${nDays} days). Honest answers on dates, element, traits and compatibility — no invented horoscopes.`,
         h1: `Ophiuchus — the real 13th sign`,
         lede: `Between Scorpius and Sagittarius the Sun really passes through <b>Ophiuchus</b>. That is <b>${span}</b> — about ${nDays} days. The 12-sign horoscope simply dropped it.`,
         whenH: `Ophiuchus dates — when it starts and ends`,
@@ -296,12 +305,21 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
         what: `Ophiuchus is a large equatorial constellation depicting a man holding a serpent. The ecliptic (the Sun's path across the sky) runs through it — so the Sun is astronomically "in Ophiuchus" every year, just like the other 12 signs.`,
         whyH: `Why horoscopes ignore Ophiuchus`,
         why: `The 12-sign zodiac was fixed ~2000 years ago, splitting the sky into 12 equal 30° slices. But there are thirteen real zodiac constellations the Sun passes through. Ophiuchus didn't fit the neat "dozen", so it was quietly dropped. Astronomically it is no lesser than Scorpius.`,
+        monthH: `What month and what element`,
+        month: `Ophiuchus is late November through mid-December (${span}). And it has <b>no element</b>: fire, earth, air and water were invented to divide 12 signs evenly. Ophiuchus was never in that system — more proof the 13th sign was dropped for a round number, not for the stars.`,
+        charH: `Ophiuchus traits — honestly`,
+        char: `There is no ready "Ophiuchus personality" — and that's the honest answer. Star-sign traits don't survive testing: people recognise themselves equally in any description (the Barnum effect). Ophiuchus doesn't even have centuries of such descriptions — the horoscope never counted it. So instead of invented "an Ophiuchus woman is like this, a man is like that", we give you what's really yours: the exact sky over your birth date.`,
+        compatH: `Compatibility and 2026 horoscope`,
+        compat: `Sign compatibility has no proven basis — not for the 12 signs, not for Ophiuchus. And we don't write "2026" predictions: they can't be verified. The honest "Ophiuchus horoscope" is where the Sun and planets actually are. That's what we compute.`,
         daysH: `Find your day in Ophiuchus`,
         cta: 'Build your live map of the cosmos →',
         altLabel: 'По-русски',
         faq: [
           [`Ophiuchus — when does it start and end?`, `The Sun passes through Ophiuchus from ${fmt(first)} to ${fmt(last)} — about ${nDays} days. These are real astronomical dates, not horoscope ones.`],
+          [`What month is Ophiuchus?`, `Late November to mid-December: from ${fmt(first)} to ${fmt(last)}.`],
+          [`What element is Ophiuchus?`, `None. Elements were invented for a tidy 12-sign system, and Ophiuchus was never part of it — so an "Ophiuchus element" doesn't exist.`],
           [`Is Ophiuchus really the 13th zodiac sign?`, `Yes. The Sun's path (the ecliptic) really runs through it, just as through the other 12 constellations. The 12-sign horoscope simply chose not to include it.`],
+          [`What are the traits of an Ophiuchus woman or man?`, `There's no testable trait set for this (or any) sign — matches are the Barnum effect. What's unique in a person isn't the "sign" but the real sky on their birth date.`],
           [`What sign would I be if Ophiuchus were counted?`, `If you were born between ${fmt(first)} and ${fmt(last)}, by the real sky your Sun's constellation is Ophiuchus — not Sagittarius or Scorpius as the horoscope says.`],
         ] as Array<[string, string]>,
       };
@@ -324,6 +342,12 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
   <p class="why">${t.what}</p>
   <h2 style="color:var(--gold);font-size:17px">${t.whyH}</h2>
   <p class="why">${t.why}</p>
+  <h2 style="color:var(--gold);font-size:17px">${t.monthH}</h2>
+  <p class="why">${t.month}</p>
+  <h2 style="color:var(--gold);font-size:17px">${t.charH}</h2>
+  <p class="why">${t.char}</p>
+  <h2 style="color:var(--gold);font-size:17px">${t.compatH}</h2>
+  <p class="why">${t.compat}</p>
   <h2 style="color:var(--gold);font-size:17px">${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
   ${faqHtml}${faqLd}

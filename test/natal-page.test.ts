@@ -103,6 +103,21 @@ describe('хаб Змееносца (13-й знак, пивот на живой 
     expect(html).toMatch(/canonical" href="https:\/\/[^"]+\/natalnaya-karta\/zmeenosec\/"/);
   });
 
+  it('перехватывает astro-подзапросы (месяц/стихия/характеристика/совместимость) ЧЕСТНО, без выдумки', () => {
+    const html = ophiuchusPage('ru', oph);
+    // покрытие suggest-кластера
+    expect(html).toMatch(/какой это месяц|какой месяц/i);
+    expect(html).toMatch(/стихи/i);
+    expect(html).toMatch(/характеристика/i);
+    expect(html).toMatch(/совместимост/i);
+    // честность ядра: стихии нет, черты не выдуманы (эффект Барнума), предсказаний не пишем
+    expect(html).toMatch(/стихии у него <b>нет<\/b>|стихии.{0,20}не существует/i);
+    expect(html).toMatch(/Барнума/);
+    expect(html).toMatch(/не пишем|нельзя проверить/i);
+    // НЕ торгуем выдуманными чертами как фактом о человеке
+    expect(html).not.toMatch(/вы загадочны|вы целеустремл|Змееносцы обладают|характер Змееносца:/i);
+  });
+
   it('EN-хаб: Ophiuchus, 13th sign, hreflang-пара на RU', () => {
     const html = ophiuchusPage('en', oph);
     expect(html).toMatch(/13th (zodiac )?sign/i);
