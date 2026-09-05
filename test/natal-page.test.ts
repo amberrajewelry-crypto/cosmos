@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { natalPage, urlFor, slug, signPage, signUrl } from '../src/natal/page';
+import { natalPage, urlFor, slug, signPage, signUrl, ophiuchusPage, ophiuchusUrl } from '../src/natal/page';
 import type { SignDay } from '../src/natal/page';
 
 describe('натальная страница (программатик §5.3)', () => {
@@ -72,5 +72,40 @@ describe('страница знака (long-tail)', () => {
     const html = signPage(5, 'ru', entries); // знак Дева, созвездие Лев
     expect(html).toMatch(/Лев/);
     expect(html).toMatch(/Знак Дева/);
+  });
+});
+
+describe('хаб Змееносца (13-й знак, пивот на живой suggest-кластер)', () => {
+  // Реальные даты: конец ноября — середина декабря (порядок специально перемешан).
+  const oph: SignDay[] = [
+    { month: 12, day: 5, constellationLatin: 'Ophiuchus' },
+    { month: 11, day: 30, constellationLatin: 'Ophiuchus' },
+    { month: 12, day: 17, constellationLatin: 'Ophiuchus' },
+  ];
+
+  it('ophiuchusUrl по языку', () => {
+    expect(ophiuchusUrl('ru')).toBe('/natalnaya-karta/zmeenosec/');
+    expect(ophiuchusUrl('en')).toBe('/en/natal-chart/ophiuchus/');
+  });
+
+  it('span берётся из min/max дат (отвечает «с какого по какое число»), не из порядка массива', () => {
+    const html = ophiuchusPage('ru', oph);
+    expect(html).toMatch(/30 ноября<\/b> по <b>17 декабря/); // первый=мин, последний=макс
+  });
+
+  it('отвечает на suggest-кластер: 13-й знак, даты, созвездие, гороскоп + FAQPage', () => {
+    const html = ophiuchusPage('ru', oph);
+    expect(html).toMatch(/13-й знак/);
+    expect(html).toMatch(/С какого по какое число/i);
+    expect(html).toMatch(/созвездие/i);
+    expect(html).toMatch(/гороскоп/i);
+    expect(html).toMatch(/"@type":"FAQPage"/);
+    expect(html).toMatch(/canonical" href="https:\/\/[^"]+\/natalnaya-karta\/zmeenosec\/"/);
+  });
+
+  it('EN-хаб: Ophiuchus, 13th sign, hreflang-пара на RU', () => {
+    const html = ophiuchusPage('en', oph);
+    expect(html).toMatch(/13th (zodiac )?sign/i);
+    expect(html).toMatch(/hreflang="ru" href="[^"]+\/natalnaya-karta\/zmeenosec\/"/);
   });
 });

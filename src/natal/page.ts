@@ -106,6 +106,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <p class="why">${t.why}</p>
+  ${isOphiuchus ? `<p class="why"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold)">${lang === 'ru' ? 'Твоё созвездие — Змееносец, настоящий 13-й знак зодиака →' : 'Your constellation is Ophiuchus — the real 13th zodiac sign →'}</a></p>` : ''}
   ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>
   <p class="privacy">${t.privacy}</p>`;
@@ -239,6 +240,93 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
   </div>
   <h2 style="color:var(--gold);font-size:17px">${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
+  <a class="cta" href="/">${t.cta}</a>`;
+
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+}
+
+// --- Хаб Змееносца — 13-й знак (§4.8-крючок под живой suggest-кластер «змееносец…»). ---
+// Отвечает ровно на реальные запросы: «с какого по какое число», «даты», «созвездие», «13-й знак»,
+// «гороскоп». Даты берутся из вычисленного положения Солнца (не выдуманы) → честно и уникально.
+export const ophiuchusUrl = (lang: Lang) =>
+  lang === 'ru' ? '/natalnaya-karta/zmeenosec/' : '/en/natal-chart/ophiuchus/';
+
+// entries — все даты года, когда Солнце реально в созвездии Ophiuchus (из генератора).
+export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
+  const months = lang === 'ru' ? MONTHS_RU : MONTHS_EN;
+  // Змееносец лежит в конце ноября — середине декабря, Новый год не пересекает → порядок как есть.
+  const ord = [...entries].sort((a, b) => a.month * 100 + a.day - (b.month * 100 + b.day));
+  const first = ord[0], last = ord[ord.length - 1];
+  const fmt = (e: SignDay) => lang === 'ru' ? `${e.day} ${months[e.month - 1]}` : `${months[e.month - 1]} ${e.day}`;
+  const span = `${fmt(first)} — ${fmt(last)}`;
+  const nDays = ord.length;
+  const dayLinks = ord.map((e) => `<a href="${urlFor(lang, e.month, e.day)}">${fmt(e)}</a>`).join(' ');
+  const selfUrl = SITE + ophiuchusUrl(lang);
+  const altUrl = SITE + ophiuchusUrl(lang === 'ru' ? 'en' : 'ru');
+
+  const t = lang === 'ru'
+    ? {
+        title: `Змееносец — 13-й знак зодиака: даты, с какого по какое число, созвездие`,
+        desc: `Змееносец — реальный 13-й знак зодиака. Солнце проходит через него ${span} (${nDays} дней). Гороскоп его игнорирует, но астрономически это полноценное зодиакальное созвездие.`,
+        h1: `Змееносец — настоящий 13-й знак`,
+        lede: `Между Скорпионом и Стрельцом Солнце реально проходит через <b>Змееносца</b> (лат. Ophiuchus). Это <b>${span}</b> — примерно ${nDays} дней. Гороскоп из 12 знаков его просто выкинул.`,
+        whenH: `С какого по какое число Змееносец`,
+        when: `Солнце находится в созвездии Змееносец с <b>${fmt(first)}</b> по <b>${fmt(last)}</b>. Даты рассчитаны по реальному положению Солнца (границы созвездий — IAU), а не по традиционному зодиаку.`,
+        whatH: `Что это за созвездие`,
+        what: `Змееносец — крупное экваториальное созвездие, изображающее человека, держащего змею. Эклиптика (путь Солнца по небу) проходит через него — поэтому Солнце астрономически бывает «в Змееносце» каждый год, как и в остальных 12 знаках.`,
+        whyH: `Почему гороскоп не считает Змееносца`,
+        why: `Зодиак из 12 знаков закрепили ~2000 лет назад и поделили небо на 12 равных долей по 30°. Но настоящих зодиакальных созвездий, через которые проходит Солнце, — тринадцать. Змееносец не вписался в ровную «дюжину», и его молча выкинули. Астрономически он ничем не хуже Скорпиона.`,
+        daysH: `Найди свой день в Змееносце`,
+        cta: 'Построить свою живую карту космоса →',
+        altLabel: 'In English',
+        faq: [
+          [`Змееносец — с какого по какое число?`, `Солнце проходит через созвездие Змееносец с ${fmt(first)} по ${fmt(last)} — примерно ${nDays} дней. Это реальные астрономические даты, не гороскопные.`],
+          [`Змееносец — это правда 13-й знак зодиака?`, `Да. Через него реально проходит путь Солнца (эклиптика), как и через остальные 12 созвездий. Гороскоп из 12 знаков просто не стал его включать.`],
+          [`Какой знак был бы у меня, если бы считали Змееносца?`, `Если ты родился с ${fmt(first)} по ${fmt(last)}, по реальному небу твоё созвездие Солнца — Змееносец, а не Стрелец или Скорпион, как говорит гороскоп.`],
+        ] as Array<[string, string]>,
+      }
+    : {
+        title: `Ophiuchus — the 13th zodiac sign: dates, when it starts and ends, constellation`,
+        desc: `Ophiuchus is the real 13th zodiac sign. The Sun passes through it ${span} (${nDays} days). Horoscopes ignore it, but astronomically it is a full zodiac constellation.`,
+        h1: `Ophiuchus — the real 13th sign`,
+        lede: `Between Scorpius and Sagittarius the Sun really passes through <b>Ophiuchus</b>. That is <b>${span}</b> — about ${nDays} days. The 12-sign horoscope simply dropped it.`,
+        whenH: `Ophiuchus dates — when it starts and ends`,
+        when: `The Sun sits in the constellation Ophiuchus from <b>${fmt(first)}</b> to <b>${fmt(last)}</b>. These dates are computed from the Sun's real position (constellation boundaries: IAU), not the traditional zodiac.`,
+        whatH: `What constellation is it`,
+        what: `Ophiuchus is a large equatorial constellation depicting a man holding a serpent. The ecliptic (the Sun's path across the sky) runs through it — so the Sun is astronomically "in Ophiuchus" every year, just like the other 12 signs.`,
+        whyH: `Why horoscopes ignore Ophiuchus`,
+        why: `The 12-sign zodiac was fixed ~2000 years ago, splitting the sky into 12 equal 30° slices. But there are thirteen real zodiac constellations the Sun passes through. Ophiuchus didn't fit the neat "dozen", so it was quietly dropped. Astronomically it is no lesser than Scorpius.`,
+        daysH: `Find your day in Ophiuchus`,
+        cta: 'Build your live map of the cosmos →',
+        altLabel: 'По-русски',
+        faq: [
+          [`Ophiuchus — when does it start and end?`, `The Sun passes through Ophiuchus from ${fmt(first)} to ${fmt(last)} — about ${nDays} days. These are real astronomical dates, not horoscope ones.`],
+          [`Is Ophiuchus really the 13th zodiac sign?`, `Yes. The Sun's path (the ecliptic) really runs through it, just as through the other 12 constellations. The 12-sign horoscope simply chose not to include it.`],
+          [`What sign would I be if Ophiuchus were counted?`, `If you were born between ${fmt(first)} and ${fmt(last)}, by the real sky your Sun's constellation is Ophiuchus — not Sagittarius or Scorpius as the horoscope says.`],
+        ] as Array<[string, string]>,
+      };
+
+  const faqHtml = `<div class="faq"><h2>${lang === 'ru' ? 'Частые вопросы' : 'FAQ'}</h2>${
+    t.faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>`;
+  const faqLd = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: t.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+  })}</script>`;
+
+  const inner = `
+  <h1>${t.h1}</h1>
+  <p class="lede">${t.lede}</p>
+  <div class="facts">
+    <h2>${t.whenH}</h2>
+    <p class="why">${t.when}</p>
+  </div>
+  <h2 style="color:var(--gold);font-size:17px">${t.whatH}</h2>
+  <p class="why">${t.what}</p>
+  <h2 style="color:var(--gold);font-size:17px">${t.whyH}</h2>
+  <p class="why">${t.why}</p>
+  <h2 style="color:var(--gold);font-size:17px">${t.daysH}</h2>
+  <div class="days">${dayLinks}</div>
+  ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>`;
 
   return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });

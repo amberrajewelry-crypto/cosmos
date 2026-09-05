@@ -9,7 +9,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://cosmos-alpha-three.vercel.app';
 
 const vite = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { natalPage, urlFor, signPage, signUrl } = await vite.ssrLoadModule('/src/natal/page.ts');
+const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl } = await vite.ssrLoadModule('/src/natal/page.ts');
 const { sunSignAndConstellation, SIGNS_RU, SIGNS_EN } = await vite.ssrLoadModule('/src/compute/sign.ts');
 
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -39,10 +39,13 @@ for (const lang of ['ru', 'en']) {
 }
 
 // Группируем даты по знаку → 12 страниц знаков × 2 языка (long-tail «натальная карта {знак}»).
+// Заодно собираем дни, когда Солнце реально в Змееносце (Ophiuchus) — под хаб 13-го знака.
 const bySign = Array.from({ length: 12 }, () => []);
+const ophDays = [];
 for (const [month, day] of dates) {
   const { signIndex, constellationLatin } = sunSignAndConstellation(new Date(Date.UTC(2024, month - 1, day, 12, 0, 0)));
   bySign[signIndex].push({ month, day, constellationLatin });
+  if (constellationLatin === 'Ophiuchus') ophDays.push({ month, day, constellationLatin });
 }
 let signN = 0;
 for (const lang of ['ru', 'en']) {
@@ -63,7 +66,10 @@ function hub(lang) {
     : "Pick your date — we'll show your true sign by the real position of the stars. A real, sidereal natal chart.";
   const signNames = lang === 'ru' ? SIGNS_RU : SIGNS_EN;
   const signLinks = signNames.map((nm, i) => `<a href="${signUrl(lang, i)}">${nm}</a>`).join(' ');
-  let body = `<section><h2>${lang === 'ru' ? 'По знаку' : 'By sign'}</h2><div class="days">${signLinks}</div></section>`;
+  const oph = lang === 'ru'
+    ? `<section><h2>Змееносец — 13-й знак</h2><p style="opacity:.9"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold);font-family:'SF Mono',monospace">Настоящий 13-й знак зодиака, который выкинул гороскоп →</a></p></section>`
+    : `<section><h2>Ophiuchus — the 13th sign</h2><p style="opacity:.9"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold);font-family:'SF Mono',monospace">The real 13th zodiac sign the horoscope dropped →</a></p></section>`;
+  let body = `<section><h2>${lang === 'ru' ? 'По знаку' : 'By sign'}</h2><div class="days">${signLinks}</div></section>${oph}`;
   for (let month = 1; month <= 12; month++) {
     const links = dates.filter(([m]) => m === month)
       .map(([m, d]) => `<a href="${urlFor(lang, m, d)}">${d}</a>`).join(' ');
@@ -79,6 +85,12 @@ function hub(lang) {
 await writePage(lang_url('ru'), hub('ru'));
 await writePage(lang_url('en'), hub('en'));
 function lang_url(lang) { return lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'; }
+
+// Хаб Змееносца (13-й знак) — под живой suggest-кластер, обе локали.
+for (const lang of ['ru', 'en']) {
+  await writePage(ophiuchusUrl(lang), ophiuchusPage(lang, ophDays));
+  urls[lang].push(ophiuchusUrl(lang));
+}
 
 // Sitemap со всеми URL + hreflang-парами.
 const allUrls = ['/', ...urls.ru, ...urls.en, '/natalnaya-karta/', '/en/natal-chart/'];
