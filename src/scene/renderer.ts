@@ -30,6 +30,6 @@ export function resize(stage: Stage, w: number, h: number): void {
   // не перекрывает легенду/ссылки. Ландшафт — центр.
   const portrait = h > w;
   stage.camera.position.set(0, 1.0, portrait ? 4.8 : 3.2);
-  stage.camera.lookAt(0, portrait ? 2.1 : 0.9, 0);
+  stage.camera.lookAt(0, portrait ? 2.4 : 0.9, 0);
   stage.camera.updateProjectionMatrix();
 }

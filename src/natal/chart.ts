@@ -1,3 +1,4 @@
+// Глифы знаков с U+FE0E — текстовое начертание, не emoji (§4.5: гравюра, не смайлы).
 // Каноническая круглая карта (§4.7): человек, пришедший по «натальная карта», узнаёт форму.
 // Наполнение честное: реальная эклиптическая долгота Солнца. Кольцо знаков умеет
 // проворачиваться на прецессию (§4.8) — гесто задаётся rotationDeg, анимируется в natal.ts.
@@ -32,7 +33,7 @@ export function natalSVG({ sunLon, rotationDeg }: ChartInput): string {
     const [dx, dy] = polar(R_OUT, i * 30);
     sectors += `<line x1="${CX}" y1="${CY}" x2="${dx.toFixed(1)}" y2="${dy.toFixed(1)}" stroke="#bfa14a" stroke-width="0.4" opacity="0.35"/>`;
     const [gx, gy] = polar(R_GLYPH, i * 30 + 15);
-    sectors += `<text x="${gx.toFixed(1)}" y="${(gy + 6).toFixed(1)}" text-anchor="middle" font-size="18" fill="#e8e2cf" font-family="Georgia,serif">${SIGNS[i][0]}</text>`;
+    sectors += `<text x="${gx.toFixed(1)}" y="${(gy + 6).toFixed(1)}" text-anchor="middle" font-size="18" fill="#e8e2cf" font-family="Georgia,serif">${SIGNS[i][0]}\uFE0E</text>`;
   }
   // Солнце — фиксировано на реальной долготе (кольцо проворачивается ПОД ним).
   const [sx, sy] = polar(R_SUN, sunLon);

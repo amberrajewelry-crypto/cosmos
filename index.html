@@ -133,9 +133,17 @@
       /* Мобильный layout: панель 380px во всю высоту хоронила 3D-фигуру. На узких экранах —
          hero наверх, фигура видна в центре, панель = нижний лист (скроллится внутри). */
       @media (max-width: 720px) {
-        #hero { top: 12px; bottom: auto; max-width: 100%; padding: 16px 18px; }
+        /* Мобилка: документ скроллится. hero в потоке сверху, под ним окно 46vh на фигуру
+           (canvas fixed, камера в портрете смотрит выше — тело в нижней половине экрана),
+           панель идёт следом в потоке и наезжает на фигуру при скролле. Ничего не перекрывается. */
+        html, body { overflow: auto; height: auto; }
+        #scene { position: fixed; inset: 0; }
+        #hero { position: relative; max-width: 100%; padding: 16px 18px 0; }
+        #hero .thesis { font-size: 18px; margin-bottom: 12px; }
+        #hero .open { font-size: 14px; }
+        #legend { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 10px; }
         #panel {
-          width: 100vw; height: 44vh; top: auto; bottom: 0; padding: 14px 16px;
+          position: relative; width: 100vw; height: auto; margin-top: 46vh; padding: 14px 16px;
           border-top: 1px solid rgba(191,161,74,.4);
           background: rgba(15,12,38,.9); backdrop-filter: blur(3px);
         }
