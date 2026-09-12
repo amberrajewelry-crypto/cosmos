@@ -17,27 +17,42 @@ function polar(r: number, lonDeg: number, offset = 0): [number, number] {
   return [CX + r * Math.cos(a), CY - r * Math.sin(a)];
 }
 
-export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; }
+export interface ChartBody { glyph: string; lon: number; key: string; }
+export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; }
 
-export function natalSVG({ sunLon, rotationDeg, asc, mc }: ChartInput): string {
+export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies }: ChartInput): string {
   const off = asc ?? 0;
   // Градуированные тики по краю (§4.5) — фиксированный слой.
   let ticks = '';
   for (let d = 0; d < 360; d += 6) {
     const [x1, y1] = polar(R_OUT, d, off);
     const [x2, y2] = polar(d % 30 === 0 ? R_OUT - 12 : R_OUT - 6, d, off);
-    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#bfa14a" stroke-width="${d % 30 === 0 ? 1.3 : 0.6}" opacity="0.7"/>`;
+    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#c9a85c" stroke-width="${d % 30 === 0 ? 1.3 : 0.6}" opacity="0.7"/>`;
   }
   // Кольцо знаков — вращаемый слой (id=signRing).
   let sectors = '';
   for (let i = 0; i < 12; i++) {
     const [dx, dy] = polar(R_OUT, i * 30, off);
-    sectors += `<line x1="${CX}" y1="${CY}" x2="${dx.toFixed(1)}" y2="${dy.toFixed(1)}" stroke="#bfa14a" stroke-width="0.4" opacity="0.35"/>`;
+    sectors += `<line x1="${CX}" y1="${CY}" x2="${dx.toFixed(1)}" y2="${dy.toFixed(1)}" stroke="#c9a85c" stroke-width="0.4" opacity="0.35"/>`;
     const [gx, gy] = polar(R_GLYPH, i * 30 + 15, off);
     sectors += `<text x="${gx.toFixed(1)}" y="${(gy + 6).toFixed(1)}" text-anchor="middle" font-size="18" fill="#e8e2cf" font-family="Georgia,serif">${SIGNS[i][0]}\uFE0E</text>`;
   }
   // Солнце — фиксировано на реальной долготе (кольцо проворачивается ПОД ним).
   const [sx, sy] = polar(R_SUN, sunLon, off);
+  // Планеты и Луна на внутреннем кольце (§4.7): настоящие геоцентрические долготы даты.
+  // Близкие тела разводим по радиусу, чтобы глифы не слипались.
+  let planets = '';
+  if (bodies) {
+    const sorted = [...bodies].filter((b) => b.key !== 'sun').sort((a, b) => a.lon - b.lon);
+    let prev = -99, lvl = 0;
+    for (const b of sorted) {
+      lvl = b.lon - prev < 9 ? (lvl + 1) % 3 : 0; prev = b.lon;
+      const r = 112 - lvl * 16;
+      const [px, py] = polar(r, b.lon, off), [tx, ty] = polar(R_IN, b.lon, off);
+      planets += `<line x1="${tx.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${px.toFixed(1)}" y2="${py.toFixed(1)}" stroke="#c9a85c" stroke-width=".4" opacity=".35"/>
+      <text x="${px.toFixed(1)}" y="${(py + 5).toFixed(1)}" text-anchor="middle" font-size="16" fill="#ece6d3" font-family="Georgia,serif" opacity=".95">${b.glyph}\uFE0E</text>`;
+    }
+  }
   // Оси ASC–DSC (горизонт) и MC–IC (меридиан) — только если известны время и место.
   let axes = '';
   if (asc != null && mc != null) {
@@ -49,12 +64,13 @@ export function natalSVG({ sunLon, rotationDeg, asc, mc }: ChartInput): string {
   }
 
   return `<svg viewBox="0 0 400 400" width="100%" height="100%" role="img" aria-label="Натальная карта">
-    <circle cx="${CX}" cy="${CY}" r="${R_OUT}" fill="none" stroke="#bfa14a" stroke-width="1.5" opacity="0.8"/>
-    <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="none" stroke="#bfa14a" stroke-width="0.8" opacity="0.5"/>
+    <circle cx="${CX}" cy="${CY}" r="${R_OUT}" fill="none" stroke="#c9a85c" stroke-width="1.5" opacity="0.8"/>
+    <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="none" stroke="#c9a85c" stroke-width="0.8" opacity="0.5"/>
     ${ticks}
     ${axes}
     <g id="signRing" style="transition: transform 1.6s cubic-bezier(.4,0,.2,1); transform-box: view-box; transform-origin: 200px 200px; transform: rotate(${rotationDeg}deg);">${sectors}</g>
-    <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="7" fill="#bfa14a"/>
+    ${planets}
+    <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="7" fill="#c9a85c"/>
     <text x="${sx.toFixed(1)}" y="${(sy - 12).toFixed(1)}" text-anchor="middle" font-size="11" fill="#e8e2cf" font-family="SF Mono,monospace">☉</text>
   </svg>`;
 }

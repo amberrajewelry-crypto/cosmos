@@ -5,6 +5,7 @@ import { precessionOffsetDeg } from '../compute/precession';
 import { birthLightStar } from '../compute/birthlight';
 import { toValue } from '../registry/registry';
 import { ascMc } from '../compute/angles';
+import { natalBodies } from '../compute/natalbodies';
 
 export interface Place { lat: number; lon: number; }
 
@@ -15,15 +16,17 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
   const sunLon = SunPosition(when).elon;
   // ASC/MC (§4.7) — только при известных времени и месте; иначе честно не рисуем.
   const angles = place ? ascMc(place.lat, place.lon, when) : undefined;
+  const bodies = natalBodies(when);
   const offset = precessionOffsetDeg(when);
-  const real = constellationVsSign(when).text ?? '';
+  const real = (constellationVsSign(when).text ?? '').replace('Солнце сейчас', 'В день рождения Солнце');
   const star = toValue(birthLightStar(when));
   const iso = when.toISOString().slice(0, 10);
 
   overlay.innerHTML = `
     <div class="natal-box">
       <button class="natal-close" aria-label="Закрыть">✕</button>
-      <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc })}</div>
+      <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
+      <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
       <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
       <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия</button>
       ${angles
@@ -43,8 +46,15 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
   rotateBtn.addEventListener('click', () => {
     const ring = overlay.querySelector('#signRing') as SVGGElement | null;
     if (ring) ring.style.transform = `rotate(${-offset}deg)`; // §4.8: садимся на реальные созвездия; центр = центр круга (view-box), не bbox
-    cap.innerHTML = `<span class="tag tag-inline">[ТОЧНО]</span> ${real} Круг провернулся на ${offset}°, накопленных прецессией.`;
     rotateBtn.hidden = true;
+    // Градусы бегут вместе с поворотом (1.6 с) — расхождение видно числом и кругом одновременно.
+    const start = performance.now();
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - start) / 1600), e = 1 - Math.pow(1 - k, 3);
+      cap.innerHTML = `<span class="tag tag-inline">[ТОЧНО]</span> ${real} Круг провернулся на <b>${(offset * e).toFixed(2)}°</b>, накопленных прецессией.`;
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   });
 
   const shareStatus = overlay.querySelector('#natalShareStatus') as HTMLElement;
