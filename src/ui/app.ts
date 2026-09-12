@@ -17,8 +17,24 @@ import { openAsk } from './ask-ui';
 import { fetchKp } from '../live/noaa';
 import type { Value } from '../types';
 
+// Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
+(function buildRing() {
+  const svg = document.getElementById('ring'); if (!svg) return;
+  const G = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  let t = '';
+  for (let d = 0; d < 360; d += 2) {
+    const a = (d * Math.PI) / 180, big = d % 30 === 0, mid = d % 10 === 0;
+    const r1 = 190, r0 = big ? 176 : mid ? 182 : 186;
+    t += `<line x1="${(200 + r0 * Math.cos(a)).toFixed(1)}" y1="${(200 + r0 * Math.sin(a)).toFixed(1)}" x2="${(200 + r1 * Math.cos(a)).toFixed(1)}" y2="${(200 + r1 * Math.sin(a)).toFixed(1)}" stroke="#c9a85c" stroke-width="${big ? .8 : .35}" opacity="${big ? .9 : .5}"/>`;
+  }
+  let g = '';
+  G.forEach((ch, i) => { const a = ((i * 30 + 15 - 90) * Math.PI) / 180; g += `<text x="${(200 + 167 * Math.cos(a)).toFixed(1)}" y="${(204 + 167 * Math.sin(a)).toFixed(1)}" text-anchor="middle" font-size="9" fill="#c9a85c" opacity=".55" font-family="Georgia,serif">${ch}\uFE0E</text>`; });
+  svg.innerHTML = `<g><circle cx="200" cy="200" r="192" fill="none" stroke="#c9a85c" stroke-width=".6" opacity=".7"/><circle cx="200" cy="200" r="174" fill="none" stroke="#c9a85c" stroke-width=".35" opacity=".45"/><circle cx="200" cy="200" r="158" fill="none" stroke="#c9a85c" stroke-width=".25" opacity=".3" stroke-dasharray="1 3"/>${t}${g}</g>`;
+})();
+
 // --- Сцена ---
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
+const stageEl = document.getElementById('stage') as HTMLElement;
 const stage = createStage(canvas);
 
 // Слои сцены: туманность (фон-шейдер) → звёзды → тело → поток сквозь тело.
@@ -28,39 +44,56 @@ stage.scene.add(createStarfield());
 
 // Тело = человек из точек, раскрашенных по происхождению вещества (§4.1/§4.3).
 const body = new THREE.Group();
-body.add(createBodyParticles());
+const bodyPts = createBodyParticles();
+body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
 stage.scene.add(body);
 
+// Курсор → точка на плоскости тела (z=0) в координатах группы: точки расступаются под лучом.
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
+const bodyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+window.addEventListener('pointerleave', () => bodyPts.setMouse(0, -10, 0));
+
 // Лёгкий параллакс от курсора: сцена отвечает на присутствие (без резких движений).
 let px = 0, py = 0, tx = 0, ty = 0;
-window.addEventListener('pointermove', (e) => { tx = (e.clientX / innerWidth - 0.5); ty = (e.clientY / innerHeight - 0.5); }, { passive: true });
+window.addEventListener('pointermove', (e) => {
+  tx = (e.clientX / innerWidth - 0.5); ty = (e.clientY / innerHeight - 0.5);
+  const r = stageEl.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, stage.camera);
+  if (ray.ray.intersectPlane(bodyPlane, hit)) { body.worldToLocal(hit); bodyPts.setMouse(hit.x, hit.y, 1); }
+}, { passive: true });
 
-const stageEl = document.getElementById('stage') as HTMLElement;
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
 window.addEventListener('resize', fit);
 fit();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let t = 0, last = performance.now();
+let t = 0;
 const dbSize = new THREE.Vector2();
-(function loop(now = performance.now()) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+let paused = false;
+stage.renderer.getDrawingBufferSize(dbSize); nebula.update(0, dbSize.x, dbSize.y); // и для reduced-motion — один кадр
+function loop(now = performance.now()) {
+  if (paused) return;
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     px += (tx - px) * 0.03; py += (ty - py) * 0.03;
     body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35;
     body.rotation.x = py * 0.08;
-    flux.update(dt);
+    bodyPts.setTime(now / 1000);
+    flux.setTime(now / 1000);
     stage.renderer.getDrawingBufferSize(dbSize);
     nebula.update(now / 1000, dbSize.x, dbSize.y);
   }
   stage.renderer.render(stage.scene, stage.camera);
   requestAnimationFrame(loop);
-})();
+}
+loop();
+// Скрытая вкладка — цикл стоит (§3.6), возврат — продолжаем.
+document.addEventListener('visibilitychange', () => { paused = document.hidden; if (!paused) loop(); });
 
 // --- Параметры тела: ценность ДО ввода координат (§2.4). Считаются в браузере (§3.7). ---
 const bodyValues: Value[] = [
@@ -88,7 +121,13 @@ const panel = document.getElementById('panel') as HTMLElement;
 let currentSky: Value[] = [];
 let liveValues: Value[] = [];
 function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues]; }
-function render() { renderPanel(panel, allValues()); }
+function render() {
+  renderPanel(panel, [
+    { title: 'Небо в твоей точке', note: 'Появится после «Показать, что происходит именно с тобой» — координаты не покидают браузер.', values: currentSky },
+    { title: 'Твоё тело', values: bodyValues },
+    { title: 'Живое сейчас', note: 'NOAA Kp загружается…', values: liveValues },
+  ]);
+}
 render();
 
 // «Спросить дальше» на карточках (§2.2): один оверлей, контекст — все видимые значения.

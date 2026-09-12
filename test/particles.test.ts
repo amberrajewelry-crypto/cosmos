@@ -3,7 +3,7 @@ import { createBodyParticles, createStarfield } from '../src/scene/particles';
 
 describe('scene/particles — человек из звёзд (§4.1)', () => {
   it('генерирует точки в габаритах стоящей фигуры', () => {
-    const pts = createBodyParticles(1000);
+    const pts = createBodyParticles(1000).points;
     const pos = pts.geometry.getAttribute('position');
     expect(pos.count).toBeGreaterThan(500);
     for (let i = 0; i < pos.count; i++) {
@@ -16,7 +16,7 @@ describe('scene/particles — человек из звёзд (§4.1)', () => {
   });
 
   it('форма человекоподобна: есть точки в зоне головы и в зоне ног', () => {
-    const pos = createBodyParticles(3000).geometry.getAttribute('position');
+    const pos = createBodyParticles(3000).points.geometry.getAttribute('position');
     let head = 0, legs = 0;
     for (let i = 0; i < pos.count; i++) {
       const y = pos.getY(i);
@@ -28,7 +28,7 @@ describe('scene/particles — человек из звёзд (§4.1)', () => {
   });
 
   it('раскраска использует палитру происхождения (есть индиго и золото)', () => {
-    const col = createBodyParticles(1000).geometry.getAttribute('color');
+    const col = createBodyParticles(1000).points.geometry.getAttribute('color');
     let indigo = 0, gold = 0;
     for (let i = 0; i < col.count; i++) {
       if (col.getZ(i) > 0.7 && col.getX(i) < 0.5) indigo++;   // индиго: высокий B

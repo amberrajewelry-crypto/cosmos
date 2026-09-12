@@ -21,6 +21,9 @@ void main(){
   col = mix(col, dust, smoothstep(.62,.92,n2) * .35);
   float vig = smoothstep(1.25, .25, length(p));
   col *= mix(.35, 1., vig);
+  // Дизеринг ±0.5 LSB против полос на градиенте.
+  float d = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  col += (d - .5) / 255.;
   gl_FragColor = vec4(col, 1.);
 }`;
 

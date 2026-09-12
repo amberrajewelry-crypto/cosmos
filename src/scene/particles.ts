@@ -49,9 +49,56 @@ function insideHuman(x: number, y: number, z: number): boolean {
   return false;
 }
 
-export function createBodyParticles(count = 6500): THREE.Points {
+// GLSL: 3D simplex-подобный шум (value noise, 3 октавы) + curl — бездивергентное поле,
+// траектории не пересекаются, точки «дышат» вокруг своего места, не разлетаясь (§4.9).
+const NOISE_GLSL = `
+vec3 hash3(vec3 p){ p=vec3(dot(p,vec3(127.1,311.7,74.7)),dot(p,vec3(269.5,183.3,246.1)),dot(p,vec3(113.5,271.9,124.6))); return fract(sin(p)*43758.5453); }
+float vnoise(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  float n=0.; for(int z=0;z<2;z++)for(int y=0;y<2;y++)for(int x=0;x<2;x++){ vec3 o=vec3(x,y,z);
+    n+=hash3(i+o).x*(x==0?1.-f.x:f.x)*(y==0?1.-f.y:f.y)*(z==0?1.-f.z:f.z);} return n; }
+vec3 curl(vec3 p){ float e=.1;
+  float dx=vnoise(p+vec3(e,0,0))-vnoise(p-vec3(e,0,0)), dy=vnoise(p+vec3(0,e,0))-vnoise(p-vec3(0,e,0)), dz=vnoise(p+vec3(0,0,e))-vnoise(p-vec3(0,0,e));
+  vec3 a=vec3(dx,dy,dz);
+  float dx2=vnoise(p.yzx+vec3(e,0,0))-vnoise(p.yzx-vec3(e,0,0)), dy2=vnoise(p.yzx+vec3(0,e,0))-vnoise(p.yzx-vec3(0,e,0)), dz2=vnoise(p.yzx+vec3(0,0,e))-vnoise(p.yzx-vec3(0,0,e));
+  vec3 b=vec3(dx2,dy2,dz2);
+  return normalize(cross(a,b)+1e-5)*.5; }`;
+
+const BODY_VERT = `
+${NOISE_GLSL}
+uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn;
+attribute float aSeed;
+varying vec3 vColor; varying float vTwinkle;
+void main(){
+  vColor = color;
+  vec3 p = position;
+  // Дрейф curl-noise вокруг своего места: амплитуда мала — фигура держит форму.
+  p += curl(position*2.4 + uTime*.06 + aSeed) * .022;
+  // Курсор: точки уходят от луча в радиусе, мягко (без резкого удара).
+  vec3 toM = p - uMouse; float d = length(toM.xy);
+  float push = smoothstep(.3, 0., d) * uMouseOn;
+  p += normalize(vec3(toM.xy, 0.) + 1e-4) * push * .09;
+  vTwinkle = .75 + .25*sin(uTime*1.7 + aSeed*31.);
+  vec4 mv = modelViewMatrix * vec4(p, 1.);
+  gl_PointSize = (1.6 + 3.2*fract(aSeed*7.3)) * uPixelRatio * (2.8 / -mv.z);
+  gl_Position = projectionMatrix * mv;
+}`;
+const BODY_FRAG = `
+varying vec3 vColor; varying float vTwinkle;
+void main(){
+  vec2 c = gl_PointCoord - .5; float r = length(c);
+  if (r > .5) discard;
+  // Мягкий спрайт: плотное ядро + ореол (свечение без bloom-прохода).
+  float core = smoothstep(.5, .0, r);
+  float glow = exp(-r*r*14.) * .45;
+  gl_FragColor = vec4(vColor * (core*.95 + glow), (core*.7 + glow*.4) * vTwinkle);
+}`;
+
+export interface BodyPoints { points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; }
+
+export function createBodyParticles(count = 9000): BodyPoints {
   const pos = new Float32Array(count * 3);
   const col = new Float32Array(count * 3);
+  const seed = new Float32Array(count);
   let i = 0, guard = 0;
   const GUARD_MAX = count * 200;
   while (i < count && guard < GUARD_MAX) {
@@ -63,16 +110,27 @@ export function createBodyParticles(count = 6500): THREE.Points {
     const [r, g, b] = colorFor((i % 1000) / 1000);
     pos.set([x, y, z], i * 3);
     col.set([r, g, b], i * 3);
+    seed[i] = Math.random() * 100;
     i++;
   }
   const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0, i * 3), 3));
   geom.setAttribute('color', new THREE.BufferAttribute(col.subarray(0, i * 3), 3));
-  const mat = new THREE.PointsMaterial({
-    size: 0.011, vertexColors: true, transparent: true, opacity: 0.95,
-    blending: THREE.AdditiveBlending, depthWrite: false,
+  geom.setAttribute('aSeed', new THREE.BufferAttribute(seed.subarray(0, i), 1));
+  const mat = new THREE.ShaderMaterial({
+    vertexShader: BODY_VERT, fragmentShader: BODY_FRAG, vertexColors: true,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: {
+      uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 },
+    },
   });
-  return new THREE.Points(geom, mat);
+  const points = new THREE.Points(geom, mat);
+  return {
+    points,
+    setMouse: (x, y, on) => { mat.uniforms.uMouse.value.set(x, y, 0); mat.uniforms.uMouseOn.value = on; },
+    setTime: (t) => { mat.uniforms.uTime.value = t; },
+  };
 }
 
 // Далёкий звёздный фон — глубина «космоса вокруг», на фоне которого светится тело.
@@ -102,25 +160,38 @@ export function createStarfield(count = 1400): THREE.Points {
 }
 
 // Поток сквозь тело (§2.3 #2/#4/#5): реликтовые фотоны/нейтрино/мюоны летят сквозь фигуру.
-// Визуально — редкие белые искры, дрейфующие снизу вверх сквозь объём; при выходе за верх — заново снизу.
-export function createFlux(count = 220): { points: THREE.Points; update: (dt: number) => void } {
+// Движение целиком в вершинном шейдере (без per-frame загрузки атрибутов): y = mod(y0 + v·t).
+const FLUX_VERT = `
+uniform float uTime; uniform float uPixelRatio;
+attribute float aSpeed;
+varying float vA;
+void main(){
+  vec3 p = position;
+  p.y = mod(position.y + aSpeed * uTime, 2.3) - 0.2;
+  vA = smoothstep(-.2, .1, p.y) * smoothstep(2.1, 1.7, p.y);
+  vec4 mv = modelViewMatrix * vec4(p, 1.);
+  gl_PointSize = 3.2 * uPixelRatio * (2.8 / -mv.z);
+  gl_Position = projectionMatrix * mv;
+}`;
+const FLUX_FRAG = `
+varying float vA;
+void main(){ vec2 c = gl_PointCoord - .5; float r = length(c); if (r > .5) discard;
+  float a = exp(-r*r*18.) * vA * .7; gl_FragColor = vec4(vec3(.95,.93,.86), a); }`;
+
+export function createFlux(count = 260): { points: THREE.Points; setTime: (t: number) => void } {
   const pos = new Float32Array(count * 3);
   const speed = new Float32Array(count);
-  const reset = (i: number, y = Math.random() * 2.1 - 0.15) => {
+  for (let i = 0; i < count; i++) {
     const r = Math.random() * 0.34, a = Math.random() * Math.PI * 2;
-    pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = Math.sin(a) * r;
+    pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = Math.random() * 2.3; pos[i * 3 + 2] = Math.sin(a) * r;
     speed[i] = 0.12 + Math.random() * 0.22;
-  };
-  for (let i = 0; i < count; i++) reset(i);
+  }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.PointsMaterial({ size: 0.014, color: 0xf2eee0, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
-  const points = new THREE.Points(geo, mat);
-  return {
-    points,
-    update: (dt) => {
-      for (let i = 0; i < count; i++) { pos[i * 3 + 1] += speed[i] * dt; if (pos[i * 3 + 1] > 2.05) reset(i, -0.15); }
-      geo.attributes.position.needsUpdate = true;
-    },
-  };
+  geo.setAttribute('aSpeed', new THREE.BufferAttribute(speed, 1));
+  const mat = new THREE.ShaderMaterial({
+    vertexShader: FLUX_VERT, fragmentShader: FLUX_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) } },
+  });
+  return { points: new THREE.Points(geo, mat), setTime: (t) => { mat.uniforms.uTime.value = t; } };
 }

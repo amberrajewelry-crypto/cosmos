@@ -59,8 +59,17 @@ const io = typeof IntersectionObserver === 'undefined' ? null
       entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('in'), i * 70); io!.unobserve(e.target); } });
     }, { threshold: 0.15 });
 
-export function renderPanel(container: HTMLElement, values: Value[]): void {
-  container.innerHTML = values.map(card).join('');
+export interface PanelGroup { title: string; note?: string; values: Value[]; }
+
+// Панель = группы карточек с приборными заголовками; пустая группа показывает своё примечание.
+export function renderPanel(container: HTMLElement, groups: PanelGroup[] | Value[]): void {
+  const gs: PanelGroup[] = Array.isArray(groups) && groups.length && 'values' in (groups[0] as PanelGroup)
+    ? (groups as PanelGroup[]) : [{ title: '', values: groups as Value[] }];
+  container.innerHTML = gs.map((g) => {
+    const head = g.title ? `<h3 class="ph"><span>${g.title}</span><i></i></h3>` : '';
+    const body = g.values.length ? g.values.map(card).join('') : (g.note ? `<p class="ph-note">${g.note}</p>` : '');
+    return head + body;
+  }).join('');
   container.querySelectorAll('.card').forEach((el, i) => {
     if (!io) { el.classList.add('in'); return; }
     if (seen.has(el)) return; seen.add(el);
