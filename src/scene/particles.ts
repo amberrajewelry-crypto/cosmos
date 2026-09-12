@@ -17,6 +17,8 @@ function colorFor(t: number): [number, number, number] {
   return ORIGINS[ORIGINS.length - 1].c;
 }
 
+// Стартовая фигура — капсулы; в рантайме заменяется точками анатомического меша
+// (Blender Human Base Meshes, CC0; scripts/sample-body.py → public/body.bin, int16 ×1e-4).
 // Человек как объединение сегментов-«костей» с радиусом (голова = сфера a==b).
 // Ось Y вверх; стоящая фигура: стопы ~0.12, макушка ~1.66, центр ~0.9.
 type Bone = { a: [number, number, number]; b: [number, number, number]; r: number };
@@ -104,6 +106,7 @@ export interface BodyPoints {
   /** Исходные позиции фигуры (для генерации форм уровней). */ body: Float32Array;
   /** Задать форму-цель и долю смешения 0..1; commit — сделать цель текущей позицией. */
   setTarget: (t: Float32Array) => void; setMix: (m: number) => void; commitTarget: () => void;
+  /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
 }
 
 export function createBodyParticles(count = 9000): BodyPoints {
@@ -146,6 +149,13 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setTime: (t) => { mat.uniforms.uTime.value = t; },
     setReveal: (r) => { mat.uniforms.uReveal.value = r; },
     body: bodyPos,
+    replaceBody: (b) => {
+      const n = Math.min(b.length, bodyPos.length);
+      bodyPos.set(b.subarray(0, n));
+      const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
+      (posAttr.array as Float32Array).set(bodyPos); posAttr.needsUpdate = true;
+      (target.array as Float32Array).set(bodyPos); target.needsUpdate = true;
+    },
     setTarget: (t) => { (target.array as Float32Array).set(t); target.needsUpdate = true; },
     setMix: (m) => { mat.uniforms.uMix.value = m; },
     commitTarget: () => {

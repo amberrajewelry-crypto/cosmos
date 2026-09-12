@@ -51,6 +51,14 @@ const bodyPts = createBodyParticles();
 body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
+// Анатомическая фигура (§4.1): 9000 точек внутри меша, 54 КБ; до загрузки — капсульная.
+fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
+  const n = new DataView(buf).getUint32(0, true);
+  const q = new Int16Array(buf, 4, n * 3);
+  const f = new Float32Array(n * 3);
+  for (let i = 0; i < f.length; i++) f[i] = q[i] / 10000;
+  bodyPts.replaceBody(f);
+}).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
   flux.points.visible = lvl === BODY_LEVEL;
