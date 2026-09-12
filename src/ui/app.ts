@@ -9,6 +9,7 @@ import { shadowRatio } from '../compute/shadow';
 import { constellationVsSign } from '../compute/sign';
 import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
+import { planetsAbove } from '../compute/planets';
 import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
 import { openAsk } from './ask-ui';
@@ -102,6 +103,7 @@ btn.addEventListener('click', () => {
         sunAltitude(lat, lon, now),
         sunAzimuth(lat, lon, now),
         moonAltitude(lat, lon, now),
+        planetsAbove(lat, lon, now),
         shadowRatio(lat, lon, now),
         magneticInclination(lat, lon, now),
         magneticDeclination(lat, lon, now),
@@ -125,6 +127,12 @@ openBtn.addEventListener('click', () => {
   const when = birth.value ? new Date(birth.value + 'T12:00:00Z') : new Date();
   openNatal(natalOverlay, when);
 });
+// Шеринг-ссылка (§2.1): /?birth=YYYY-MM-DD открывает карту сразу.
+const shared = new URLSearchParams(location.search).get('birth');
+if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
+  birth.value = shared;
+  openNatal(natalOverlay, new Date(shared + 'T12:00:00Z'));
+}
 
 // --- Погрешности (§7.8) ---
 const honestyOverlay = document.getElementById('honesty') as HTMLElement;

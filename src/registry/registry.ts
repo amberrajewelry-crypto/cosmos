@@ -29,6 +29,14 @@ const REGISTRY: Record<string, Entry> = {
     label: 'Реальное созвездие vs знак', unit: '', provisionalTag: 'ТОЧНО', verification: 'unverified',
     explain: 'За две тысячи лет прецессия сдвинула небо на ~24°: знак и реальное созвездие Солнца больше не совпадают.',
   },
+  'sky.planets.above': {
+    label: 'Планеты над горизонтом', unit: 'из 5', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    explain: 'Какие из пяти ярких планет сейчас над твоим горизонтом. Найди их глазом — планеты не мерцают.',
+  },
+  'stars.birthlight': {
+    label: 'Звезда твоего рождения', unit: 'св. лет', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    explain: 'Свет летит с конечной скоростью: глядя на эту звезду, ты видишь её такой, какой она была примерно в год твоего рождения.',
+  },
   'shadow.length': {
     label: 'Длина твоей тени', unit: '× роста', provisionalTag: 'ТОЧНО', verification: 'verified', // точная производная верифиц. высоты Солнца
     explain: 'Во столько раз твоя тень длиннее тебя прямо сейчас. Возьми линейку и проверь — это единственное число, которое видно глазом.',

@@ -26,6 +26,8 @@ export type LayerId =
   | 'magnetic.inclination'
   | 'magnetic.declination'
   | 'stars.birthyear'
+  | 'stars.birthlight'
+  | 'sky.planets.above'
   | 'live.kp';
 
 // Возвращает compute/ и live/. Сырое число + провенанс. БЕЗ тега.
