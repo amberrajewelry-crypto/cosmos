@@ -43,7 +43,7 @@ function card(v: Value): string {
   <article class="card tag-${v.tag}" aria-label="${v.label}"><div class="card-core">
     ${head}
     ${note}
-    <h2 class="label">${v.label} ${tagLine}</h2>
+    <h3 class="label">${v.label} ${tagLine}</h3>
     <p class="explain">${v.explain}</p>
     <div class="src">${src}</div>
     <div class="card-actions">
@@ -89,7 +89,7 @@ export function renderPanel(container: HTMLElement, groups: PanelGroup[] | Value
   const gs: PanelGroup[] = Array.isArray(groups) && groups.length && 'values' in (groups[0] as PanelGroup)
     ? (groups as PanelGroup[]) : [{ title: '', values: groups as Value[] }];
   container.innerHTML = gs.map((g) => {
-    const head = g.title ? `<h3 class="ph"><span>${g.title}</span><i></i></h3>` : '';
+    const head = g.title ? `<h2 class="ph"><span>${g.title}</span><i></i></h2>` : '';
     const body = g.values.length ? g.values.map(card).join('') : (g.note ? `<p class="ph-note">${g.note}</p>` : '');
     const vis = g.visual && g.values.length ? `<div class="card in vis"><div class="card-core">${g.visual}</div></div>` : '';
     return head + vis + body;
