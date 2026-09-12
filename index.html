@@ -109,6 +109,22 @@
       .natal-hint { display: block; margin-top: 6px; font-size: 10px; opacity: .55; }
 
       /* Легенда — тонкая строка внизу по центру: цвет = происхождение вещества (§4.3) */
+      /* §4.2 лестница масштабов */
+      #scale { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 2; width: min(560px, calc(100% - 32px)); text-align: center; pointer-events: none; }
+      #scale > * { pointer-events: auto; }
+      .scale-row { display: inline-flex; align-items: center; gap: 6px; padding: 5px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); }
+      .scale-btn { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--ink); background: rgba(236,230,211,.06); border: 1px solid rgba(201,168,92,.35); padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: background .4s var(--ease), transform .16s var(--ease), opacity .3s; }
+      .scale-btn:hover { background: rgba(201,168,92,.16); } .scale-btn:active { transform: scale(.97); } .scale-btn:disabled { opacity: .3; cursor: default; }
+      .scale-lbl { display: inline-flex; flex-direction: column; min-width: 120px; padding: 0 10px; line-height: 1.15; }
+      .scale-lbl b { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--gold); }
+      .scale-lbl i { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink); }
+      .scale-ticks { list-style: none; margin: 8px auto 0; padding: 0; display: flex; justify-content: center; gap: 14px; }
+      .scale-ticks li { width: 1px; height: 8px; background: rgba(236,230,211,.25); transition: background .4s, height .4s var(--ease); }
+      .scale-ticks li.on { background: var(--gold); height: 14px; box-shadow: 0 0 8px var(--gold); }
+      .scale-fact { margin: 8px 0 0; font-family: var(--serif); font-size: 14px; line-height: 1.4; color: rgba(236,230,211,.78); text-wrap: balance; }
+      .scale-fact .tag { font-size: 10px; margin-left: 4px; }
+      html.off-body #legend { opacity: 0; pointer-events: none; }
+      #legend { transition: opacity .5s var(--ease); }
       #legend { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1; list-style: none; margin: 0; padding: 8px 14px; display: grid; grid-template-columns: auto auto; gap: 4px 18px;
         font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink-2); border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.06); backdrop-filter: blur(14px); white-space: nowrap; }
       #legend li { display: flex; align-items: center; gap: 7px; }
@@ -197,6 +213,9 @@
         .cta { font-size: 16px; margin-top: 12px; }
         .instr { margin-top: 10px; }
         #stage { position: relative; height: 68vh; margin-top: -8vh; }
+        #scale { position: relative; left: 0; bottom: 0; transform: none; order: 3; margin: -110px auto 12px; width: calc(100% - 32px); }
+        html.off-body #legend { display: none; }
+        .scale-fact { font-size: 13px; }
         #ring { width: 92vw; height: 92vw; }
         #legend { position: relative; left: 0; bottom: 0; transform: none; margin: 0 20px; white-space: normal; justify-content: center; }
         #panel { position: relative; width: 100vw; height: auto; padding: 18px 0 40px; flex-direction: row; align-items: flex-start; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
@@ -210,6 +229,7 @@
   </head>
   <body>
     <div id="stage"><canvas id="scene"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+    <div id="scale" aria-label="Масштаб"></div>
     <nav id="nav" aria-label="Навигация">
       <a class="brand" href="/">COSMOS</a>
       <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">Натальная </span>карта</a>

@@ -15,6 +15,8 @@ import { horizonSVG } from './panel';
 import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
 import { openAsk } from './ask-ui';
+import { initScale } from './scale';
+import { BODY_LEVEL } from '../scene/scales';
 import { fetchKp } from '../live/noaa';
 import type { Value } from '../types';
 
@@ -49,6 +51,11 @@ const bodyPts = createBodyParticles();
 body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
+// §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
+const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
+  flux.points.visible = lvl === BODY_LEVEL;
+  document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
+});
 stage.scene.add(body);
 
 // Курсор → точка на плоскости тела (z=0) в координатах группы: точки расступаются под лучом.
@@ -79,7 +86,15 @@ let paused = false;
 const t0 = performance.now();
 // Зум колесом/щипком в безопасном диапазоне (§4.2 в M1-объёме): демпфированная дистанция камеры.
 let zoomTarget = 0, zoomNow = 0; // 0 = базовая дистанция; −1..+1 → ×0.55..×1.9
-stageEl.addEventListener('wheel', (e) => { zoomTarget = Math.max(-1, Math.min(1, zoomTarget + e.deltaY * 0.0015)); }, { passive: true });
+let wheelLock = 0;
+stageEl.addEventListener('wheel', (e) => {
+  const atEdge = (e.deltaY < 0 && zoomTarget <= -1) || (e.deltaY > 0 && zoomTarget >= 1);
+  if (atEdge && performance.now() > wheelLock && Math.abs(e.deltaY) > 8) {
+    if (scale.step(e.deltaY < 0 ? -1 : 1)) { wheelLock = performance.now() + 1500; zoomTarget = 0; }
+    return;
+  }
+  zoomTarget = Math.max(-1, Math.min(1, zoomTarget + e.deltaY * 0.0015));
+}, { passive: true });
 const LOOK = new THREE.Vector3(0, 0.95, 0);
 const baseCam = stage.camera.position.clone();
 fit(); baseCam.copy(stage.camera.position);

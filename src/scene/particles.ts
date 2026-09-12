@@ -65,12 +65,14 @@ vec3 curl(vec3 p){ float e=.1;
 
 const BODY_VERT = `
 ${NOISE_GLSL}
-uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal;
-attribute float aSeed;
+uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal; uniform float uMix;
+attribute float aSeed; attribute vec3 aTarget;
 varying vec3 vColor; varying float vTwinkle;
 void main(){
   vColor = color;
-  vec3 p = position;
+  // §4.2 лестница масштабов: перестройка в форму другого уровня, каждая точка со своей задержкой.
+  float mx = smoothstep(0., 1., clamp((uMix - fract(aSeed*.53)*.3) / .7, 0., 1.));
+  vec3 p = mix(position, aTarget, mx);
   // §2.4 «внутри неё медленно проступают точки»: сборка из рассеяния, каждая точка со своей задержкой.
   float rv = smoothstep(0., 1., clamp((uReveal - fract(aSeed*.37)*.45) / .55, 0., 1.));
   vec3 scatter = (hash3(vec3(aSeed, aSeed*1.7, aSeed*2.3)) - .5) * vec3(2.6, 3.2, 1.6) + vec3(0., .9, 0.);
@@ -97,7 +99,12 @@ void main(){
   gl_FragColor = vec4(vColor * (core*.95 + glow), (core*.7 + glow*.4) * vTwinkle);
 }`;
 
-export interface BodyPoints { points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; setReveal: (r: number) => void; }
+export interface BodyPoints {
+  points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; setReveal: (r: number) => void;
+  /** Исходные позиции фигуры (для генерации форм уровней). */ body: Float32Array;
+  /** Задать форму-цель и долю смешения 0..1; commit — сделать цель текущей позицией. */
+  setTarget: (t: Float32Array) => void; setMix: (m: number) => void; commitTarget: () => void;
+}
 
 export function createBodyParticles(count = 9000): BodyPoints {
   const pos = new Float32Array(count * 3);
@@ -121,12 +128,15 @@ export function createBodyParticles(count = 9000): BodyPoints {
   geom.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0, i * 3), 3));
   geom.setAttribute('color', new THREE.BufferAttribute(col.subarray(0, i * 3), 3));
   geom.setAttribute('aSeed', new THREE.BufferAttribute(seed.subarray(0, i), 1));
+  const bodyPos = pos.slice(0, i * 3);
+  const target = new THREE.BufferAttribute(bodyPos.slice(), 3);
+  geom.setAttribute('aTarget', target);
   const mat = new THREE.ShaderMaterial({
     vertexShader: BODY_VERT, fragmentShader: BODY_FRAG, vertexColors: true,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: {
       uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
-      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 },
     },
   });
   const points = new THREE.Points(geom, mat);
@@ -135,6 +145,14 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setMouse: (x, y, on) => { mat.uniforms.uMouse.value.set(x, y, 0); mat.uniforms.uMouseOn.value = on; },
     setTime: (t) => { mat.uniforms.uTime.value = t; },
     setReveal: (r) => { mat.uniforms.uReveal.value = r; },
+    body: bodyPos,
+    setTarget: (t) => { (target.array as Float32Array).set(t); target.needsUpdate = true; },
+    setMix: (m) => { mat.uniforms.uMix.value = m; },
+    commitTarget: () => {
+      const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
+      (posAttr.array as Float32Array).set(target.array as Float32Array); posAttr.needsUpdate = true;
+      mat.uniforms.uMix.value = 0;
+    },
   };
 }
 
