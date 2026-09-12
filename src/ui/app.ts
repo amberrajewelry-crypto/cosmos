@@ -10,7 +10,8 @@ import { shadowRatio } from '../compute/shadow';
 import { constellationVsSign } from '../compute/sign';
 import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
-import { planetsAbove } from '../compute/planets';
+import { planetsAbove, skyBodies } from '../compute/planets';
+import { horizonSVG } from './panel';
 import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
 import { openAsk } from './ask-ui';
@@ -138,11 +139,12 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 
 const panel = document.getElementById('panel') as HTMLElement;
 let currentSky: Value[] = [];
+let skyVisual = '';
 let liveValues: Value[] = [];
 function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues]; }
 function render() {
   renderPanel(panel, [
-    { title: 'Небо в твоей точке', note: 'Появится после «Показать, что происходит именно с тобой» — координаты не покидают браузер.', values: currentSky },
+    { title: 'Небо в твоей точке', note: 'Появится после «Показать, что происходит именно с тобой» — координаты не покидают браузер.', values: currentSky, visual: skyVisual },
     { title: 'Твоё тело', values: bodyValues },
     { title: 'Живое сейчас', note: 'NOAA Kp загружается…', values: liveValues },
   ]);
@@ -185,6 +187,7 @@ btn.addEventListener('click', () => {
         neutrinoFlux(lat, lon, now),
       ].map(toValue);
       currentSky = sky;
+      skyVisual = horizonSVG(skyBodies(lat, lon, now));
       render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;

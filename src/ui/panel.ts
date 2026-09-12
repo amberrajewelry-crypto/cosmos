@@ -16,8 +16,10 @@ export function wrongNumberMailto(v: Value): string {
 
 // Единица контента — карточка параметра (§2.5). Фактура кодирует тег (§4.4), НЕ цвет (§3.10).
 function fmt(n: number): string {
-  // разряды пробелами: 28500000 → «28 500 000»
-  return n.toLocaleString('ru-RU');
+  // разряды пробелами: 28500000 → «28 500 000»; дроби — 1 знак (углы), мелкие — 2, целые — без хвоста.
+  const a = Math.abs(n);
+  const digits = Number.isInteger(n) ? 0 : a >= 10 ? 1 : 2;
+  return n.toLocaleString('ru-RU', { maximumFractionDigits: digits, minimumFractionDigits: digits });
 }
 
 function card(v: Value): string {
@@ -59,7 +61,28 @@ const io = typeof IntersectionObserver === 'undefined' ? null
       entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('in'), i * 70); io!.unobserve(e.target); } });
     }, { threshold: 0.15 });
 
-export interface PanelGroup { title: string; note?: string; values: Value[]; }
+export interface PanelGroup { title: string; note?: string; values: Value[]; visual?: string; }
+
+// Горизонт (§4 «каждый слой визуален»): полоса неба по азимуту, тела на своей высоте.
+// Под горизонтом — призрачно. Масштаб по высоте линейный и подписан (§4.10).
+export function horizonSVG(bodies: Array<{ name: string; glyph: string; alt: number; az: number }>): string {
+  const W = 340, H = 118, HZ = 82;
+  const y = (alt: number) => HZ - (alt / 90) * 66;
+  const marks = ['С', 'В', 'Ю', 'З'].map((c, i) => `<text x="${(i * 90 / 360) * W + 2}" y="${H - 4}" font-size="9" fill="#c9a85c" font-family="IBM Plex Mono,monospace" opacity=".7">${c}</text>`).join('');
+  const dots = bodies.map((b) => {
+    const x = (b.az / 360) * W, yy = y(Math.max(-30, b.alt)), up = b.alt > 0;
+    return `<g opacity="${up ? 1 : .32}"><line x1="${x.toFixed(1)}" y1="${HZ}" x2="${x.toFixed(1)}" y2="${yy.toFixed(1)}" stroke="#c9a85c" stroke-width=".5" opacity=".5"/>
+      <text x="${x.toFixed(1)}" y="${(yy + 5).toFixed(1)}" text-anchor="middle" font-size="${b.name === 'Солнце' ? 18 : 15}" fill="${b.name === 'Солнце' ? '#c9a85c' : '#ece6d3'}" font-family="Georgia,serif">${b.glyph}\uFE0E</text></g>`;
+  }).join('');
+  return `<svg class="horizon" viewBox="0 0 ${W} ${H}" role="img" aria-label="Небо над горизонтом сейчас">
+    <rect x="0" y="0" width="${W}" height="${HZ}" fill="url(#skyg)"/>
+    <defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1340" stop-opacity=".0"/><stop offset="1" stop-color="#c9a85c" stop-opacity=".10"/></linearGradient></defs>
+    <line x1="0" y1="${HZ}" x2="${W}" y2="${HZ}" stroke="#c9a85c" stroke-width=".8" opacity=".8"/>
+    ${[0, 90, 180, 270].map((a) => `<line x1="${(a / 360) * W}" y1="${HZ}" x2="${(a / 360) * W}" y2="${HZ + 5}" stroke="#c9a85c" stroke-width=".6" opacity=".6"/>`).join('')}
+    <text x="${W - 2}" y="${y(90) + 8}" text-anchor="end" font-size="8" fill="#ece6d3" opacity=".45" font-family="IBM Plex Mono,monospace">90° зенит</text>
+    ${marks}${dots}
+  </svg>`;
+}
 
 // Панель = группы карточек с приборными заголовками; пустая группа показывает своё примечание.
 export function renderPanel(container: HTMLElement, groups: PanelGroup[] | Value[]): void {
@@ -68,7 +91,8 @@ export function renderPanel(container: HTMLElement, groups: PanelGroup[] | Value
   container.innerHTML = gs.map((g) => {
     const head = g.title ? `<h3 class="ph"><span>${g.title}</span><i></i></h3>` : '';
     const body = g.values.length ? g.values.map(card).join('') : (g.note ? `<p class="ph-note">${g.note}</p>` : '');
-    return head + body;
+    const vis = g.visual && g.values.length ? `<div class="card in vis"><div class="card-core">${g.visual}</div></div>` : '';
+    return head + vis + body;
   }).join('');
   container.querySelectorAll('.card').forEach((el, i) => {
     if (!io) { el.classList.add('in'); return; }

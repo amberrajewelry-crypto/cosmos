@@ -8,6 +8,20 @@ const PLANETS: Array<[Body, string]> = [
   [Body.Jupiter, 'Юпитер'], [Body.Saturn, 'Сатурн'],
 ];
 
+export interface SkyBody { name: string; glyph: string; alt: number; az: number; }
+const GLYPH: Record<string, string> = { Меркурий: '☿', Венера: '♀', Марс: '♂', Юпитер: '♃', Сатурн: '♄' };
+
+// Alt/az всех ярких тел для визуала горизонта (§2.3 #7 «визуален, не только число»).
+export function skyBodies(lat: number, lon: number, when: Date): SkyBody[] {
+  const obs = new Observer(lat, lon, 0);
+  const all: Array<[Body, string, string]> = [[Body.Sun, 'Солнце', '☉'], [Body.Moon, 'Луна', '☽'], ...PLANETS.map(([b, n]) => [b, n, GLYPH[n]] as [Body, string, string])];
+  return all.map(([body, name, glyph]) => {
+    const eq = Equator(body, when, obs, true, true);
+    const h = Horizon(when, obs, eq.ra, eq.dec, 'normal');
+    return { name, glyph, alt: h.altitude, az: h.azimuth };
+  });
+}
+
 export function planetsAbove(lat: number, lon: number, when: Date): Computed {
   const obs = new Observer(lat, lon, 0);
   const up: string[] = [];
