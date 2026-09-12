@@ -22,3 +22,15 @@ describe('registry.toValue — тег из реестра (§1.6)', () => {
     expect(v.status).toBe('ok');            // есть text → слой не гаснет
   });
 });
+
+import { wrongNumberMailto } from '../src/ui/panel';
+describe('«число неверно» (§7.11) и «где проверить» (§2.5)', () => {
+  it('mailto содержит id и значение, verifyUrl пробрасывается из реестра', () => {
+    const v = toValue({ id: 'sky.sun.altitude', value: 12.5, source: 'astronomy-engine', computedAt: 0 });
+    expect(v.verifyUrl).toContain('timeanddate');
+    const m = wrongNumberMailto(v);
+    expect(m.startsWith('mailto:')).toBe(true);
+    expect(decodeURIComponent(m)).toContain('sky.sun.altitude');
+    expect(decodeURIComponent(m)).toContain('12.5');
+  });
+});

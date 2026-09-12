@@ -1,5 +1,19 @@
 import type { Value } from '../types';
 
+// §7.11 «число неверно» с первого дня. Без бэкенда (§3.7): отчёт собирается в mailto,
+// координаты в него не попадают — только id, значение, источник и время расчёта.
+const FEEDBACK_EMAIL = 'amberrajewelry@gmail.com';
+export function wrongNumberMailto(v: Value): string {
+  const body = [
+    `Параметр: ${v.id} (${v.label})`,
+    `Показано: ${v.value ?? '—'} ${v.unit} ${v.text ?? ''}`.trim(),
+    `Тег: [${v.tag}] · верификация: ${v.verification}`,
+    `Источник: ${v.source} · рассчитано: ${new Date(v.computedAt).toISOString()}`,
+    '', 'Что показывает эталон и какой (ссылка):', '',
+  ].join('\n');
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('COSMOS: число неверно — ' + v.id)}&body=${encodeURIComponent(body)}`;
+}
+
 // Единица контента — карточка параметра (§2.5). Фактура кодирует тег (§4.4), НЕ цвет (§3.10).
 function fmt(n: number): string {
   // разряды пробелами: 28500000 → «28 500 000»
@@ -30,7 +44,11 @@ function card(v: Value): string {
     <h2 class="label">${v.label} ${tagLine}</h2>
     <p class="explain">${v.explain}</p>
     <div class="src">${src}</div>
-    <button class="ask-more" data-ask="${v.id}">спросить дальше →</button>
+    <div class="card-actions">
+      <button class="ask-more" data-ask="${v.id}">спросить дальше →</button>
+      ${v.verifyUrl ? `<a class="ask-more" href="${v.verifyUrl}" target="_blank" rel="noopener">где проверить ↗</a>` : ''}
+      <a class="ask-more wrong" href="${wrongNumberMailto(v)}">число неверно</a>
+    </div>
   </article>`;
 }
 

@@ -52,4 +52,5 @@ export interface Value {
   computedAt: number;
   explain: string;        // одна фраза объяснения (§2.5) — из реестра/контент-базы
   text?: string;          // категориальный факт вместо числа
+  verifyUrl?: string;     // «где проверить» — независимый эталон (§2.5)
 }

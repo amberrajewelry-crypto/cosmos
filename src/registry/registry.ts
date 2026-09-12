@@ -10,40 +10,49 @@ interface Entry {
   provisionalTag: Tag;          // каким станет тег ПОСЛЕ верификации
   verification: VerificationStatus;
   explain: string;              // одна фраза (§2.5)
+  verifyUrl?: string;           // «где проверить» (§2.5, §7.4): независимый эталон, куда может сходить читатель
 }
 
 const REGISTRY: Record<string, Entry> = {
   'sky.sun.altitude': {
     label: 'Высота Солнца', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons Δ0.006°
     explain: 'Где над горизонтом стоит Солнце в твоей точке прямо сейчас.',
+    verifyUrl: 'https://www.timeanddate.com/sun/',
   },
   'sky.sun.azimuth': {
     label: 'Азимут Солнца', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons Δ0.001°
     explain: 'Направление на Солнце по горизонту, от Севера к Востоку.',
+    verifyUrl: 'https://www.timeanddate.com/sun/',
   },
   'sky.moon.altitude': {
     label: 'Высота Луны', unit: '°', provisionalTag: 'ТОЧНО', verification: 'diverged', // A4: рефракция у горизонта Δ0.19° → [ОЦЕНКА]
     explain: 'Где над горизонтом Луна — она тянет твоё тело приливом прямо сейчас.',
+    verifyUrl: 'https://www.timeanddate.com/moon/',
   },
   'sky.sun.constellation': {
     label: 'Реальное созвездие vs знак', unit: '', provisionalTag: 'ТОЧНО', verification: 'unverified',
     explain: 'За две тысячи лет прецессия сдвинула небо на ~24°: знак и реальное созвездие Солнца больше не совпадают.',
+    verifyUrl: 'https://in-the-sky.org/whatsup.php',
   },
   'sky.planets.above': {
     label: 'Планеты над горизонтом', unit: 'из 5', provisionalTag: 'ТОЧНО', verification: 'unverified',
     explain: 'Какие из пяти ярких планет сейчас над твоим горизонтом. Найди их глазом — планеты не мерцают.',
+    verifyUrl: 'https://in-the-sky.org/whatsup.php',
   },
   'stars.birthlight': {
     label: 'Звезда твоего рождения', unit: 'св. лет', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
     explain: 'Свет летит с конечной скоростью: глядя на эту звезду, ты видишь её такой, какой она была примерно в год твоего рождения.',
+    verifyUrl: 'https://simbad.cds.unistra.fr/simbad/',
   },
   'shadow.length': {
     label: 'Длина твоей тени', unit: '× роста', provisionalTag: 'ТОЧНО', verification: 'verified', // точная производная верифиц. высоты Солнца
     explain: 'Во столько раз твоя тень длиннее тебя прямо сейчас. Возьми линейку и проверь — это единственное число, которое видно глазом.',
+    verifyUrl: 'https://www.timeanddate.com/sun/',
   },
   'body.relikt.photons': {
     label: 'Реликтовые фотоны в теле', unit: 'шт', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
     explain: 'Столько фотонов, родившихся через 380 000 лет после Большого взрыва, пронизывают тебя сейчас.',
+    verifyUrl: 'https://pdg.lbl.gov/2024/reviews/rpp2024-rev-cosmic-microwave-background.pdf',
   },
   'body.radioactivity': {
     label: 'Собственная радиоактивность', unit: 'расп/с', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
@@ -56,6 +65,7 @@ const REGISTRY: Record<string, Entry> = {
   'physics.cmb.velocity': {
     label: 'Твоя скорость сквозь космос', unit: 'км/с', provisionalTag: 'ГЛОБ', verification: 'unverified',
     explain: 'Ты «сидящий неподвижно» несёшься с этой скоростью относительно реликтового излучения. Покой — иллюзия.',
+    verifyUrl: 'https://www.aanda.org/articles/aa/full_html/2020/09/aa33880-18/aa33880-18.html',
   },
   'physics.time.gradient': {
     label: 'Градиент времени голова/ноги', unit: 'нс/год', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
@@ -72,14 +82,17 @@ const REGISTRY: Record<string, Entry> = {
   'magnetic.inclination': {
     label: 'Наклон магнитных линий', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
     explain: 'Под этим углом магнитные линии Земли протыкают тебя насквозь в твоей точке.',
+    verifyUrl: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml',
   },
   'magnetic.declination': {
     label: 'Магнитное склонение', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
     explain: 'На столько истинный север расходится с тем, куда показывает компас в твоей точке.',
+    verifyUrl: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml',
   },
   'live.kp': {
     label: 'Kp-индекс', unit: '', provisionalTag: 'ГЛОБ', verification: 'unverified',
     explain: 'Глобальный уровень геомагнитной возмущённости.',
+    verifyUrl: 'https://www.swpc.noaa.gov/products/planetary-k-index',
   },
 };
 
@@ -110,6 +123,7 @@ export function toValue(c: Computed): Value {
     verification: e.verification,
     computedAt: c.computedAt,
     explain: e.explain,
+    verifyUrl: e.verifyUrl,
     text: c.text,           // категориальный факт (созвездие/«тени нет») — пробрасываем в UI
   };
 }
