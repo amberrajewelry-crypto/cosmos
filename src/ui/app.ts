@@ -82,7 +82,9 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
-window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); });
+function gain(): void { bodyPts.setGain(stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 1); }
+window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); gain(); });
+gain();
 fit();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
@@ -152,12 +154,10 @@ const bodyValues: Value[] = [
 const byId = (id: string) => bodyValues.find((v) => v.id === id);
 (document.getElementById('openPhotons') as HTMLElement).textContent =
   (byId('body.relikt.photons')?.value ?? 0).toLocaleString('ru-RU');
-(document.getElementById('openPrimordial') as HTMLElement).textContent =
-  `${byId('body.primordial.fraction')?.value ?? 0} %`;
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.documentElement.classList.add('staged');
   const stages = document.querySelectorAll<HTMLElement>('#hero .stage');
-  [2000, 5000, 8000].forEach((ms, i) => setTimeout(() => stages[i]?.classList.add('on'), ms));
+  [2000, 5000].forEach((ms, i) => setTimeout(() => stages[i]?.classList.add('on'), ms));
 }
 
 const panel = document.getElementById('panel') as HTMLElement;
@@ -192,6 +192,7 @@ const btn = document.getElementById('reveal') as HTMLButtonElement;
 const status = document.getElementById('status') as HTMLElement;
 
 btn.addEventListener('click', () => {
+  document.documentElement.classList.add('panel-open');
   if (!navigator.geolocation) { status.textContent = 'Геолокация недоступна в этом браузере.'; return; }
   status.textContent = 'Определяю твою точку…';
   navigator.geolocation.getCurrentPosition(
@@ -224,6 +225,9 @@ btn.addEventListener('click', () => {
 const natalOverlay = document.getElementById('natal') as HTMLElement;
 const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
 const birth = document.getElementById('birth') as HTMLInputElement;
+// Уточнение времени/места показываем только когда дата введена — экран без лишних строк.
+birth.addEventListener('input', () => document.documentElement.classList.toggle('has-birth', !!birth.value));
+(document.getElementById('openPanel') as HTMLButtonElement).addEventListener('click', () => document.documentElement.classList.toggle('panel-open'));
 const birthTime = document.getElementById('birthTime') as HTMLInputElement;
 const birthLat = document.getElementById('birthLat') as HTMLInputElement;
 const birthLon = document.getElementById('birthLon') as HTMLInputElement;

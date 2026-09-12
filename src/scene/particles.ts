@@ -91,6 +91,7 @@ void main(){
   gl_Position = projectionMatrix * mv;
 }`;
 const BODY_FRAG = `
+uniform float uGain;
 varying vec3 vColor; varying float vTwinkle;
 void main(){
   vec2 c = gl_PointCoord - .5; float r = length(c);
@@ -98,7 +99,7 @@ void main(){
   // Мягкий спрайт: плотное ядро + ореол (свечение без bloom-прохода).
   float core = smoothstep(.5, .0, r);
   float glow = exp(-r*r*14.) * .45;
-  gl_FragColor = vec4(vColor * (core*.95 + glow), (core*.7 + glow*.4) * vTwinkle);
+  gl_FragColor = vec4(vColor * (core*.95 + glow), (core*.7 + glow*.4) * vTwinkle * uGain);
 }`;
 
 export interface BodyPoints {
@@ -106,6 +107,7 @@ export interface BodyPoints {
   /** Исходные позиции фигуры (для генерации форм уровней). */ body: Float32Array;
   /** Задать форму-цель и долю смешения 0..1; commit — сделать цель текущей позицией. */
   setTarget: (t: Float32Array) => void; setMix: (m: number) => void; commitTarget: () => void;
+  /** Яркость спрайтов: портретная камера дальше — точки плотнее, гасим накопление. */ setGain: (g: number) => void;
   /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
 }
 
@@ -139,7 +141,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: {
       uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
-      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 }, uGain: { value: 1 },
     },
   });
   const points = new THREE.Points(geom, mat);
@@ -158,6 +160,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     },
     setTarget: (t) => { (target.array as Float32Array).set(t); target.needsUpdate = true; },
     setMix: (m) => { mat.uniforms.uMix.value = m; },
+    setGain: (g) => { mat.uniforms.uGain.value = g; },
     commitTarget: () => {
       const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
       (posAttr.array as Float32Array).set(target.array as Float32Array); posAttr.needsUpdate = true;

@@ -68,18 +68,18 @@ export interface PanelGroup { title: string; note?: string; values: Value[]; vis
 export function horizonSVG(bodies: Array<{ name: string; glyph: string; alt: number; az: number }>): string {
   const W = 340, H = 118, HZ = 82;
   const y = (alt: number) => HZ - (alt / 90) * 66;
-  const marks = ['С', 'В', 'Ю', 'З'].map((c, i) => `<text x="${(i * 90 / 360) * W + 2}" y="${H - 4}" font-size="9" fill="#c9a85c" font-family="IBM Plex Mono,monospace" opacity=".7">${c}</text>`).join('');
+  const marks = ['С', 'В', 'Ю', 'З'].map((c, i) => `<text x="${(i * 90 / 360) * W + 2}" y="${H - 4}" font-size="9" fill="#c9a85c" font-family="Geist Mono,monospace" opacity=".7">${c}</text>`).join('');
   const dots = bodies.map((b) => {
     const x = (b.az / 360) * W, yy = y(Math.max(-30, b.alt)), up = b.alt > 0;
     return `<g opacity="${up ? 1 : .32}"><line x1="${x.toFixed(1)}" y1="${HZ}" x2="${x.toFixed(1)}" y2="${yy.toFixed(1)}" stroke="#c9a85c" stroke-width=".5" opacity=".5"/>
-      <text x="${x.toFixed(1)}" y="${(yy + 5).toFixed(1)}" text-anchor="middle" font-size="${b.name === 'Солнце' ? 18 : 15}" fill="${b.name === 'Солнце' ? '#c9a85c' : '#ece6d3'}" font-family="Georgia,serif">${b.glyph}\uFE0E</text></g>`;
+      <text x="${x.toFixed(1)}" y="${(yy + 5).toFixed(1)}" text-anchor="middle" font-size="${b.name === 'Солнце' ? 18 : 15}" fill="${b.name === 'Солнце' ? '#c9a85c' : '#ece6d3'}" font-family="Geist,sans-serif">${b.glyph}\uFE0E</text></g>`;
   }).join('');
   return `<svg class="horizon" viewBox="0 0 ${W} ${H}" role="img" aria-label="Небо над горизонтом сейчас">
     <rect x="0" y="0" width="${W}" height="${HZ}" fill="url(#skyg)"/>
     <defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1340" stop-opacity=".0"/><stop offset="1" stop-color="#c9a85c" stop-opacity=".10"/></linearGradient></defs>
     <line x1="0" y1="${HZ}" x2="${W}" y2="${HZ}" stroke="#c9a85c" stroke-width=".8" opacity=".8"/>
     ${[0, 90, 180, 270].map((a) => `<line x1="${(a / 360) * W}" y1="${HZ}" x2="${(a / 360) * W}" y2="${HZ + 5}" stroke="#c9a85c" stroke-width=".6" opacity=".6"/>`).join('')}
-    <text x="${W - 2}" y="${y(90) + 8}" text-anchor="end" font-size="8" fill="#ece6d3" opacity=".45" font-family="IBM Plex Mono,monospace">90° зенит</text>
+    <text x="${W - 2}" y="${y(90) + 8}" text-anchor="end" font-size="8" fill="#ece6d3" opacity=".45" font-family="Geist Mono,monospace">90° зенит</text>
     ${marks}${dots}
   </svg>`;
 }
