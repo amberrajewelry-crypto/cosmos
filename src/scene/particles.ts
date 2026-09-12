@@ -65,19 +65,23 @@ vec3 curl(vec3 p){ float e=.1;
 
 const BODY_VERT = `
 ${NOISE_GLSL}
-uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn;
+uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal;
 attribute float aSeed;
 varying vec3 vColor; varying float vTwinkle;
 void main(){
   vColor = color;
   vec3 p = position;
+  // §2.4 «внутри неё медленно проступают точки»: сборка из рассеяния, каждая точка со своей задержкой.
+  float rv = smoothstep(0., 1., clamp((uReveal - fract(aSeed*.37)*.45) / .55, 0., 1.));
+  vec3 scatter = (hash3(vec3(aSeed, aSeed*1.7, aSeed*2.3)) - .5) * vec3(2.6, 3.2, 1.6) + vec3(0., .9, 0.);
+  p = mix(scatter, p, rv);
   // Дрейф curl-noise вокруг своего места: амплитуда мала — фигура держит форму.
   p += curl(position*2.4 + uTime*.06 + aSeed) * .022;
   // Курсор: точки уходят от луча в радиусе, мягко (без резкого удара).
   vec3 toM = p - uMouse; float d = length(toM.xy);
   float push = smoothstep(.3, 0., d) * uMouseOn;
   p += normalize(vec3(toM.xy, 0.) + 1e-4) * push * .09;
-  vTwinkle = .75 + .25*sin(uTime*1.7 + aSeed*31.);
+  vTwinkle = (.75 + .25*sin(uTime*1.7 + aSeed*31.)) * mix(.15, 1., rv);
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   gl_PointSize = (1.6 + 3.2*fract(aSeed*7.3)) * uPixelRatio * (2.8 / -mv.z);
   gl_Position = projectionMatrix * mv;
@@ -93,7 +97,7 @@ void main(){
   gl_FragColor = vec4(vColor * (core*.95 + glow), (core*.7 + glow*.4) * vTwinkle);
 }`;
 
-export interface BodyPoints { points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; }
+export interface BodyPoints { points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; setReveal: (r: number) => void; }
 
 export function createBodyParticles(count = 9000): BodyPoints {
   const pos = new Float32Array(count * 3);
@@ -122,7 +126,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: {
       uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
-      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 },
     },
   });
   const points = new THREE.Points(geom, mat);
@@ -130,6 +134,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     points,
     setMouse: (x, y, on) => { mat.uniforms.uMouse.value.set(x, y, 0); mat.uniforms.uMouseOn.value = on; },
     setTime: (t) => { mat.uniforms.uTime.value = t; },
+    setReveal: (r) => { mat.uniforms.uReveal.value = r; },
   };
 }
 

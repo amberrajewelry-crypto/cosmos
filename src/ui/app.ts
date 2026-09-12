@@ -66,7 +66,7 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
-window.addEventListener('resize', fit);
+window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); });
 fit();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
@@ -74,9 +74,28 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 let t = 0;
 const dbSize = new THREE.Vector2();
 let paused = false;
+// Сборка фигуры за ~3.2 с после загрузки (reduced-motion — сразу).
+const t0 = performance.now();
+// Зум колесом/щипком в безопасном диапазоне (§4.2 в M1-объёме): демпфированная дистанция камеры.
+let zoomTarget = 0, zoomNow = 0; // 0 = базовая дистанция; −1..+1 → ×0.55..×1.9
+stageEl.addEventListener('wheel', (e) => { zoomTarget = Math.max(-1, Math.min(1, zoomTarget + e.deltaY * 0.0015)); }, { passive: true });
+const LOOK = new THREE.Vector3(0, 0.95, 0);
+const baseCam = stage.camera.position.clone();
+fit(); baseCam.copy(stage.camera.position);
+// Адаптивное качество: если кадр стабильно > 33 мс — снижаем pixelRatio до 1 (только вниз).
+let slowFrames = 0, lastFrame = performance.now(), degraded = false;
 stage.renderer.getDrawingBufferSize(dbSize); nebula.update(0, dbSize.x, dbSize.y); // и для reduced-motion — один кадр
 function loop(now = performance.now()) {
   if (paused) return;
+  if (!degraded) {
+    const ft = now - lastFrame; lastFrame = now;
+    slowFrames = ft > 33 ? slowFrames + 1 : 0;
+    if (slowFrames > 60) { degraded = true; stage.renderer.setPixelRatio(1); fit(); }
+  }
+  bodyPts.setReveal(reduceMotion ? 1 : Math.min(1, (now - t0) / 4200));
+  zoomNow += (zoomTarget - zoomNow) * 0.06;
+  const zf = Math.pow(1.9, zoomNow);
+  stage.camera.position.copy(baseCam).sub(LOOK).multiplyScalar(zf).add(LOOK);
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
@@ -215,6 +234,12 @@ if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
   const { when, place } = birthMoment();
   openNatal(natalOverlay, when, place);
 }
+
+// Esc закрывает любой открытый оверлей (§3.10).
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  for (const id of ['ask', 'natal', 'honesty']) { const el = document.getElementById(id); if (el && !el.hidden) { el.hidden = true; return; } }
+});
 
 // --- Погрешности (§7.8) ---
 const honestyOverlay = document.getElementById('honesty') as HTMLElement;
