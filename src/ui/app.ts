@@ -123,15 +123,41 @@ btn.addEventListener('click', () => {
 const natalOverlay = document.getElementById('natal') as HTMLElement;
 const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
 const birth = document.getElementById('birth') as HTMLInputElement;
+const birthTime = document.getElementById('birthTime') as HTMLInputElement;
+const birthLat = document.getElementById('birthLat') as HTMLInputElement;
+const birthLon = document.getElementById('birthLon') as HTMLInputElement;
+
+// Момент рождения: дата (+ время UTC, если задано, иначе полдень); место — если заданы обе координаты.
+function birthMoment(): { when: Date; place?: { lat: number; lon: number } } {
+  const t = birthTime.value || '12:00';
+  const when = birth.value ? new Date(`${birth.value}T${t}:00Z`) : new Date();
+  const lat = parseFloat(birthLat.value), lon = parseFloat(birthLon.value);
+  const place = birthTime.value && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : undefined;
+  return { when, place };
+}
 openBtn.addEventListener('click', () => {
-  const when = birth.value ? new Date(birth.value + 'T12:00:00Z') : new Date();
-  openNatal(natalOverlay, when);
+  const { when, place } = birthMoment();
+  openNatal(natalOverlay, when, place);
 });
-// Шеринг-ссылка (§2.1): /?birth=YYYY-MM-DD открывает карту сразу.
-const shared = new URLSearchParams(location.search).get('birth');
+(document.getElementById('birthHere') as HTMLButtonElement).addEventListener('click', () => {
+  navigator.geolocation?.getCurrentPosition((pos) => {
+    birthLat.value = pos.coords.latitude.toFixed(3);
+    birthLon.value = pos.coords.longitude.toFixed(3);
+  });
+});
+// Шеринг-ссылка (§2.1): /?birth=YYYY-MM-DD[&t=HH:MM&lat=..&lon=..] открывает карту сразу.
+const qs = new URLSearchParams(location.search);
+const shared = qs.get('birth');
 if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
   birth.value = shared;
-  openNatal(natalOverlay, new Date(shared + 'T12:00:00Z'));
+  if (/^\d{2}:\d{2}$/.test(qs.get('t') ?? '')) {
+    birthTime.value = qs.get('t')!;
+    birthLat.value = qs.get('lat') ?? '';
+    birthLon.value = qs.get('lon') ?? '';
+    (document.getElementById('natalMore') as HTMLDetailsElement).open = true;
+  }
+  const { when, place } = birthMoment();
+  openNatal(natalOverlay, when, place);
 }
 
 // --- Погрешности (§7.8) ---

@@ -28,6 +28,8 @@ export type LayerId =
   | 'stars.birthyear'
   | 'stars.birthlight'
   | 'sky.planets.above'
+  | 'natal.asc'
+  | 'natal.mc'
   | 'live.kp';
 
 // Возвращает compute/ и live/. Сырое число + провенанс. БЕЗ тега.

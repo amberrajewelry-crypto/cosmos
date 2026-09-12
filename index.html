@@ -56,6 +56,13 @@
       #birth { font-family: var(--mono); font-size: 12px; background: rgba(20,16,51,.6); color: var(--ink); border: 1px solid rgba(191,161,74,.5); padding: 6px 8px; border-radius: 2px; }
       #openNatal { font-family: var(--serif); font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--gold); padding: 7px 12px; border-radius: 2px; cursor: pointer; }
       #openNatal:hover { background: rgba(191,161,74,.12); }
+      .natal-more { margin-top: 8px; font-family: var(--mono); font-size: 11px; opacity: .85; }
+      .natal-more summary { cursor: pointer; border-bottom: 1px dotted var(--gold); width: fit-content; padding-bottom: 2px; }
+      .natal-more-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+      .natal-more-row input { font-family: var(--mono); font-size: 12px; background: rgba(20,16,51,.6); color: var(--ink); border: 1px solid rgba(191,161,74,.5); padding: 5px 7px; border-radius: 2px; width: 88px; }
+      .natal-more-row button { font-family: var(--mono); font-size: 11px; color: var(--ink); background: transparent; border: 1px solid var(--gold); padding: 5px 9px; border-radius: 2px; cursor: pointer; }
+      .natal-hint { display: block; margin-top: 5px; font-size: 10px; opacity: .6; }
+      .natal-muted { opacity: .6; }
       #legend { list-style: none; margin: 14px 0 0; padding: 0; font-family: var(--mono); font-size: 10px; opacity: .8; }
       #legend li { display: flex; align-items: center; gap: 7px; margin: 3px 0; }
       #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
@@ -162,6 +169,16 @@
         <input type="date" id="birth" aria-label="Дата рождения" />
         <button id="openNatal">Карта рождения ○</button>
       </div>
+      <details class="natal-more" id="natalMore">
+        <summary>Время и место рождения → асцендент и MC</summary>
+        <div class="natal-more-row">
+          <input type="time" id="birthTime" aria-label="Время рождения (UTC)" />
+          <input type="number" id="birthLat" placeholder="широта" step="0.001" min="-90" max="90" aria-label="Широта места рождения" />
+          <input type="number" id="birthLon" placeholder="долгота" step="0.001" min="-180" max="180" aria-label="Долгота места рождения" />
+          <button id="birthHere" type="button">я здесь</button>
+        </div>
+        <span class="natal-hint">время — по UTC; координаты остаются в браузере</span>
+      </details>
       <span id="status"></span>
       <ul id="legend" aria-label="Цвет = происхождение вещества">
         <li><i style="background:#4b40c7"></i>водород Большого взрыва</li>
