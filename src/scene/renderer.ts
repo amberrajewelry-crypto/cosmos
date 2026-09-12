@@ -26,5 +26,10 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
 export function resize(stage: Stage, w: number, h: number): void {
   stage.renderer.setSize(w, h, false);
   stage.camera.aspect = w / h;
+  // Портрет: hero занимает верх экрана — смотрим выше, тело уходит в нижнюю половину и
+  // не перекрывает легенду/ссылки. Ландшафт — центр.
+  const portrait = h > w;
+  stage.camera.position.set(0, 1.0, portrait ? 4.8 : 3.2);
+  stage.camera.lookAt(0, portrait ? 2.1 : 0.9, 0);
   stage.camera.updateProjectionMatrix();
 }

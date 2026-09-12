@@ -54,6 +54,18 @@ const bodyValues: Value[] = [
   muonFlux(),
 ].map(toValue);
 
+// §2.4 «первые десять секунд»: числа берём из тех же Values, что и карточки — не хардкод.
+const byId = (id: string) => bodyValues.find((v) => v.id === id);
+(document.getElementById('openPhotons') as HTMLElement).textContent =
+  (byId('body.relikt.photons')?.value ?? 0).toLocaleString('ru-RU');
+(document.getElementById('openPrimordial') as HTMLElement).textContent =
+  `${byId('body.primordial.fraction')?.value ?? 0} %`;
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.documentElement.classList.add('staged');
+  const stages = document.querySelectorAll<HTMLElement>('#hero .stage');
+  [2000, 5000, 8000].forEach((ms, i) => setTimeout(() => stages[i]?.classList.add('on'), ms));
+}
+
 const panel = document.getElementById('panel') as HTMLElement;
 let currentSky: Value[] = [];
 let liveValues: Value[] = [];

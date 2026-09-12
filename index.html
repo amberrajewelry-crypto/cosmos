@@ -41,6 +41,11 @@
       }
       #hero h1 { font-family: var(--mono); font-size: 22px; letter-spacing: 4px; margin: 0 0 8px; color: var(--gold); }
       #hero .thesis { font-family: var(--serif); font-size: 20px; line-height: 1.4; margin: 0 0 18px; }
+      /* §2.4: фразы и кнопка проступают по таймингу 0/2/5/8 с; без JS/при reduced-motion — видны сразу */
+      #hero .open { font-family: var(--serif); font-size: 15px; line-height: 1.45; margin: 0 0 10px; opacity: .9; }
+      #hero .open b { color: var(--gold); font-family: var(--mono); font-weight: normal; }
+      html.staged #hero .stage { opacity: 0; transition: opacity 1.4s ease; }
+      html.staged #hero .stage.on { opacity: 1; }
       #reveal {
         font-family: var(--serif); font-size: 15px; color: var(--bg); background: var(--gold);
         border: none; padding: 11px 18px; border-radius: 2px; cursor: pointer;
@@ -134,7 +139,9 @@
     <div id="hero">
       <h1>C O S M O S</h1>
       <p class="thesis">Космос не вокруг тебя, а внутри тебя.</p>
-      <button id="reveal">Показать, что происходит именно с тобой →</button>
+      <p class="open stage" id="open1">Прямо сейчас внутри тебя <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p>
+      <p class="open stage" id="open2"><b id="openPrimordial">—</b> твоих атомов старше любой звезды.</p>
+      <button id="reveal" class="stage">Показать, что происходит именно с тобой →</button>
       <div class="natal-open">
         <input type="date" id="birth" aria-label="Дата рождения" />
         <button id="openNatal">Карта рождения ○</button>
