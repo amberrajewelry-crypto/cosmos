@@ -142,32 +142,41 @@ function shell(lang: Lang, s: Shell): string {
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#e8e2cf;--gold:#bfa14a;--bg:#141033;--serif:Georgia,'Times New Roman',serif;--mono:'SF Mono',ui-monospace,Menlo,monospace}
+:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.68);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--serif:'Cormorant Garamond','Iowan Old Style',Georgia,serif;--mono:'IBM Plex Mono','SF Mono',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);line-height:1.6}
-.wrap{max-width:760px;margin:0 auto;padding:32px 22px 64px}
-.top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;opacity:.75}
-.top a{color:var(--gold);text-decoration:none}
-h1{font-family:var(--mono);font-size:26px;letter-spacing:1px;color:var(--gold);margin:26px 0 6px}
-.lede{font-size:21px;line-height:1.4;margin:14px 0 20px}
-.chart{width:min(78vw,340px);aspect-ratio:1;margin:8px auto 24px;display:block}
-.why{font-size:16px;opacity:.92}
-.facts{border:1px solid rgba(191,161,74,.5);border-radius:2px;padding:16px 18px;margin:24px 0}
-.facts h2{font-family:var(--serif);font-size:16px;color:var(--gold);margin:0 0 10px}
-.facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:6px 0}
+body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.6;font-size:18px;-webkit-font-smoothing:antialiased}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{max-width:760px;margin:0 auto;padding:36px 22px 80px}
+.top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08)}
+.top a{color:var(--gold);text-decoration:none;padding:6px 10px;border-radius:999px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(36px,5.6vw,54px);line-height:1.02;letter-spacing:-.01em;color:var(--ink);margin:40px 0 12px}
+h1 em,h1 b{font-style:italic;font-weight:400;color:var(--gold)}
+h2{font-family:var(--serif);font-weight:500;font-size:26px;color:var(--gold);margin:30px 0 8px}
+.lede{font-size:22px;line-height:1.4;margin:14px 0 24px;color:var(--ink2)}
+.chart{width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
+.why{font-size:18px;opacity:.94}
+.facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
+.facts h2{font-size:20px;margin:0 0 10px}
 .facts ul{margin:0;padding:0}
-.note{font-family:var(--mono);font-size:11px;opacity:.55;margin:6px 0 0}
-.cta{display:inline-block;margin:22px 0 10px;font-size:16px;color:var(--bg);background:var(--gold);padding:12px 20px;border-radius:2px;text-decoration:none}
+.facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:8px 0;color:var(--ink)}
+.facts li b{color:var(--gold);font-weight:400}
+.note{font-family:var(--mono);font-size:11px;opacity:.55;margin:8px 0 0}
+.cta{display:inline-flex;align-items:center;gap:12px;margin:22px 0 10px;font-size:18px;font-weight:500;color:#120f2a;background:var(--gold);padding:8px 8px 8px 22px;border-radius:999px;text-decoration:none;transition:transform .6s var(--ease)}
+.cta::after{content:'→';width:34px;height:34px;border-radius:50%;background:rgba(10,8,32,.14);display:grid;place-items:center;font-family:var(--mono);font-size:14px}
+.cta:active{transform:scale(.98)}
 .privacy{font-family:var(--mono);font-size:11px;opacity:.6}
-.days{display:flex;flex-wrap:wrap;gap:4px 10px;margin:10px 0}
-.days a{color:var(--ink);font-family:var(--mono);font-size:13px;text-decoration:none;opacity:.85}
-.days a:hover{color:var(--gold)}
-.faq{margin:26px 0}
-.faq h2{color:var(--gold);font-size:17px;margin:0 0 8px}
-.faq details{border-bottom:1px solid rgba(191,161,74,.25);padding:10px 0}
-.faq summary{cursor:pointer;font-size:16px}
-.faq p{font-size:15px;opacity:.9;margin:8px 0 0}
+.days{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.days a{color:var(--ink2);font-family:var(--mono);font-size:12px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
+.days a:hover{color:var(--ink);border-color:var(--gold2)}
+.faq{margin:30px 0}
+.faq details{border-bottom:1px solid rgba(236,230,211,.1);padding:12px 0}
+.faq summary{cursor:pointer;font-size:19px;font-weight:500}
+.faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
+section p{color:var(--ink2)}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -238,7 +247,7 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
     <h2>${t.decodeH}</h2>
     <p class="why">${t.decode}</p>
   </div>
-  <h2 style="color:var(--gold);font-size:17px">${t.daysH}</h2>
+  <h2>${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
   <a class="cta" href="/">${t.cta}</a>`;
 
@@ -338,17 +347,17 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
     <h2>${t.whenH}</h2>
     <p class="why">${t.when}</p>
   </div>
-  <h2 style="color:var(--gold);font-size:17px">${t.whatH}</h2>
+  <h2>${t.whatH}</h2>
   <p class="why">${t.what}</p>
-  <h2 style="color:var(--gold);font-size:17px">${t.whyH}</h2>
+  <h2>${t.whyH}</h2>
   <p class="why">${t.why}</p>
-  <h2 style="color:var(--gold);font-size:17px">${t.monthH}</h2>
+  <h2>${t.monthH}</h2>
   <p class="why">${t.month}</p>
-  <h2 style="color:var(--gold);font-size:17px">${t.charH}</h2>
+  <h2>${t.charH}</h2>
   <p class="why">${t.char}</p>
-  <h2 style="color:var(--gold);font-size:17px">${t.compatH}</h2>
+  <h2>${t.compatH}</h2>
   <p class="why">${t.compat}</p>
-  <h2 style="color:var(--gold);font-size:17px">${t.daysH}</h2>
+  <h2>${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
   ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>`;

@@ -3,9 +3,9 @@ import { verificationTable } from '../registry/registry';
 // Страница «Погрешности» (§7.8, §3.8): проект о честности признаёт свои расхождения первым.
 // Данные — прямо из статусов верификации реестра (DRY, не дублируем).
 const V_LABEL: Record<string, string> = {
-  verified: '✅ сверено с эталоном',
-  diverged: '⚠️ расходится (задокументировано)',
-  unverified: '⏳ не сверено',
+  verified: '<span class="ok">●</span> сверено с эталоном',
+  diverged: '<span class="warn">◐</span> расходится (задокументировано)',
+  unverified: '<span class="pend">○</span> не сверено',
 };
 
 export function openHonesty(overlay: HTMLElement): void {

@@ -25,7 +25,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
       <button class="natal-close" aria-label="Закрыть">✕</button>
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc })}</div>
       <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
-      <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия →</button>
+      <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия</button>
       ${angles
         ? `<p class="natal-cap natal-star"><span class="tag tag-inline">[ОЦЕНКА]</span> Асцендент ${angles.asc.toFixed(1)}°, MC ${angles.mc.toFixed(1)}° — геометрия эклиптики для твоего времени и места. <span class="natal-src">точность зависит от точности времени: 4 минуты = 1°</span></p>`
         : `<p class="natal-cap natal-star natal-muted">Асцендент и MC не показаны: нужны время и место рождения — без них это было бы выдумкой.</p>`}

@@ -25,7 +25,7 @@ function card(v: Value): string {
   // Число (если есть) + тег в шапке; чисто категориальный факт — тег уходит к заголовку.
   const head = hasNum
     ? `<div class="card-head">
-         <span class="num">${fmt(v.value as number)}${v.unit ? ' ' + v.unit : ''}</span>
+         <span class="num">${fmt(v.value as number)}${v.unit ? `<small>${v.unit}</small>` : ''}</span>
          <span class="tag">[${v.tag}]</span>
        </div>`
     : '';
@@ -38,7 +38,7 @@ function card(v: Value): string {
   const age = isLive && hasNum ? ` · обновлено ${ageMin} мин назад` : '';
   const src = (!hasNum && !v.text ? 'источник недоступен' : v.source) + age;
   return `
-  <article class="card tag-${v.tag}" aria-label="${v.label}">
+  <article class="card tag-${v.tag}" aria-label="${v.label}"><div class="card-core">
     ${head}
     ${note}
     <h2 class="label">${v.label} ${tagLine}</h2>
@@ -49,9 +49,23 @@ function card(v: Value): string {
       ${v.verifyUrl ? `<a class="ask-more" href="${v.verifyUrl}" target="_blank" rel="noopener">где проверить ↗</a>` : ''}
       <a class="ask-more wrong" href="${wrongNumberMailto(v)}">число неверно</a>
     </div>
-  </article>`;
+  </div></article>`;
 }
+
+// Карточки не появляются статично: тяжёлый fade-up по мере входа в вьюпорт (IntersectionObserver, не scroll).
+const seen = new WeakSet<Element>();
+const io = typeof IntersectionObserver === 'undefined' ? null
+  : new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('in'), i * 70); io!.unobserve(e.target); } });
+    }, { threshold: 0.15 });
 
 export function renderPanel(container: HTMLElement, values: Value[]): void {
   container.innerHTML = values.map(card).join('');
+  container.querySelectorAll('.card').forEach((el, i) => {
+    if (!io) { el.classList.add('in'); return; }
+    if (seen.has(el)) return; seen.add(el);
+    io.observe(el);
+    // Уже видимые при первом рендере — ступенчато, без ожидания скролла.
+    if (i < 4) setTimeout(() => el.classList.add('in'), 120 + i * 110);
+  });
 }

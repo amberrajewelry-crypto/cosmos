@@ -12,7 +12,7 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x141033); // глубокий индиго, не чёрный (§4.5)
+  scene.background = new THREE.Color(0x0a0820); // под туманностью-шейдером; не чёрный (§4.5)
 
   // near = 0.1 < минимальной дистанции зума 0.5 — объект не уходит за near-clip (fix MED-6)
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1e6);
@@ -26,10 +26,9 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
 export function resize(stage: Stage, w: number, h: number): void {
   stage.renderer.setSize(w, h, false);
   stage.camera.aspect = w / h;
-  // Портрет: hero занимает верх экрана — смотрим выше, тело уходит в нижнюю половину и
-  // не перекрывает легенду/ссылки. Ландшафт — центр.
+  // Портрет (мобилка): сцена — отдельное окно под hero, тело по центру, чуть дальше.
   const portrait = h > w;
-  stage.camera.position.set(0, 1.0, portrait ? 4.8 : 3.2);
-  stage.camera.lookAt(0, portrait ? 2.4 : 0.9, 0);
+  stage.camera.position.set(0, 1.0, portrait ? 4.4 : 3.2);
+  stage.camera.lookAt(0, 0.95, 0);
   stage.camera.updateProjectionMatrix();
 }

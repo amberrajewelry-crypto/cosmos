@@ -100,3 +100,27 @@ export function createStarfield(count = 1400): THREE.Points {
   });
   return new THREE.Points(geom, mat);
 }
+
+// Поток сквозь тело (§2.3 #2/#4/#5): реликтовые фотоны/нейтрино/мюоны летят сквозь фигуру.
+// Визуально — редкие белые искры, дрейфующие снизу вверх сквозь объём; при выходе за верх — заново снизу.
+export function createFlux(count = 220): { points: THREE.Points; update: (dt: number) => void } {
+  const pos = new Float32Array(count * 3);
+  const speed = new Float32Array(count);
+  const reset = (i: number, y = Math.random() * 2.1 - 0.15) => {
+    const r = Math.random() * 0.34, a = Math.random() * Math.PI * 2;
+    pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = Math.sin(a) * r;
+    speed[i] = 0.12 + Math.random() * 0.22;
+  };
+  for (let i = 0; i < count; i++) reset(i);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ size: 0.014, color: 0xf2eee0, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+  const points = new THREE.Points(geo, mat);
+  return {
+    points,
+    update: (dt) => {
+      for (let i = 0; i < count; i++) { pos[i * 3 + 1] += speed[i] * dt; if (pos[i * 3 + 1] > 2.05) reset(i, -0.15); }
+      geo.attributes.position.needsUpdate = true;
+    },
+  };
+}

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createStage, resize } from '../scene/renderer';
-import { createBodyParticles, createStarfield } from '../scene/particles';
+import { createBodyParticles, createStarfield, createFlux } from '../scene/particles';
+import { createNebula } from '../scene/nebula';
 import { renderPanel } from './panel';
 import { toValue } from '../registry/registry';
 import { reliktPhotons, ownRadioactivity, primordialHydrogenPercent } from '../compute/body';
@@ -20,26 +21,42 @@ import type { Value } from '../types';
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
 const stage = createStage(canvas);
 
-// Далёкий звёздный фон — глубина «космоса вокруг» (не дышит вместе с телом).
+// Слои сцены: туманность (фон-шейдер) → звёзды → тело → поток сквозь тело.
+const nebula = createNebula();
+stage.scene.add(nebula.mesh);
 stage.scene.add(createStarfield());
 
 // Тело = человек из точек, раскрашенных по происхождению вещества (§4.1/§4.3).
 const body = new THREE.Group();
 body.add(createBodyParticles());
+const flux = createFlux();
+body.add(flux.points);
 stage.scene.add(body);
 
-function fit() { resize(stage, window.innerWidth, window.innerHeight); }
+// Лёгкий параллакс от курсора: сцена отвечает на присутствие (без резких движений).
+let px = 0, py = 0, tx = 0, ty = 0;
+window.addEventListener('pointermove', (e) => { tx = (e.clientX / innerWidth - 0.5); ty = (e.clientY / innerHeight - 0.5); }, { passive: true });
+
+const stageEl = document.getElementById('stage') as HTMLElement;
+function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
 window.addEventListener('resize', fit);
 fit();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let t = 0;
-(function loop() {
+let t = 0, last = performance.now();
+const dbSize = new THREE.Vector2();
+(function loop(now = performance.now()) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
-    body.rotation.y = Math.sin(t * 0.3) * 0.18;
+    px += (tx - px) * 0.03; py += (ty - py) * 0.03;
+    body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35;
+    body.rotation.x = py * 0.08;
+    flux.update(dt);
+    stage.renderer.getDrawingBufferSize(dbSize);
+    nebula.update(now / 1000, dbSize.x, dbSize.y);
   }
   stage.renderer.render(stage.scene, stage.camera);
   requestAnimationFrame(loop);
