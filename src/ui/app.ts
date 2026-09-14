@@ -84,13 +84,19 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
-function gain(): void { bodyPts.setGain(stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 1); }
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// §4.9: аура бури пульсирует с периодом в секунды, амплитуда — от реального Kp (0…9), не мигает.
+let kpLive = 0;
+function gain(now = performance.now()): void {
+  const base = stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 1;
+  const pulse = reduceMotion ? 0 : (0.02 + 0.03 * (kpLive / 9)) * Math.sin((now / 1000) * (2 * Math.PI / 6));
+  bodyPts.setGain(base * (1 + pulse));
+}
 window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); gain(); syncLook(); });
 gain();
 fit();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let t = 0;
 const dbSize = new THREE.Vector2();
 let paused = false;
@@ -134,6 +140,7 @@ function loop(now = performance.now()) {
     body.rotation.x = py * 0.08;
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000);
+    gain(now);
     stage.renderer.getDrawingBufferSize(dbSize);
     nebula.update(now / 1000, dbSize.x, dbSize.y);
   }
@@ -189,7 +196,7 @@ panel.addEventListener('click', (e) => {
 });
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
-fetchKp().then((c) => { liveValues = [toValue(c)]; render(); });
+fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') kpLive = c.value; render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;

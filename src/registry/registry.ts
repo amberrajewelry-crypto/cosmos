@@ -57,10 +57,12 @@ const REGISTRY: Record<string, Entry> = {
   'body.radioactivity': {
     label: 'Собственная радиоактивность', unit: 'расп/с', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: HPS/ANS 4400 Бк K-40 + 3100 Бк C-14 на 70 кг
     explain: 'Столько ядер калия-40 и углерода-14 распадается внутри тебя каждую секунду. Ты сам источник.',
+    verifyUrl: 'https://hps.org/publicinformation/ate/faqs/faqradbods.html',
   },
   'body.primordial.fraction': {
     label: 'Атомы старше любой звезды', unit: '%', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: доля H по числу атомов 62–63 % (Freitas, Nanomedicine I, табл. 3-1)
     explain: 'Столько твоих атомов (по числу) — водород, синтезированный в первые минуты Вселенной.',
+    verifyUrl: 'https://en.wikipedia.org/wiki/Composition_of_the_human_body#Elemental_composition_list',
   },
   'physics.cmb.velocity': {
     label: 'Твоя скорость сквозь космос', unit: 'км/с', provisionalTag: 'ГЛОБ', verification: 'verified', // A4: диполь CMB 369.82±0.11 км/с, Planck 2018 I
@@ -70,14 +72,17 @@ const REGISTRY: Record<string, Entry> = {
   'physics.time.gradient': {
     label: 'Градиент времени голова/ноги', unit: 'нс/год', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: g·h/c² согласуется с Chou et al. 2010 (Science 329) при масштабировании 33 см→1.7 м
     explain: 'На столько наносекунд в год твоя голова стареет быстрее ног — пространство-время искривлено внутри тебя.',
+    verifyUrl: 'https://www.science.org/doi/10.1126/science.1192720',
   },
   'flux.muon': {
     label: 'Мюоны сквозь тело', unit: '/мин', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: PDG 2024 §30.3.2 ~1 см⁻²мин⁻¹; сечение тела — оценка
     explain: 'Столько мюонов из верхней атмосферы прошивают тебя каждую минуту. Долетают только потому, что время для них течёт медленнее — они доказывают СТО собой.',
+    verifyUrl: 'https://pdg.lbl.gov/2024/reviews/rpp2024-rev-cosmic-rays.pdf',
   },
   'flux.neutrino': {
     label: 'Нейтрино сквозь тебя', unit: '/см²·с', provisionalTag: 'ГЛОБ', verification: 'verified', // A4: Bahcall & Serenelli 2005, суммарный солнечный поток ~6.5·10¹⁰
     explain: 'Столько солнечных нейтрино проходит через каждый см² тебя каждую секунду, почти не касаясь.',
+    verifyUrl: 'https://www.sns.ias.edu/~jnb/SNdata/sndata.html',
   },
   'magnetic.inclination': {
     label: 'Наклон магнитных линий', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs BGS WMM2025: 61.02° vs 61.022°
