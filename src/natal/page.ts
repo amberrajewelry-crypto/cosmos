@@ -1,6 +1,8 @@
 import { natalSVG } from './chart';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
+import { natalBodies } from '../compute/natalbodies';
+import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
 // Честный крючок: знак зодиака vs РЕАЛЬНОЕ созвездие Солнца. Обезличено (§3.7): только дата,
@@ -362,4 +364,84 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
   <a class="cta" href="/">${t.cta}</a>`;
 
   return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+}
+
+
+// §5.3 /nebo/{дата}: реальное небо на конкретную дату (с годом) за 100 лет. Рендерится по запросу
+// (serverless api/nebo.ts), не статикой — 36 500 файлов не нужны. Полдень UTC, без координат (§3.7).
+export const NEBO_YEARS: [number, number] = [1926, 2026];
+export const neboUrl = (lang: Lang, iso: string) => (lang === 'ru' ? `/nebo/${iso}/` : `/en/sky/${iso}/`);
+const BODY_EN: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn' };
+const BODY_ASTRO: Record<string, Body> = { sun: Body.Sun, moon: Body.Moon, mercury: Body.Mercury, venus: Body.Venus, mars: Body.Mars, jupiter: Body.Jupiter, saturn: Body.Saturn };
+
+export function neboPage(iso: string, lang: Lang): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const when = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  const { sunLon, signIndex, constellationLatin, matches } = sunSignAndConstellation(when);
+  const precession = precessionOffsetDeg(when);
+  const bodies = natalBodies(when);
+  const obs = new Observer(0, 0, 0);
+  const rows = bodies.map((b) => {
+    const eq = Equator(BODY_ASTRO[b.key], when, obs, false, false);
+    const c = Constellation(eq.ra, eq.dec).name;
+    const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[Math.floor(b.lon / 30) % 12];
+    const con = (lang === 'ru' ? CONST_RU : CONST_EN)[c] ?? c;
+    return `<li>${b.glyph}︎ ${lang === 'ru' ? b.name : BODY_EN[b.key]} — <b>${b.lon.toFixed(1)}°</b> · ${lang === 'ru' ? 'знак' : 'sign'} ${sign} · ${lang === 'ru' ? 'созвездие' : 'constellation'} <b>${con}</b></li>`;
+  });
+  const moon = Illumination(Body.Moon, when).phase_fraction;
+  const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
+  const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
+  const dateStr = lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]} ${y}` : `${MONTHS_EN[m - 1]} ${d}, ${y}`;
+  const svg = natalSVG({ sunLon, rotationDeg: 0, bodies: bodies.map((b) => ({ glyph: b.glyph, lon: b.lon, key: b.key })) });
+  const selfUrl = SITE + neboUrl(lang, iso), altUrl = SITE + neboUrl(lang === 'ru' ? 'en' : 'ru', iso);
+  const t = lang === 'ru' ? {
+    title: `Небо ${dateStr}: где реально были Солнце, Луна и планеты`,
+    desc: `Реальное небо ${dateStr}: Солнце в созвездии ${constellation} (гороскоп говорит «${sign}»), Луна освещена на ${Math.round(moon * 100)} %, положения планет по эфемеридам.`,
+    h1: `Небо <em>${dateStr}</em> — как было на самом деле`,
+    lede: matches ? `В этот день Солнце стояло в созвездии ${constellation} — здесь знак и созвездие совпали.` : `В этот день Солнце стояло в созвездии <b>${constellation}</b>, а гороскоп называет «${sign}». Расхождение — ${precession.toFixed(1)}° прецессии.`,
+    factsH: 'Тела на эклиптике (полдень UTC)', moonL: `Луна освещена на <b>${Math.round(moon * 100)} %</b>`,
+    note: 'Эфемериды astronomy-engine (VSOP87/ELP), границы созвездий IAU 1930. Точность положений — доли градуса.',
+    cta: 'Своя карта с временем и местом', altLabel: 'English', privacy: 'Страница считается по дате; ничего о тебе не хранится.',
+    hub: 'Другие даты', app: 'Открыть в приложении',
+  } : {
+    title: `Sky on ${dateStr}: where the Sun, Moon and planets really were`,
+    desc: `The real sky on ${dateStr}: Sun in ${constellation} (horoscope says "${sign}"), Moon ${Math.round(moon * 100)}% lit, planet positions from ephemerides.`,
+    h1: `The sky on <em>${dateStr}</em> — as it really was`,
+    lede: matches ? `That day the Sun stood in ${constellation} — sign and constellation agree here.` : `That day the Sun stood in <b>${constellation}</b>, while the horoscope says "${sign}". The gap is ${precession.toFixed(1)}° of precession.`,
+    factsH: 'Bodies on the ecliptic (noon UTC)', moonL: `Moon <b>${Math.round(moon * 100)}%</b> illuminated`,
+    note: 'astronomy-engine ephemerides (VSOP87/ELP), IAU 1930 constellation boundaries. Positions accurate to a fraction of a degree.',
+    cta: 'Your chart with time and place', altLabel: 'Русский', privacy: 'Computed from the date only; nothing about you is stored.',
+    hub: 'Other dates', app: 'Open in the app',
+  };
+  const prev = new Date(when.getTime() - 86400e3).toISOString().slice(0, 10), next = new Date(when.getTime() + 86400e3).toISOString().slice(0, 10);
+  const links = [prev, next].filter((x) => +x.slice(0, 4) >= NEBO_YEARS[0] && +x.slice(0, 4) <= NEBO_YEARS[1]).map((x) => `<a href="${neboUrl(lang, x)}">${x}</a>`).join(' ');
+  const dayPage = urlFor(lang, m, d);
+  const inner = `
+  <h1>${t.h1}</h1>
+  <p class="lede">${t.lede}</p>
+  <div class="chart">${svg}</div>
+  <div class="facts">
+    <h2>${t.factsH}</h2>
+    <ul>${rows.join('')}<li>☽︎ ${t.moonL}</li></ul>
+    <p class="note">${t.note}</p>
+  </div>
+  <section><h2>${t.hub}</h2><div class="days">${links} <a href="${dayPage}">${lang === 'ru' ? 'все родившиеся' : 'everyone born'} ${lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]}` : `${MONTHS_EN[m - 1]} ${d}`}</a></div></section>
+  <a class="cta" href="/?birth=${iso}">${t.cta}</a>
+  <p class="privacy">${t.privacy}</p>`;
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+}
+
+// Sitemap: индекс по годам + по 365/366 URL на год (оба языка) — тоже по запросу.
+export function neboSitemapIndex(): string {
+  const items = [];
+  for (let y = NEBO_YEARS[0]; y <= NEBO_YEARS[1]; y++) items.push(`<sitemap><loc>${SITE}/sitemap-nebo-${y}.xml</loc></sitemap>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${items.join('')}</sitemapindex>`;
+}
+export function neboSitemapYear(y: number): string {
+  const urls: string[] = [];
+  for (let t = Date.UTC(y, 0, 1); t < Date.UTC(y + 1, 0, 1); t += 86400e3) {
+    const iso = new Date(t).toISOString().slice(0, 10);
+    urls.push(`<url><loc>${SITE}${neboUrl('ru', iso)}</loc></url><url><loc>${SITE}${neboUrl('en', iso)}</loc></url>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`;
 }

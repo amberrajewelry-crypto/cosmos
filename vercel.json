@@ -1,0 +1,12 @@
+{
+  "trailingSlash": true,
+  "rewrites": [
+    { "source": "/nebo/:date(\\d{4}-\\d{2}-\\d{2})", "destination": "/api/nebo?date=:date&lang=ru" },
+    { "source": "/en/sky/:date(\\d{4}-\\d{2}-\\d{2})", "destination": "/api/nebo?date=:date&lang=en" },
+    { "source": "/sitemap-nebo.xml", "destination": "/api/nebo?sitemap=index" },
+    { "source": "/sitemap-nebo-:year(\\d{4}).xml", "destination": "/api/nebo?sitemap=:year" }
+  ],
+  "redirects": [
+    { "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele", "destination": "/natalnaya-karta/znak/:znak/", "permanent": true }
+  ]
+}
