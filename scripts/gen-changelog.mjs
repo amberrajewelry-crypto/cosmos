@@ -1,8 +1,9 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 // §7.8 публичный changelog из git-истории: что починили. Генерируется на сборке.
-const log = execSync('git log --date=short --pretty=format:%ad%x09%s -n 200', { encoding: 'utf8' })
-  .split('\n').filter(Boolean).map((l) => l.split('\t'));
+let raw = '';
+try { raw = execSync('git log --date=short --pretty=format:%ad%x09%s -n 200', { encoding: 'utf8' }); } catch { process.exit(0); } // на Vercel нет .git — используем закоммиченный файл
+const log = raw.split('\n').filter(Boolean).map((l) => l.split('\t'));
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const byDate = new Map();
 for (const [d, s] of log) { if (!byDate.has(d)) byDate.set(d, []); byDate.get(d).push(s); }
