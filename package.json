@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "gen": "node scripts/gen-natal.mjs",
-    "build": "tsc && node scripts/gen-natal.mjs && vite build",
+    "build:fn": "esbuild scripts/nebo-fn.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/nebo.mjs --log-level=warning",
+    "build": "tsc && node scripts/gen-natal.mjs && vite build && npm run build:fn",
     "preview": "vite preview",
     "test": "vitest run",
     "test:guard": "vitest run test-guard",
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/three": "^0.185.4",
+    "esbuild": "^0.28.2",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
