@@ -95,6 +95,12 @@
       .natal-more-row { display: flex; justify-content: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
       .natal-more-row input { font-family: var(--mono); font-size: 12px; background: var(--glass); color: var(--ink); border: 1px solid rgba(236,230,211,.1); padding: 7px 9px; border-radius: 999px; width: 92px; color-scheme: dark; }
       .natal-more-row button { font-family: var(--mono); font-size: 11px; color: var(--ink); background: transparent; border: 1px solid var(--gold-2); padding: 7px 12px; border-radius: 999px; }
+      .place-box { position: relative; }
+      .place-box input { width: 170px; }
+      #placeList { position: absolute; top: calc(100% + 6px); left: 0; z-index: 4; min-width: 240px; margin: 0; padding: 6px; list-style: none; text-align: left; background: rgba(14,11,40,.96); border: 1px solid rgba(236,230,211,.12); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+      #placeList li { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-family: var(--serif); font-size: 13px; color: var(--ink); }
+      #placeList li small { font-family: var(--mono); font-size: 10px; color: var(--ink-2); margin-left: 6px; }
+      #placeList li:hover, #placeList li[aria-selected="true"] { background: rgba(201,168,92,.14); }
       .natal-hint { display: block; margin-top: 6px; font-size: 10px; opacity: .55; }
 
       /* Легенда — тонкая строка внизу по центру: цвет = происхождение вещества (§4.3) */
@@ -255,12 +261,15 @@
       <details class="natal-more" id="natalMore">
         <summary>время и место рождения → асцендент и MC</summary>
         <div class="natal-more-row">
-          <input type="time" id="birthTime" aria-label="Время рождения (UTC)" />
-          <input type="number" id="birthLat" placeholder="широта" step="0.001" min="-90" max="90" aria-label="Широта места рождения" />
-          <input type="number" id="birthLon" placeholder="долгота" step="0.001" min="-180" max="180" aria-label="Долгота места рождения" />
+          <input type="time" id="birthTime" aria-label="Местное время рождения" />
+          <span class="place-box">
+            <input type="text" id="birthPlace" placeholder="город рождения" autocomplete="off" aria-label="Город рождения" aria-autocomplete="list" aria-controls="placeList" />
+            <ul id="placeList" role="listbox" hidden></ul>
+          </span>
           <button id="birthHere" type="button">я здесь</button>
         </div>
-        <span class="natal-hint">время — по UTC; координаты остаются в браузере</span>
+        <input type="hidden" id="birthLat" /><input type="hidden" id="birthLon" /><input type="hidden" id="birthTz" />
+        <span class="natal-hint" id="placeHint">время — местное для города; город и координаты остаются в браузере</span>
       </details>
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>

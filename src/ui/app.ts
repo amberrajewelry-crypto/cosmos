@@ -18,6 +18,8 @@ import { openAsk } from './ask-ui';
 import { initScale } from './scale';
 import { BODY_LEVEL } from '../scene/scales';
 import { fetchKp } from '../live/noaa';
+import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
+import { localToUtc } from '../compute/localtime';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -241,11 +243,46 @@ document.querySelectorAll('#menu a, #menu button').forEach((el) => el.addEventLi
 const birthTime = document.getElementById('birthTime') as HTMLInputElement;
 const birthLat = document.getElementById('birthLat') as HTMLInputElement;
 const birthLon = document.getElementById('birthLon') as HTMLInputElement;
+const birthTz = document.getElementById('birthTz') as HTMLInputElement;
+const birthPlace = document.getElementById('birthPlace') as HTMLInputElement;
+const placeList = document.getElementById('placeList') as HTMLUListElement;
+const placeHint = document.getElementById('placeHint') as HTMLElement;
 
-// Момент рождения: дата (+ время UTC, если задано, иначе полдень); место — если заданы обе координаты.
+// Город рождения: база в браузере (§3.7), подсказки по префиксу, выбор → координаты + зона.
+let places: Place[] = [];
+let sel = -1;
+function showPlaces(items: Place[]): void {
+  placeList.innerHTML = items.map((p, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${placeLabel(p)}<small>${p.tz}</small></li>`).join('');
+  placeList.hidden = items.length === 0;
+}
+function pickPlace(p: Place): void {
+  birthPlace.value = placeLabel(p); birthLat.value = String(p.lat); birthLon.value = String(p.lon); birthTz.value = p.tz;
+  placeList.hidden = true; sel = -1;
+  placeHint.textContent = `время — местное (${p.tz}); координаты остаются в браузере`;
+}
+let shown: Place[] = [];
+birthPlace.addEventListener('focus', () => { loadPlaces().then((p) => { places = p; }); });
+birthPlace.addEventListener('input', async () => {
+  birthTz.value = ''; birthLat.value = ''; birthLon.value = '';
+  if (!places.length) places = await loadPlaces();
+  sel = -1; shown = searchPlaces(places, birthPlace.value); showPlaces(shown);
+});
+birthPlace.addEventListener('keydown', (e) => {
+  if (placeList.hidden) return;
+  if (e.key === 'ArrowDown') { sel = Math.min(shown.length - 1, sel + 1); showPlaces(shown); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); showPlaces(shown); e.preventDefault(); }
+  else if (e.key === 'Enter' && sel >= 0) { pickPlace(shown[sel]); e.preventDefault(); }
+  else if (e.key === 'Escape') { placeList.hidden = true; }
+});
+placeList.addEventListener('mousedown', (e) => {
+  const li = (e.target as HTMLElement).closest('li'); if (li) pickPlace(shown[Number(li.dataset.i)]);
+});
+birthPlace.addEventListener('blur', () => setTimeout(() => { placeList.hidden = true; }, 150));
+
+// Момент рождения: дата (+ местное время по зоне города, иначе полдень UTC); место — если есть координаты.
 function birthMoment(): { when: Date; place?: { lat: number; lon: number } } {
   const t = birthTime.value || '12:00';
-  const when = birth.value ? new Date(`${birth.value}T${t}:00Z`) : new Date();
+  const when = birth.value ? localToUtc(birth.value, t, birthTz.value || undefined) : new Date();
   const lat = parseFloat(birthLat.value), lon = parseFloat(birthLon.value);
   const place = birthTime.value && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : undefined;
   return { when, place };
@@ -258,6 +295,9 @@ openBtn.addEventListener('click', () => {
   navigator.geolocation?.getCurrentPosition((pos) => {
     birthLat.value = pos.coords.latitude.toFixed(3);
     birthLon.value = pos.coords.longitude.toFixed(3);
+    birthTz.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    birthPlace.value = `здесь (${birthLat.value}, ${birthLon.value})`;
+    placeHint.textContent = `время — местное (${birthTz.value}); координаты остаются в браузере`;
   });
 });
 // Шеринг-ссылка (§2.1): /?birth=YYYY-MM-DD[&t=HH:MM&lat=..&lon=..] открывает карту сразу.
@@ -269,6 +309,8 @@ if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
     birthTime.value = qs.get('t')!;
     birthLat.value = qs.get('lat') ?? '';
     birthLon.value = qs.get('lon') ?? '';
+    birthTz.value = qs.get('tz') ?? '';
+    if (birthLat.value) { birthPlace.value = `${birthLat.value}, ${birthLon.value}`; placeHint.textContent = 'из ссылки: время по UTC, координаты заданы'; }
     (document.getElementById('natalMore') as HTMLDetailsElement).open = true;
   }
   const { when, place } = birthMoment();
