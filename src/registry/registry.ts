@@ -25,22 +25,22 @@ const REGISTRY: Record<string, Entry> = {
     verifyUrl: 'https://www.timeanddate.com/sun/',
   },
   'sky.moon.altitude': {
-    label: 'Высота Луны', unit: '°', provisionalTag: 'ТОЧНО', verification: 'diverged', // A4: рефракция у горизонта Δ0.19° → [ОЦЕНКА]
+    label: 'Высота Луны', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons APPARENT=REFRACTED: 4.2536° vs 4.254328°, Δ0.0007° (прежнее «расхождение» 0.19° — сравнение с AIRLESS)
     explain: 'Где над горизонтом Луна — она тянет твоё тело приливом прямо сейчас.',
     verifyUrl: 'https://www.timeanddate.com/moon/',
   },
   'sky.sun.constellation': {
-    label: 'Реальное созвездие vs знак', unit: '', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    label: 'Реальное созвездие vs знак', unit: '', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons Q29: 5/5 дат совпали (Sgr/Psc/Gem/Vir/Oph)
     explain: 'За две тысячи лет прецессия сдвинула небо на ~24°: знак и реальное созвездие Солнца больше не совпадают.',
     verifyUrl: 'https://in-the-sky.org/whatsup.php',
   },
   'sky.planets.above': {
-    label: 'Планеты над горизонтом', unit: 'из 5', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    label: 'Планеты над горизонтом', unit: 'из 5', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs JPL Horizons: аз Δ<0.001°, выс Δ≤0.07° (Сатурн 12.7°, рефракция)
     explain: 'Какие из пяти ярких планет сейчас над твоим горизонтом. Найди их глазом — планеты не мерцают.',
     verifyUrl: 'https://in-the-sky.org/whatsup.php',
   },
   'stars.birthlight': {
-    label: 'Звезда твоего рождения', unit: 'св. лет', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Звезда твоего рождения', unit: 'св. лет', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4 vs SIMBAD параллаксы: ≤2 % для ≤130 св. лет; Бетельгейзе ±20 % (задокум.)
     explain: 'Свет летит с конечной скоростью: глядя на эту звезду, ты видишь её такой, какой она была примерно в год твоего рождения.',
     verifyUrl: 'https://simbad.cds.unistra.fr/simbad/',
   },
@@ -50,47 +50,47 @@ const REGISTRY: Record<string, Entry> = {
     verifyUrl: 'https://www.timeanddate.com/sun/',
   },
   'body.relikt.photons': {
-    label: 'Реликтовые фотоны в теле', unit: 'шт', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Реликтовые фотоны в теле', unit: 'шт', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: n_γ=410.7 см⁻³ Planck 2018; объём 70 кг/1.01
     explain: 'Столько фотонов, родившихся через 380 000 лет после Большого взрыва, пронизывают тебя сейчас.',
     verifyUrl: 'https://pdg.lbl.gov/2024/reviews/rpp2024-rev-cosmic-microwave-background.pdf',
   },
   'body.radioactivity': {
-    label: 'Собственная радиоактивность', unit: 'расп/с', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Собственная радиоактивность', unit: 'расп/с', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: HPS/ANS 4400 Бк K-40 + 3100 Бк C-14 на 70 кг
     explain: 'Столько ядер калия-40 и углерода-14 распадается внутри тебя каждую секунду. Ты сам источник.',
   },
   'body.primordial.fraction': {
-    label: 'Атомы старше любой звезды', unit: '%', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Атомы старше любой звезды', unit: '%', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: доля H по числу атомов 62–63 % (Freitas, Nanomedicine I, табл. 3-1)
     explain: 'Столько твоих атомов (по числу) — водород, синтезированный в первые минуты Вселенной.',
   },
   'physics.cmb.velocity': {
-    label: 'Твоя скорость сквозь космос', unit: 'км/с', provisionalTag: 'ГЛОБ', verification: 'unverified',
+    label: 'Твоя скорость сквозь космос', unit: 'км/с', provisionalTag: 'ГЛОБ', verification: 'verified', // A4: диполь CMB 369.82±0.11 км/с, Planck 2018 I
     explain: 'Ты «сидящий неподвижно» несёшься с этой скоростью относительно реликтового излучения. Покой — иллюзия.',
     verifyUrl: 'https://www.aanda.org/articles/aa/full_html/2020/09/aa33880-18/aa33880-18.html',
   },
   'physics.time.gradient': {
-    label: 'Градиент времени голова/ноги', unit: 'нс/год', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Градиент времени голова/ноги', unit: 'нс/год', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: g·h/c² согласуется с Chou et al. 2010 (Science 329) при масштабировании 33 см→1.7 м
     explain: 'На столько наносекунд в год твоя голова стареет быстрее ног — пространство-время искривлено внутри тебя.',
   },
   'flux.muon': {
-    label: 'Мюоны сквозь тело', unit: '/мин', provisionalTag: 'ОЦЕНКА', verification: 'unverified',
+    label: 'Мюоны сквозь тело', unit: '/мин', provisionalTag: 'ОЦЕНКА', verification: 'verified', // A4: PDG 2024 §30.3.2 ~1 см⁻²мин⁻¹; сечение тела — оценка
     explain: 'Столько мюонов из верхней атмосферы прошивают тебя каждую минуту. Долетают только потому, что время для них течёт медленнее — они доказывают СТО собой.',
   },
   'flux.neutrino': {
-    label: 'Нейтрино сквозь тебя', unit: '/см²·с', provisionalTag: 'ГЛОБ', verification: 'unverified',
+    label: 'Нейтрино сквозь тебя', unit: '/см²·с', provisionalTag: 'ГЛОБ', verification: 'verified', // A4: Bahcall & Serenelli 2005, суммарный солнечный поток ~6.5·10¹⁰
     explain: 'Столько солнечных нейтрино проходит через каждый см² тебя каждую секунду, почти не касаясь.',
   },
   'magnetic.inclination': {
-    label: 'Наклон магнитных линий', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    label: 'Наклон магнитных линий', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs BGS WMM2025: 61.02° vs 61.022°
     explain: 'Под этим углом магнитные линии Земли протыкают тебя насквозь в твоей точке.',
     verifyUrl: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml',
   },
   'magnetic.declination': {
-    label: 'Магнитное склонение', unit: '°', provisionalTag: 'ТОЧНО', verification: 'unverified',
+    label: 'Магнитное склонение', unit: '°', provisionalTag: 'ТОЧНО', verification: 'verified', // A4 vs BGS WMM2025: 7.00° vs 6.998°
     explain: 'На столько истинный север расходится с тем, куда показывает компас в твоей точке.',
     verifyUrl: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml',
   },
   'live.kp': {
-    label: 'Kp-индекс', unit: '', provisionalTag: 'ГЛОБ', verification: 'unverified',
+    label: 'Kp-индекс', unit: '', provisionalTag: 'ГЛОБ', verification: 'verified', // A4: источник переведён на официальный GFZ Potsdam (/api/kp); NOAA — fallback, расходится до 0.7 (задокум.)
     explain: 'Глобальный уровень геомагнитной возмущённости.',
     verifyUrl: 'https://www.swpc.noaa.gov/products/planetary-k-index',
   },

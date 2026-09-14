@@ -21,7 +21,7 @@ export function openHonesty(overlay: HTMLElement): void {
         <thead><tr><th>Параметр</th><th>Тег после сверки</th><th>Статус A4</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="honesty-note">Солнце (высота/азимут) сверено с JPL Horizons: Δ 0.006°/0.001°. Луна у горизонта расходится на 0.19° (модель рефракции) — поэтому не [ТОЧНО]. Магнитное поле ждёт независимой сверки с NOAA.</p>
+      <p class="honesty-note">Проход A4 от 14.09.2026. Солнце и планеты сверены с JPL Horizons (азимут Δ&lt;0.001°, высота Δ≤0.07°), созвездие Солнца — с Horizons по 5 датам (5/5), магнитное поле — с BGS WMM2025 (Δ0.002°), расстояния до звёзд — с SIMBAD (≤2 %, Бетельгейзе ±20 %), константы тела — с Planck 2018, PDG 2024, HPS. Луна у горизонта: 2.6″ от Horizons с рефракцией (прежние 0.19° — сравнение с безвоздушной высотой). Kp берётся у официального производителя, GFZ Potsdam; NOAA — запасной источник, расходится с GFZ до 0.7 балла. Полный протокол — VERIFICATION.md.</p>
     </div>`;
   overlay.hidden = false;
   (overlay.querySelector('.honesty-close') as HTMLButtonElement)

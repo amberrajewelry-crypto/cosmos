@@ -7,10 +7,15 @@ describe('registry.toValue — тег из реестра (§1.6)', () => {
     expect(v.tag).toBe('ТОЧНО');            // A4 пройдена
     expect(v.verification).toBe('verified');
   });
-  it('НЕверифицированный [ТОЧНО]-кандидат даунгрейдится до [ОЦЕНКА]', () => {
+  it('Луна после A4 (REFRACTED, Δ2.6″) — [ТОЧНО] verified', () => {
     const v = toValue({ id: 'sky.moon.altitude', value: 10, source: 'astronomy-engine', computedAt: 1 });
-    expect(v.tag).toBe('ОЦЕНКА');           // diverged → не ТОЧНО
-    expect(v.verification).toBe('diverged');
+    expect(v.tag).toBe('ТОЧНО');
+    expect(v.verification).toBe('verified');
+  });
+  it('неизвестный id → FALLBACK: не [ТОЧНО], unverified (даунгрейд структурный)', () => {
+    const v = toValue({ id: 'nope.unknown' as never, value: 10, source: 'x', computedAt: 1 });
+    expect(v.tag).not.toBe('ТОЧНО');
+    expect(v.verification).toBe('unverified');
   });
   it('null-значение → слой гаснет (status unavailable)', () => {
     const v = toValue({ id: 'sky.sun.altitude', value: null, source: 'astronomy-engine', computedAt: 1 });

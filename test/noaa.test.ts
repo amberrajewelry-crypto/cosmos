@@ -18,7 +18,14 @@ describe('live/noaa — Kp, слой не бросает (§3.2)', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     const c = await fetchKp(1_000_000); // свежий now, мимо кэша
     expect(c.value).toBeNull();
-    expect(c.source).toBe('NOAA SWPC');
+    expect(c.source).toBe('NOAA SWPC'); // оба источника упали — последним был fallback
+    vi.unstubAllGlobals();
+  });
+  it('fetchKp: прокси GFZ отдаёт kp → источник GFZ', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ kp: 2.333, source: 'GFZ Potsdam' }) }));
+    const c = await fetchKp(2_000_000_000);
+    expect(c.value).toBe(2.333);
+    expect(c.source).toBe('GFZ Potsdam');
     vi.unstubAllGlobals();
   });
 });

@@ -1,7 +1,9 @@
 import type { Computed } from '../types';
 
 // live/ слой (§3.2): async, кэш, НИКОГДА не бросает наружу — ошибка → value:null (слой гаснет).
-// Источник: NOAA SWPC planetary K-index (публичный, CORS-открыт, без ключа). TTL 3ч (§3.6).
+// Источник: официальный Kp GFZ Potsdam через наш прокси /api/kp (A4: NOAA estimated расходится
+// с GFZ до 0.7 балла); fallback — NOAA SWPC напрямую (CORS-открыт). TTL 3ч (§3.6).
+const GFZ_PROXY = '/api/kp';
 const KP_URL = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
 const TTL_MS = 3 * 60 * 60 * 1000;
 
@@ -25,13 +27,21 @@ export async function fetchKp(now: number = Date.now()): Promise<Computed> {
   if (inflight) return inflight;
   inflight = (async (): Promise<Computed> => {
     let value: number | null = null;
+    let source = 'GFZ Potsdam';
     try {
-      const res = await fetch(KP_URL);
-      value = parseKp(await res.json());
-    } catch {
-      value = null; // §3.2: наружу не бросаем, слой честно гаснет
+      const g = await (await fetch(GFZ_PROXY)).json() as { kp?: unknown };
+      value = typeof g.kp === 'number' && Number.isFinite(g.kp) ? g.kp : null;
+    } catch { value = null; }
+    if (value == null) {
+      source = 'NOAA SWPC';
+      try {
+        const res = await fetch(KP_URL);
+        value = parseKp(await res.json());
+      } catch {
+        value = null; // §3.2: наружу не бросаем, слой честно гаснет
+      }
     }
-    const c: Computed = { id: 'live.kp', value, source: 'NOAA SWPC', computedAt: now };
+    const c: Computed = { id: 'live.kp', value, source, computedAt: now };
     if (value != null) cache = { c, ts: now };
     return c;
   })();
