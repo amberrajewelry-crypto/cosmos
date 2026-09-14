@@ -19,6 +19,19 @@ def inside(p):
         n+=1; origin = loc + d*1e-4; guard+=1
     return n%2==1
 random.seed(7); pts=[]; tries=0
+# 30 % точек — на поверхности (площадь-взвешенно): силуэт читается чётко, объём остаётся «окном» (§4.1)
+NS = int(N*0.3)
+polys = [(p.area, p.vertices[:]) for p in me.polygons]
+tot = sum(a for a,_ in polys); acc=[]; run=0.0
+for a,_ in polys: run+=a; acc.append(run)
+import bisect
+V=[v.co for v in me.vertices]
+for _ in range(NS):
+    i = bisect.bisect(acc, random.random()*tot); vs = polys[min(i,len(polys)-1)][1]
+    a,b,c = V[vs[0]], V[vs[1]], V[vs[2]]
+    u,v = random.random(), random.random()
+    if u+v>1: u,v = 1-u, 1-v
+    pts.append(a + (b-a)*u + (c-a)*v)
 while len(pts)<N and tries<N*200:
     tries+=1
     p=Vector((random.uniform(lo.x,hi.x),random.uniform(lo.y,hi.y),random.uniform(lo.z,hi.z)))
