@@ -20,6 +20,8 @@ import { BODY_LEVEL } from '../scene/scales';
 import { fetchKp } from '../live/noaa';
 import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
 import { localToUtc } from '../compute/localtime';
+import { sendFeedback, track, trackZoom } from '../live/feedback';
+import { wrongNumberMailto } from './panel';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -63,6 +65,7 @@ fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
+  trackZoom(lvl);
   flux.points.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
 });
@@ -188,12 +191,44 @@ render();
 // «Спросить дальше» на карточках (§2.2): один оверлей, контекст — все видимые значения.
 const askOverlay = document.getElementById('ask') as HTMLElement;
 panel.addEventListener('click', (e) => {
-  const btn = (e.target as HTMLElement).closest('.ask-more') as HTMLElement | null;
-  if (!btn) return;
-  const id = btn.dataset.ask;
+  const el = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null;
+  if (!el) return;
   const all = allValues();
-  openAsk(askOverlay, all.find((v) => v.id === id), all);
+  const done = (txt: string) => { const m = el.parentElement!; m.innerHTML = `<span class="micro-q">${txt}</span>`; };
+  if (el.dataset.ask) { track('ask'); openAsk(askOverlay, all.find((v) => v.id === el.dataset.ask), all); }
+  else if (el.dataset.clear) { // §7.6
+    const [id, ok] = el.dataset.clear.split(':');
+    sendFeedback({ kind: 'clear', id, ok: ok === '1' });
+    if (ok === '1') done('спасибо');
+    else { done('объясняю проще →'); openAsk(askOverlay, all.find((v) => v.id === id), all, 'Объясни проще, как для школьника'); }
+  } else if (el.dataset.check) { // §7.4: только результат и часовой пояс, без координат
+    const [id, result] = el.dataset.check.split(':') as [string, 'yes' | 'no' | 'unclear'];
+    const delta = result === 'no' ? (prompt('На сколько разошлось? (например: 15 см, 3°)') ?? '') : undefined;
+    sendFeedback({ kind: 'check', id, result, delta });
+    done(result === 'yes' ? 'записал: сошлось' : result === 'no' ? 'записал расхождение — проверим модель' : 'записал; допишем инструкцию');
+  } else if (el.dataset.wrong) { // §7.3
+    const v = all.find((x) => x.id === el.dataset.wrong); if (v) openWrong(v);
+  }
 });
+
+// §7.3 форма «число неверно»: нативный <dialog>; входные данные — только по явному согласию (§7.1).
+const wrongDlg = document.getElementById('wrongDlg') as HTMLDialogElement;
+function openWrong(v: Value): void {
+  (wrongDlg.querySelector('#wrongShown') as HTMLElement).textContent = `${v.label}: ${v.value ?? '—'} ${v.unit} ${v.text ?? ''}`.trim();
+  wrongDlg.showModal();
+  const form = wrongDlg.querySelector('form') as HTMLFormElement;
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const attach = f.get('attach') === 'on' && birthLat.value ? `lat ${birthLat.value}, lon ${birthLon.value}, birth ${birth.value} ${birthTime.value} ${birthTz.value}` : undefined;
+    const fb = { kind: 'wrong' as const, id: v.id, shown: `${v.value ?? '—'} ${v.unit}`, expected: String(f.get('expected')), source: String(f.get('source')), inputs: attach };
+    const ok = await sendFeedback(fb);
+    wrongDlg.close();
+    if (!ok) location.href = wrongNumberMailto(v); // §7.11: канал обязан работать с первого дня
+    form.reset();
+  };
+}
+wrongDlg.querySelector('.natal-close')?.addEventListener('click', () => wrongDlg.close());
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
 fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') kpLive = c.value; render(); });
@@ -296,7 +331,7 @@ function birthMoment(): { when: Date; place?: { lat: number; lon: number } } {
 }
 openBtn.addEventListener('click', () => {
   const { when, place } = birthMoment();
-  openNatal(natalOverlay, when, place);
+  track('natal'); openNatal(natalOverlay, when, place);
 });
 (document.getElementById('birthHere') as HTMLButtonElement).addEventListener('click', () => {
   navigator.geolocation?.getCurrentPosition((pos) => {
@@ -321,7 +356,7 @@ if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
     (document.getElementById('natalMore') as HTMLDetailsElement).open = true;
   }
   const { when, place } = birthMoment();
-  openNatal(natalOverlay, when, place);
+  track('natal'); openNatal(natalOverlay, when, place);
 }
 
 // Esc закрывает любой открытый оверлей (§3.10).
@@ -334,4 +369,4 @@ document.addEventListener('keydown', (e) => {
 // --- Погрешности (§7.8) ---
 const honestyOverlay = document.getElementById('honesty') as HTMLElement;
 (document.getElementById('openHonesty') as HTMLButtonElement)
-  .addEventListener('click', () => openHonesty(honestyOverlay));
+  .addEventListener('click', () => { track('honesty'); openHonesty(honestyOverlay); });

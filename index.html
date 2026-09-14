@@ -150,6 +150,23 @@
       .ask-more { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.1); padding: 5px 10px; border-radius: 999px; text-decoration: none; transition: color .5s var(--ease), border-color .5s var(--ease); }
       .ask-more:hover { color: var(--ink); border-color: var(--gold-2); }
       .card-actions .wrong { opacity: .5; }
+      .micro { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-2); opacity: .7; transition: opacity .5s var(--ease); }
+      .card:hover .micro { opacity: 1; }
+      .micro button { font: inherit; color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.1); padding: 3px 8px; border-radius: 999px; cursor: pointer; }
+      .micro button:hover { color: var(--ink); border-color: var(--gold-2); }
+      .micro-sep { margin-left: 8px; }
+      #wrongDlg { background: transparent; border: 0; padding: 0; max-width: min(92vw, 460px); }
+      #wrongDlg::backdrop { background: rgba(6,4,20,.7); backdrop-filter: blur(10px); }
+      .wrong-form { position: relative; display: grid; gap: 14px; padding: 28px 26px 22px; border-radius: 22px; background: linear-gradient(180deg, rgba(20,16,52,.96), rgba(12,10,32,.96)); border: 1px solid rgba(236,230,211,.1); color: var(--ink); font-family: var(--serif); }
+      .wrong-form h2 { font-family: var(--display); font-weight: 300; font-size: 22px; margin: 0; text-align: center; }
+      .wrong-shown { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin: 0; text-align: center; }
+      .wrong-form label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
+      .wrong-form input[type=text], .wrong-form input:not([type]) { font: 13px var(--mono); color: var(--ink); background: var(--glass); border: 1px solid rgba(236,230,211,.12); border-radius: 12px; padding: 9px 12px; }
+      .wrong-attach { grid-template-columns: auto 1fr; align-items: start; }
+      .wrong-form .cta { justify-self: center; }
+      .ask-interview { display: grid; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(236,230,211,.1); font-size: 13px; color: var(--ink-2); }
+      .ask-interview input { font: 13px var(--mono); color: var(--ink); background: var(--glass); border: 1px solid rgba(236,230,211,.12); border-radius: 12px; padding: 8px 12px; }
+      .ask-interview button { font: 11px var(--mono); color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.1); padding: 5px 10px; border-radius: 999px; cursor: pointer; justify-self: start; }
       /* Фактура = честность (§4.4): плотный край у [ТОЧНО], мягкий у [ОЦЕНКА], контур у [ГЛОБ], пунктир у [СПОРНО], мел у [МИФ] */
       .tag-ТОЧНО .card-core { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px var(--gold-2); }
       .tag-ОЦЕНКА .card-core { background: linear-gradient(180deg, rgba(20,16,52,.55), rgba(12,10,32,.55)); }
@@ -274,6 +291,18 @@
     </div>
     <div id="natal" hidden aria-label="Карта рождения"></div>
     <div id="honesty" hidden aria-label="Известные расхождения"></div>
+    <dialog id="wrongDlg" aria-label="Число неверно">
+      <form method="dialog" class="wrong-form">
+        <button type="button" class="natal-close" aria-label="Закрыть">✕</button>
+        <h2>Число неверно</h2>
+        <p class="wrong-shown" id="wrongShown"></p>
+        <label>Какое значение ты ожидал?<input name="expected" required maxlength="200" /></label>
+        <label>Чем проверял? (источник)<input name="source" required maxlength="300" placeholder="ссылка, прибор, таблица" /></label>
+        <label class="wrong-attach"><input type="checkbox" name="attach" /> приложить мои координаты и время — они нужны, чтобы повторить расчёт</label>
+        <button type="submit" class="cta">Отправить</button>
+        <span class="natal-hint">Уходит только то, что в этой форме. Одно подтверждённое расхождение важнее ста отзывов о дизайне.</span>
+      </form>
+    </dialog>
     <div id="ask" hidden aria-label="Спросить"></div>
     <section id="panel" aria-label="Параметры космоса внутри тебя"></section>
     </main>

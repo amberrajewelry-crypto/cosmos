@@ -15,6 +15,9 @@ export function wrongNumberMailto(v: Value): string {
 }
 
 // Единица контента — карточка параметра (§2.5). Фактура кодирует тег (§4.4), НЕ цвет (§3.10).
+// §7.4 краудсорс верификации: параметры, которые человек может измерить сам (тень, компас).
+const CHECKABLE = new Set(['shadow.length', 'magnetic.declination', 'magnetic.inclination', 'sky.sun.altitude', 'sky.sun.azimuth']);
+
 function fmt(n: number): string {
   // разряды пробелами: 28500000 → «28 500 000»; дроби — 1 знак (углы), мелкие — 2, целые — без хвоста.
   const a = Math.abs(n);
@@ -49,7 +52,11 @@ function card(v: Value): string {
     <div class="card-actions">
       <button class="ask-more" data-ask="${v.id}">спросить дальше →</button>
       ${v.verifyUrl ? `<a class="ask-more" href="${v.verifyUrl}" target="_blank" rel="noopener">где проверить ↗</a>` : ''}
-      <a class="ask-more wrong" href="${wrongNumberMailto(v)}">число неверно</a>
+      <button class="ask-more wrong" data-wrong="${v.id}">число неверно</button>
+    </div>
+    <div class="micro">
+      <span class="micro-q">Понятно?</span><button data-clear="${v.id}:1">да</button><button data-clear="${v.id}:0">не очень</button>
+      ${CHECKABLE.has(v.id) ? `<span class="micro-q micro-sep">Ты проверил?</span><button data-check="${v.id}:yes">сошлось</button><button data-check="${v.id}:no">разошлось на…</button><button data-check="${v.id}:unclear">не понял, как мерить</button>` : ''}
     </div>
   </div></article>`;
 }
