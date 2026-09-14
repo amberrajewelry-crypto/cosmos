@@ -7,6 +7,6 @@
     { "source": "/sitemap-nebo-:year(\\d{4}).xml", "destination": "/api/nebo?sitemap=:year" }
   ],
   "redirects": [
-    { "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele", "destination": "/natalnaya-karta/znak/:znak/", "permanent": true }
+    { "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele/", "destination": "/natalnaya-karta/znak/:znak/", "permanent": true }
   ]
 }
