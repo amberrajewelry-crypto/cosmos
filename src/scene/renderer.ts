@@ -28,7 +28,7 @@ export function resize(stage: Stage, w: number, h: number): void {
   stage.camera.aspect = w / h;
   // Портрет (мобилка): сцена — отдельное окно под hero, тело по центру, чуть дальше.
   const portrait = h > w;
-  stage.camera.position.set(0, 1.0, portrait ? 4.4 : 3.2);
-  stage.camera.lookAt(0, 0.95, 0);
+  stage.camera.position.set(0, portrait ? 1.0 : 1.25, portrait ? 4.4 : 3.9);
+  stage.camera.lookAt(0, portrait ? 0.95 : 1.2, 0);
   stage.camera.updateProjectionMatrix();
 }

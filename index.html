@@ -20,10 +20,11 @@
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","name":"Космос внутри тебя","url":"https://cosmos-alpha-three.vercel.app/","description":"Настоящая, сидерическая натальная карта по реальному положению звёзд."}
     </script>
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Unboundedwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/GeistMonowght.woff2" />
     <style>
-@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
+@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Unbounded';font-style:normal;font-weight:200 900;font-display:swap;src:url(/fonts/Unboundedwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
       :root {
         --ink: #ece6d3;
         --ink-2: rgba(236,230,211,.68);
@@ -32,6 +33,7 @@
         --gold-3: rgba(201,168,92,.12);
         --bg: #0a0820;
         --glass: rgba(14,11,38,.55);
+        --display: 'Unbounded','Geist','Geist Fallback',system-ui,sans-serif;
         --serif: 'Geist','Geist Fallback',system-ui,sans-serif;
         --mono: 'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;
         --ease: cubic-bezier(.32,.72,0,1);
@@ -43,7 +45,7 @@
       #stage { position: fixed; inset: 0; z-index: 0; }
       #scene { display: block; width: 100%; height: 100%; }
       /* Армиллярное кольцо (§4.5) — гравюрный обод за фигурой, оборот за 4 минуты */
-      #ring { position: absolute; left: 50%; top: 50%; width: min(78vh, 90vw); height: min(78vh, 90vw); transform: translate(-50%, -50%); pointer-events: none; opacity: .3; }
+      #ring { position: absolute; left: 50%; top: 57%; width: min(66vh, 90vw); height: min(66vh, 90vw); transform: translate(-50%, -50%); pointer-events: none; opacity: .3; }
       #ring g { transform-origin: 200px 200px; animation: ringspin 240s linear infinite; }
       @keyframes ringspin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) { #ring g { animation: none; } }
@@ -58,37 +60,39 @@
       #nav { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 4px;
         padding: 6px 8px 6px 16px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08);
         backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
-      #nav .brand { font-family: var(--serif); font-weight: 500; font-size: 13px; letter-spacing: .34em; color: var(--gold); margin-right: 10px; text-decoration: none; }
+      #nav .brand { font-family: var(--display); font-weight: 400; font-size: 12px; letter-spacing: .3em; color: var(--gold); margin-right: 10px; text-decoration: none; }
       #nav a, #nav button { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); background: transparent; border: none; padding: 7px 12px; border-radius: 999px; text-decoration: none; transition: color .5s var(--ease), background .5s var(--ease); }
       #nav .links { display: contents; }
       #burger { display: none; }
       #nav a:hover, #nav button:hover { color: var(--ink); background: rgba(236,230,211,.06); }
 
       /* Hero — редакционный сплит: типографика слева, живая сцена в центре, приборы справа */
-      #hero { position: fixed; left: 0; bottom: 0; z-index: 1; max-width: min(520px, 94vw); padding: 0 44px 44px; }
+      #hero { position: fixed; left: 0; right: 0; top: 78px; z-index: 1; margin: 0 auto; max-width: 760px; padding: 0 24px; text-align: center; }
+      #hero > * { text-wrap: balance; }
       .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--gold-2); margin-bottom: 22px; }
       .eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
-      #hero h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(36px, 4.2vw, 58px); line-height: 1.02; letter-spacing: -.03em; margin: 0 0 22px; }
-      #hero h1 em { font-style: italic; font-weight: 300; color: var(--gold); }
-      #hero .open { font-family: var(--serif); font-weight: 300; font-size: 16px; line-height: 1.4; margin: 0 0 10px; color: var(--ink-2); max-width: 440px; }
+      #hero h1 { font-family: var(--display); font-weight: 300; font-size: clamp(26px, 2.9vw, 40px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; }
+      #hero h1 em { font-style: normal; font-weight: 200; color: var(--gold); }
+      #hero .open { font-family: var(--serif); font-weight: 300; font-size: 15px; line-height: 1.45; margin: 0 auto 6px; color: var(--ink-2); max-width: 520px; }
+      .hero-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; }
       #hero .open b { font-family: var(--mono); font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: .02em; }
       html.staged .stage { opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity 1.4s var(--ease), transform 1.4s var(--ease), filter 1.4s var(--ease); }
       html.staged .stage.on { opacity: 1; transform: none; filter: none; }
-      .cta { margin-top: 18px; display: inline-flex; align-items: center; gap: 14px; padding: 6px 6px 6px 22px; border-radius: 999px;
-        background: var(--gold); color: #120f2a; border: none; font-family: var(--serif); font-size: 15px; font-weight: 500; letter-spacing: -.01em;
+      .cta { margin-top: 0; display: inline-flex; align-items: center; gap: 14px; padding: 6px 6px 6px 22px; border-radius: 999px;
+        background: var(--gold); color: #120f2a; border: none; font-family: var(--display); font-size: 12px; font-weight: 400; letter-spacing: -.01em;
         transition: transform .6s var(--ease), filter .6s var(--ease); }
       .cta i { width: 36px; height: 36px; border-radius: 50%; background: rgba(10,8,32,.14); display: grid; place-items: center; font-style: normal; font-family: var(--mono); font-size: 14px; transition: transform .6s var(--ease); }
       .cta:hover { filter: brightness(1.06); } .cta:hover i { transform: translate(2px,-1px) scale(1.06); } .cta:active { transform: scale(.98); }
-      .instr { margin-top: 16px; display: inline-flex; align-items: center; gap: 6px; padding: 5px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); }
+      .instr { margin-top: 0; display: inline-flex; align-items: center; gap: 6px; padding: 5px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); }
       .instr input { font-family: var(--mono); font-size: 12px; color: var(--ink); background: transparent; border: none; padding: 8px 12px; color-scheme: dark; }
-      .instr button { font-family: var(--serif); font-size: 13px; font-weight: 500; color: var(--ink); background: rgba(236,230,211,.06); border: 1px solid var(--gold-2); padding: 8px 16px; border-radius: 999px; transition: background .5s var(--ease); }
+      .instr button { font-family: var(--display); font-size: 11px; font-weight: 400; color: var(--ink); background: rgba(236,230,211,.06); border: 1px solid var(--gold-2); padding: 8px 16px; border-radius: 999px; transition: background .5s var(--ease); }
       .instr button:hover { background: var(--gold-3); }
       #status { display: block; margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); min-height: 14px; }
       #natalMore { display: none; } html.has-birth #natalMore { display: block; }
       .natal-more { margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
-      .natal-more summary { cursor: pointer; width: fit-content; list-style: none; border-bottom: 1px solid var(--gold-2); padding-bottom: 2px; transition: color .5s var(--ease); }
+      .natal-more summary { cursor: pointer; width: fit-content; margin: 0 auto; list-style: none; border-bottom: 1px solid var(--gold-2); padding-bottom: 2px; transition: color .5s var(--ease); }
       .natal-more summary:hover { color: var(--ink); }
-      .natal-more-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+      .natal-more-row { display: flex; justify-content: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
       .natal-more-row input { font-family: var(--mono); font-size: 12px; background: var(--glass); color: var(--ink); border: 1px solid rgba(236,230,211,.1); padding: 7px 9px; border-radius: 999px; width: 92px; color-scheme: dark; }
       .natal-more-row button { font-family: var(--mono); font-size: 11px; color: var(--ink); background: transparent; border: 1px solid var(--gold-2); padding: 7px 12px; border-radius: 999px; }
       .natal-hint { display: block; margin-top: 6px; font-size: 10px; opacity: .55; }
@@ -102,7 +106,7 @@
       .scale-btn:hover { background: rgba(201,168,92,.16); } .scale-btn:active { transform: scale(.97); } .scale-btn:disabled { opacity: .3; cursor: default; }
       .scale-lbl { display: inline-flex; flex-direction: column; min-width: 120px; padding: 0 10px; line-height: 1.15; }
       .scale-lbl b { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--gold); }
-      .scale-lbl i { font-family: var(--serif); font-style: normal; font-weight: 300; font-size: 13px; color: var(--ink); }
+      .scale-lbl i { font-family: var(--display); font-style: normal; font-weight: 300; font-size: 11px; color: var(--ink); }
       .scale-ticks { list-style: none; margin: 8px auto 0; padding: 0; display: flex; justify-content: center; gap: 14px; }
       .scale-ticks li { width: 1px; height: 8px; background: rgba(236,230,211,.25); transition: background .4s, height .4s var(--ease); }
       .scale-ticks li.on { background: var(--gold); height: 14px; box-shadow: 0 0 8px var(--gold); }
@@ -126,13 +130,13 @@
       .card { padding: 5px; border-radius: var(--r); background: rgba(236,230,211,.035); border: 1px solid rgba(236,230,211,.07);
         opacity: 0; transform: translateY(18px); filter: blur(4px); transition: opacity .9s var(--ease), transform .9s var(--ease), filter .9s var(--ease); }
       .card.in { opacity: 1; transform: none; filter: none; }
-      .card-core { padding: 18px 20px 16px; border-radius: calc(var(--r) - 5px); background: linear-gradient(180deg, rgba(20,16,52,.78), rgba(12,10,32,.78)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+      .card-core { text-align: center; padding: 18px 20px 16px; border-radius: calc(var(--r) - 5px); background: linear-gradient(180deg, rgba(20,16,52,.78), rgba(12,10,32,.78)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
       .vis .card-core { padding: 10px 10px 6px; }
       .horizon { display: block; width: 100%; height: auto; }
       .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
       .num { font-family: var(--mono); font-weight: 300; font-size: 30px; letter-spacing: -.01em; color: var(--gold); line-height: 1; }
       .num small { font-size: 13px; letter-spacing: .04em; color: var(--ink-2); margin-left: 6px; }
-      .label { font-family: var(--serif); font-weight: 400; font-size: 18px; letter-spacing: -.01em; margin: 12px 0 6px; line-height: 1.2; }
+      .label { font-family: var(--display); font-weight: 300; font-size: 15px; letter-spacing: -.01em; text-wrap: balance; margin: 12px 0 6px; line-height: 1.2; }
       .explain { font-family: var(--serif); font-size: 15.5px; line-height: 1.45; color: var(--ink-2); margin: 0; }
       .statement { font-family: var(--serif); font-size: 16px; line-height: 1.4; margin: 10px 0 0; }
       .src { font-family: var(--mono); font-size: 10px; letter-spacing: .02em; color: var(--ink-2); opacity: .7; margin-top: 12px; }
@@ -203,11 +207,10 @@
         html.menu-open #nav .links > * { opacity: 1; transform: none; }
         html.menu-open #nav .links > :nth-child(2) { transition-delay: .08s; } html.menu-open #nav .links > :nth-child(3) { transition-delay: .16s; }
         .eb-more { display: inline; }
-        #hero { position: relative; max-width: 100%; padding: 84px 20px 0; }
-        #hero h1 { font-size: 38px; margin-bottom: 14px; }
-        #hero .open { font-size: 16px; margin-bottom: 6px; }
-        .cta { font-size: 16px; margin-top: 12px; }
-        .instr { margin-top: 10px; }
+        #hero { position: relative; top: 0; max-width: 100%; padding: 84px 20px 0; }
+        #hero h1 { font-size: 26px; margin-bottom: 12px; }
+        #hero .open { font-size: 15px; margin-bottom: 6px; }
+        .cta { font-size: 12px; }
         #stage { position: relative; height: 68vh; margin-top: -8vh; }
         #scale { position: relative; left: 0; bottom: 0; transform: none; order: 3; margin: -110px auto 12px; width: calc(100% - 32px); }
         html.off-body #legend { display: none; }
@@ -241,10 +244,12 @@
     <div id="hero">
       <h1>Космос не вокруг тебя,<br /><em>а внутри тебя.</em></h1>
       <p class="open stage" id="open1">Прямо сейчас сквозь тебя летят <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p>
-      <button id="reveal" class="cta stage">Показать, что происходит именно с тобой <i>→</i></button>
-      <div class="instr">
-        <input type="date" id="birth" aria-label="Дата рождения" />
-        <button id="openNatal" type="button">Карта рождения</button>
+      <div class="hero-row stage">
+        <button id="reveal" class="cta">Показать, что происходит именно с тобой <i>→</i></button>
+        <div class="instr">
+          <input type="date" id="birth" aria-label="Дата рождения" />
+          <button id="openNatal" type="button">Карта рождения</button>
+        </div>
       </div>
       <span id="status"></span>
       <details class="natal-more" id="natalMore">

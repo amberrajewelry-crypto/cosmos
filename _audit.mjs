@@ -9,7 +9,7 @@ for (const y of [0, 700, 1400, 2100, 2800, H]) { await p.evaluate(v=>scrollTo(0,
 await p.evaluate(()=>scrollTo(0,0)); await p.click('#reveal'); await p.waitForTimeout(2500); await p.screenshot({ path: S+'/aud-reveal.png' });
 await p.fill('#birth','1990-05-14'); await p.click('#openNatal'); await p.waitForTimeout(2500); await p.screenshot({ path: S+'/aud-natal.png', fullPage:false });
 const natalH = await p.evaluate(()=>{const n=document.getElementById('natal'); return n? [n.scrollHeight, n.clientHeight, getComputedStyle(n).overflowY]:null}); console.log('natal', natalH);
-await p.keyboard.press('Escape'); await p.click('#openHonesty'); await p.waitForTimeout(1200); await p.screenshot({ path: S+'/aud-honesty.png' });
+await p.keyboard.press('Escape'); await p.click('#burger'); await p.waitForTimeout(700); await p.click('#openHonesty'); await p.waitForTimeout(1200); await p.screenshot({ path: S+'/aud-honesty.png' });
 await p.keyboard.press('Escape');
 // tap targets < 40px
 const small = await p.evaluate(()=>[...document.querySelectorAll('a,button')].filter(e=>{const r=e.getBoundingClientRect(); return r.width>0 && (r.height<40||r.width<40)}).map(e=>(e.id||e.className||e.tagName)+' '+Math.round(e.getBoundingClientRect().height)));

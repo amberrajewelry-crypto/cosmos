@@ -83,7 +83,7 @@ window.addEventListener('pointermove', (e) => {
 
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
 function gain(): void { bodyPts.setGain(stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 1); }
-window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); gain(); });
+window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); gain(); syncLook(); });
 gain();
 fit();
 
@@ -106,6 +106,8 @@ stageEl.addEventListener('wheel', (e) => {
   zoomTarget = Math.max(-1, Math.min(1, zoomTarget + e.deltaY * 0.0015));
 }, { passive: true });
 const LOOK = new THREE.Vector3(0, 0.95, 0);
+const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 1.2; };
+syncLook();
 const baseCam = stage.camera.position.clone();
 fit(); baseCam.copy(stage.camera.position);
 // Адаптивное качество: если кадр стабильно > 33 мс — снижаем pixelRatio до 1 (только вниз).
