@@ -28,3 +28,4 @@ dist-ssr
 public/natalnaya-karta/
 public/en/natal-chart/
 public/sitemap-natal.xml
+.gindex.json
