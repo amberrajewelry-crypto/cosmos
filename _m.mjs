@@ -1,0 +1,10 @@
+import { chromium, devices } from '@playwright/test';
+const S='/private/tmp/claude-501/-Users-vladimir/49036807-ede9-4eba-821d-98bd4628d0cb/scratchpad'; const b = await chromium.launch(); const errs=[];
+const c = await b.newContext({ ...devices['iPhone 13'] }); const p = await c.newPage(); p.on('pageerror', e=>errs.push(e.message));
+await p.goto('http://localhost:4179/', { waitUntil:'networkidle' }); await p.waitForTimeout(4500);
+await p.screenshot({ path: S+'/m-top.png' });
+await p.click('#burger'); await p.waitForTimeout(900); await p.screenshot({ path: S+'/m-menu.png' });
+await p.click('#openPanel'); await p.waitForTimeout(1500); await p.screenshot({ path: S+'/m-panel.png' });
+await p.evaluate(()=>document.querySelector('.rail')?.scrollBy(300,0)); await p.evaluate(()=>scrollBy(0,500)); await p.waitForTimeout(800); await p.screenshot({ path: S+'/m-panel2.png' });
+const d = await chromium.launch(); const dp = await d.newPage({ viewport:{width:1440,height:900} }); await dp.goto('http://localhost:4179/', { waitUntil:'networkidle' }); await dp.waitForTimeout(4500); await dp.click('#reveal'); await dp.waitForTimeout(1500); await dp.screenshot({ path: S+'/d-panel.png' }); await d.close();
+console.log('errors', errs); await b.close();

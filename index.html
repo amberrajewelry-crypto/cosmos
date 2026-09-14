@@ -60,6 +60,8 @@
         backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
       #nav .brand { font-family: var(--serif); font-weight: 500; font-size: 13px; letter-spacing: .34em; color: var(--gold); margin-right: 10px; text-decoration: none; }
       #nav a, #nav button { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); background: transparent; border: none; padding: 7px 12px; border-radius: 999px; text-decoration: none; transition: color .5s var(--ease), background .5s var(--ease); }
+      #nav .links { display: contents; }
+      #burger { display: none; }
       #nav a:hover, #nav button:hover { color: var(--ink); background: rgba(236,230,211,.06); }
 
       /* Hero — редакционный сплит: типографика слева, живая сцена в центре, приборы справа */
@@ -117,6 +119,7 @@
       #panel { position: fixed; top: 0; right: 0; z-index: 1; transform: translateX(24px); opacity: 0; pointer-events: none; transition: transform .9s var(--ease), opacity .9s var(--ease); width: min(400px, 94vw); height: 100vh; box-sizing: border-box; padding: 84px 24px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
       html.panel-open #panel { transform: none; opacity: 1; pointer-events: auto; }
       #panel::-webkit-scrollbar { display: none; }
+      .pg, .rail { display: contents; }
       .ph { display: flex; align-items: center; gap: 12px; margin: 10px 4px 0; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); opacity: .8; }
       .ph i { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold-2), transparent); }
       .ph-note { font-family: var(--serif); font-weight: 300; font-size: 14px; line-height: 1.45; color: var(--ink-2); margin: 0 4px 6px; opacity: .8; }
@@ -188,10 +191,19 @@
         html, body { overflow: auto; height: auto; }
         body { display: flex; flex-direction: column; } main { display: contents; }
         #hero { order: 1; } #stage { order: 2; } #legend { order: 3; } #panel { order: 4; }
-        #nav { top: 12px; padding: 5px 6px 5px 12px; max-width: 94vw; } #nav .brand { font-size: 15px; margin-right: 4px; }
-        #nav a, #nav button { padding: 6px 9px; font-size: 10px; }
+        /* бургер: пилюля = бренд + две линии; меню — полноэкранное стекло со ступенчатым появлением */
+        /* transform и backdrop-filter на #nav делают его containing block для fixed-меню — на мобилке убираем оба */
+        #nav { top: 12px; left: 0; right: 0; width: max-content; margin: 0 auto; transform: none; backdrop-filter: none; background: rgba(14,11,40,.86); padding: 5px 6px 5px 14px; gap: 10px; }
+        #burger { display: grid; place-items: center; place-content: center; gap: 5px; width: 40px; height: 40px; border-radius: 50%; background: rgba(236,230,211,.06); border: 1px solid rgba(236,230,211,.1); padding: 0; cursor: pointer; }
+        #burger i { display: block; width: 16px; height: 1px; background: var(--ink); transition: transform .5s var(--ease); transform-origin: center; }
+        html.menu-open #burger i:first-child { transform: translateY(3px) rotate(45deg); } html.menu-open #burger i:last-child { transform: translateY(-3px) rotate(-45deg); }
+        #nav .links { display: flex; flex-direction: column; justify-content: center; gap: 6px; position: fixed; inset: 0; z-index: -1; padding: 0 28px; background: rgba(10,8,32,.82); backdrop-filter: blur(28px); opacity: 0; pointer-events: none; transition: opacity .6s var(--ease); }
+        html.menu-open #nav .links { opacity: 1; pointer-events: auto; }
+        #nav .links a, #nav .links button { font-family: var(--serif); font-weight: 300; font-size: 34px; letter-spacing: -.02em; text-align: left; padding: 10px 0; color: var(--ink); background: none; border-bottom: 1px solid rgba(236,230,211,.08); border-radius: 0; opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+        html.menu-open #nav .links > * { opacity: 1; transform: none; }
+        html.menu-open #nav .links > :nth-child(2) { transition-delay: .08s; } html.menu-open #nav .links > :nth-child(3) { transition-delay: .16s; }
+        .eb-more { display: inline; }
         #hero { position: relative; max-width: 100%; padding: 84px 20px 0; }
-        .eb-more { display: none; }
         #hero h1 { font-size: 38px; margin-bottom: 14px; }
         #hero .open { font-size: 16px; margin-bottom: 6px; }
         .cta { font-size: 16px; margin-top: 12px; }
@@ -200,14 +212,16 @@
         #scale { position: relative; left: 0; bottom: 0; transform: none; order: 3; margin: -110px auto 12px; width: calc(100% - 32px); }
         html.off-body #legend { display: none; }
         .scale-fact { font-size: 13px; }
+        .scale-btn { padding: 11px 16px; } .card-actions button, .card-actions a { min-height: 36px; }
         #ring { width: 92vw; height: 92vw; }
         #legend { position: relative; left: 0; bottom: 0; transform: none; margin: 0 20px; white-space: normal; justify-content: center; }
-        #panel { transform: none; opacity: 1; pointer-events: auto; position: relative; width: 100vw; height: auto; padding: 18px 0 40px; flex-direction: row; align-items: flex-start; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-        #panel::before, #panel::after { content: ''; flex: 0 0 8px; }
+        #panel { transform: none; opacity: 1; pointer-events: auto; position: relative; width: 100vw; height: auto; padding: 8px 0 40px; gap: 18px; overflow: visible; }
+        .pg { display: block; } .ph { display: flex; margin: 0 20px 8px; }
+        /* карточки — лентой свайпом вбок, заголовок группы над лентой */
+        .rail { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 0 20px 6px; scrollbar-width: none; }
+        .rail::-webkit-scrollbar { display: none; }
         .card { flex: 0 0 82vw; scroll-snap-align: center; }
-        .ph { flex: 0 0 auto; writing-mode: vertical-rl; margin: 0 0 0 8px; align-self: stretch; }
-        .ph i { display: none; }
-        .ph-note { flex: 0 0 70vw; align-self: center; scroll-snap-align: center; }
+        .ph-note { flex: 0 0 calc(100vw - 40px); margin: 0; }
       }
     </style>
   </head>
@@ -216,9 +230,12 @@
     <div id="scale" aria-label="Масштаб"></div>
     <nav id="nav" aria-label="Навигация">
       <a class="brand" href="/">COSMOS</a>
-      <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">Натальная </span>карта</a>
-      <button id="openPanel" type="button">Параметры</button>
-      <button id="openHonesty" type="button">Погрешности</button>
+      <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+      <div id="menu" class="links">
+        <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">Натальная </span>карта</a>
+        <button id="openPanel" type="button">Параметры</button>
+        <button id="openHonesty" type="button">Погрешности</button>
+      </div>
     </nav>
     <main id="main">
     <div id="hero">

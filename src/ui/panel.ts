@@ -92,7 +92,7 @@ export function renderPanel(container: HTMLElement, groups: PanelGroup[] | Value
     const head = g.title ? `<h2 class="ph"><span>${g.title}</span><i></i></h2>` : '';
     const body = g.values.length ? g.values.map(card).join('') : (g.note ? `<p class="ph-note">${g.note}</p>` : '');
     const vis = g.visual && g.values.length ? `<div class="card in vis"><div class="card-core">${g.visual}</div></div>` : '';
-    return head + vis + body;
+    return `<section class="pg">${head}<div class="rail">${vis}${body}</div></section>`;
   }).join('');
   container.querySelectorAll('.card').forEach((el, i) => {
     if (!io) { el.classList.add('in'); return; }

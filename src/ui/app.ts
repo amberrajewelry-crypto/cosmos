@@ -227,7 +227,15 @@ const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
 const birth = document.getElementById('birth') as HTMLInputElement;
 // Уточнение времени/места показываем только когда дата введена — экран без лишних строк.
 birth.addEventListener('input', () => document.documentElement.classList.toggle('has-birth', !!birth.value));
-(document.getElementById('openPanel') as HTMLButtonElement).addEventListener('click', () => document.documentElement.classList.toggle('panel-open'));
+(document.getElementById('openPanel') as HTMLButtonElement).addEventListener('click', () => {
+  document.documentElement.classList.toggle('panel-open');
+  document.getElementById('panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+// Мобильное меню: бургер ↔ крест, любой пункт закрывает.
+const burger = document.getElementById('burger') as HTMLButtonElement;
+const setMenu = (on: boolean): void => { document.documentElement.classList.toggle('menu-open', on); burger.setAttribute('aria-expanded', String(on)); };
+burger.addEventListener('click', () => setMenu(!document.documentElement.classList.contains('menu-open')));
+document.querySelectorAll('#menu a, #menu button').forEach((el) => el.addEventListener('click', () => setMenu(false)));
 const birthTime = document.getElementById('birthTime') as HTMLInputElement;
 const birthLat = document.getElementById('birthLat') as HTMLInputElement;
 const birthLon = document.getElementById('birthLon') as HTMLInputElement;
@@ -268,6 +276,7 @@ if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
 // Esc закрывает любой открытый оверлей (§3.10).
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  if (document.documentElement.classList.contains('menu-open')) { setMenu(false); return; }
   for (const id of ['ask', 'natal', 'honesty']) { const el = document.getElementById(id); if (el && !el.hidden) { el.hidden = true; return; } }
 });
 
