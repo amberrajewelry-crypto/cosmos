@@ -11,16 +11,17 @@ const STARS: Array<[string, number]> = [ // [имя, расстояние, св.
   ['Спика', 250], ['Антарес', 550], ['Бетельгейзе', 548], ['Ригель', 860],
 ];
 
-export function birthLightStar(birth: Date, now: Date = new Date()): Computed {
+// pick: [имя, св. лет] из каталога (src/data/stars.ts) — если каталог уже загружен; иначе встроенный список 20.
+export function birthLightStar(birth: Date, now: Date = new Date(), pick?: [string, number]): Computed {
   const ageYears = (now.getTime() - birth.getTime()) / (365.25 * 86_400_000);
-  const [name, dist] = STARS.reduce((best, s) =>
+  const [name, dist] = pick ?? STARS.reduce((best, s) =>
     Math.abs(s[1] - ageYears) < Math.abs(best[1] - ageYears) ? s : best);
   const delta = Math.round(dist - ageYears);
   const when = delta === 0 ? 'в год твоего рождения'
     : delta > 0 ? `за ${delta} ${plural(delta)} до твоего рождения`
     : `когда тебе было ${-delta} ${plural(-delta)}`;
   return {
-    id: 'stars.birthlight', value: Math.round(dist * 10) / 10, source: 'Hipparcos/Gaia параллакс',
+    id: 'stars.birthlight', value: Math.round(dist * 10) / 10, source: pick ? 'SIMBAD (Hipparcos/Gaia параллакс), 250 именованных звёзд' : 'Hipparcos/Gaia параллакс',
     computedAt: now.getTime(),
     text: `${name}: свет, который ты видишь сегодня, вышел ${when}.`,
   };

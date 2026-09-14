@@ -18,9 +18,16 @@ function polar(r: number, lonDeg: number, offset = 0): [number, number] {
 }
 
 export interface ChartBody { glyph: string; lon: number; key: string; }
-export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; }
+export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; sky?: Array<Array<[number, number]>>; }
 
-export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies }: ChartInput): string {
+// §4.7: линии реальных зодиакальных созвездий в кольце (широта ±30° → R_IN…R_OUT). Скрыты до поворота (§4.8).
+export function skyLines(sky: Array<Array<[number, number]>>, off: number): string {
+  const r = (lat: number) => R_IN + ((Math.max(-30, Math.min(30, lat)) + 30) / 60) * (R_OUT - R_IN);
+  const d = sky.map((pl) => pl.map(([lon, lat], i) => { const [x, y] = polar(r(lat), lon, off); return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`; }).join(' ')).join(' ');
+  return `<g id="realSky" style="opacity:0; transition: opacity 1.6s ease"><path d="${d}" fill="none" stroke="#e8e2cf" stroke-width="0.7" opacity="0.55"/></g>`;
+}
+
+export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky }: ChartInput): string {
   const off = asc ?? 0;
   // Градуированные тики по краю (§4.5) — фиксированный слой.
   let ticks = '';
@@ -68,6 +75,7 @@ export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies }: ChartInput): 
     <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="none" stroke="#c9a85c" stroke-width="0.8" opacity="0.5"/>
     ${ticks}
     ${axes}
+    ${sky ? skyLines(sky, off) : ''}
     <g id="signRing" style="transition: transform 1.6s cubic-bezier(.4,0,.2,1); transform-box: view-box; transform-origin: 200px 200px; transform: rotate(${rotationDeg}deg);">${sectors}</g>
     ${planets}
     <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="7" fill="#c9a85c"/>

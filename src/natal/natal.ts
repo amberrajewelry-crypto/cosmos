@@ -6,6 +6,7 @@ import { birthLightStar } from '../compute/birthlight';
 import { toValue } from '../registry/registry';
 import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
+import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
 
 export interface Place { lat: number; lon: number; }
 
@@ -19,7 +20,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
   const bodies = natalBodies(when);
   const offset = precessionOffsetDeg(when);
   const real = (constellationVsSign(when).text ?? '').replace('Солнце сейчас', 'В день рождения Солнце');
-  const star = toValue(birthLightStar(when));
+  let star = toValue(birthLightStar(when));
   const iso = when.toISOString().slice(0, 10);
 
   overlay.innerHTML = `
@@ -32,7 +33,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
       ${angles
         ? `<p class="natal-cap natal-star"><span class="tag tag-inline">[ОЦЕНКА]</span> Асцендент ${angles.asc.toFixed(1)}°, MC ${angles.mc.toFixed(1)}° — геометрия эклиптики для твоего времени и места. <span class="natal-src">точность зависит от точности времени: 4 минуты = 1°</span></p>`
         : `<p class="natal-cap natal-star natal-muted">Асцендент и MC не показаны: нужны время и место рождения — без них это было бы выдумкой.</p>`}
-      <p class="natal-cap natal-star"><span class="tag tag-inline">[${star.tag}]</span> ${star.text} <span class="natal-src">${star.value} св. лет · ${star.source}</span></p>
+      <p class="natal-cap natal-star" id="natalStarLine">${starLine(star)}</p>
       <div class="natal-share">
         <button id="natalPng">Скачать PNG</button>
         <button id="natalLink">Скопировать ссылку</button>
@@ -41,11 +42,24 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
     </div>`;
   overlay.hidden = false;
 
+  // Каталог звёзд (54 КБ) — после первого рендера: точная «звезда рождения» и линии созвездий под поворот.
+  loadStars().then((cat) => {
+    const age = (Date.now() - when.getTime()) / (365.25 * 86_400_000);
+    const pick = nearestLightStar(cat, age);
+    if (pick) { star = toValue(birthLightStar(when, new Date(), [pick.name, Math.round(pick.ly * 10) / 10])); (overlay.querySelector('#natalStarLine') as HTMLElement).innerHTML = starLine(star); }
+    const svg = overlay.querySelector('#natalSvg') as HTMLElement;
+    if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()) });
+    if (rotated) (overlay.querySelector('#realSky') as SVGGElement | null)?.style.setProperty('opacity', '1');
+  }).catch(() => { /* без каталога остаётся встроенный список */ });
+
   const rotateBtn = overlay.querySelector('#natalRotate') as HTMLButtonElement;
   const cap = overlay.querySelector('#natalCap') as HTMLElement;
+  let rotated = false;
   rotateBtn.addEventListener('click', () => {
+    rotated = true;
     const ring = overlay.querySelector('#signRing') as SVGGElement | null;
     if (ring) ring.style.transform = `rotate(${-offset}deg)`; // §4.8: садимся на реальные созвездия; центр = центр круга (view-box), не bbox
+    (overlay.querySelector('#realSky') as SVGGElement | null)?.style.setProperty('opacity', '1');
     rotateBtn.hidden = true;
     // Градусы бегут вместе с поворотом (1.6 с) — расхождение видно числом и кругом одновременно.
     const start = performance.now();
@@ -74,6 +88,10 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
 
   (overlay.querySelector('.natal-close') as HTMLButtonElement)
     .addEventListener('click', () => { overlay.hidden = true; });
+}
+
+function starLine(star: { tag: string; text?: string; value: unknown; source: string }): string {
+  return `<span class="tag tag-inline">[${star.tag}]</span> ${star.text} <span class="natal-src">${star.value} св. лет · ${star.source}</span>`;
 }
 
 // SVG → PNG в браузере: сериализуем разметку, рисуем на canvas поверх фона сцены.
