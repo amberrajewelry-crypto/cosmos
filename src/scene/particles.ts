@@ -68,13 +68,16 @@ vec3 curl(vec3 p){ float e=.1;
 const BODY_VERT = `
 ${NOISE_GLSL}
 uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal; uniform float uMix;
+uniform float uScaleA; uniform float uScaleB;
 attribute float aSeed; attribute vec3 aTarget;
+const vec3 PIVOT = vec3(0., .9, 0.);
 varying vec3 vColor; varying float vTwinkle;
 void main(){
   vColor = color;
   // §4.2 лестница масштабов: перестройка в форму другого уровня, каждая точка со своей задержкой.
   float mx = smoothstep(0., 1., clamp((uMix - fract(aSeed*.53)*.3) / .7, 0., 1.));
-  vec3 p = mix(position, aTarget, mx);
+  // Непрерывный зум: текущая форма сжимается к точке, следующая входит из-за кадра (масштаб вокруг центра фигуры).
+  vec3 p = mix((position - PIVOT) * uScaleA + PIVOT, (aTarget - PIVOT) * uScaleB + PIVOT, mx);
   // §2.4 «внутри неё медленно проступают точки»: сборка из рассеяния, каждая точка со своей задержкой.
   float rv = smoothstep(0., 1., clamp((uReveal - fract(aSeed*.37)*.45) / .55, 0., 1.));
   vec3 scatter = (hash3(vec3(aSeed, aSeed*1.7, aSeed*2.3)) - .5) * vec3(2.6, 3.2, 1.6) + vec3(0., .9, 0.);
@@ -107,6 +110,8 @@ export interface BodyPoints {
   /** Исходные позиции фигуры (для генерации форм уровней). */ body: Float32Array;
   /** Задать форму-цель и долю смешения 0..1; commit — сделать цель текущей позицией. */
   setTarget: (t: Float32Array) => void; setMix: (m: number) => void; commitTarget: () => void;
+  /** Пара форм A→B для непрерывного зума и их масштабы вокруг центра фигуры. */
+  setPair: (a: Float32Array, b: Float32Array) => void; setScales: (a: number, b: number) => void;
   /** Яркость спрайтов: портретная камера дальше — точки плотнее, гасим накопление. */ setGain: (g: number) => void;
   /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
 }
@@ -141,7 +146,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: {
       uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
-      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 }, uGain: { value: 1 },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 }, uGain: { value: 1 }, uScaleA: { value: 1 }, uScaleB: { value: 1 },
     },
   });
   const points = new THREE.Points(geom, mat);
@@ -160,6 +165,12 @@ export function createBodyParticles(count = 9000): BodyPoints {
     },
     setTarget: (t) => { (target.array as Float32Array).set(t); target.needsUpdate = true; },
     setMix: (m) => { mat.uniforms.uMix.value = m; },
+    setPair: (a, b) => {
+      const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
+      (posAttr.array as Float32Array).set(a); posAttr.needsUpdate = true;
+      (target.array as Float32Array).set(b); target.needsUpdate = true;
+    },
+    setScales: (a, b) => { mat.uniforms.uScaleA.value = a; mat.uniforms.uScaleB.value = b; },
     setGain: (g) => { mat.uniforms.uGain.value = g; },
     commitTarget: () => {
       const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;

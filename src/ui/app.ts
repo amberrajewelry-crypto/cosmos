@@ -69,6 +69,7 @@ const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts
   trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
   flux.points.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
+  document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
 });
 stage.scene.add(body);
 
@@ -106,17 +107,22 @@ const dbSize = new THREE.Vector2();
 let paused = false;
 // Сборка фигуры за ~3.2 с после загрузки (reduced-motion — сразу).
 const t0 = performance.now();
-// Зум колесом/щипком в безопасном диапазоне (§4.2 в M1-объёме): демпфированная дистанция камеры.
-let zoomTarget = 0, zoomNow = 0; // 0 = базовая дистанция; −1..+1 → ×0.55..×1.9
-let wheelLock = 0;
+// Зум (§4.2): колесо и пинч ведут непрерывный z лестницы масштабов; перетаскивание крутит фигуру.
 stageEl.addEventListener('wheel', (e) => {
-  const atEdge = (e.deltaY < 0 && zoomTarget <= -1) || (e.deltaY > 0 && zoomTarget >= 1);
-  if (atEdge && performance.now() > wheelLock && Math.abs(e.deltaY) > 8) {
-    if (scale.step(e.deltaY < 0 ? -1 : 1)) { wheelLock = performance.now() + 1500; zoomTarget = 0; }
-    return;
-  }
-  zoomTarget = Math.max(-1, Math.min(1, zoomTarget + e.deltaY * 0.0015));
+  if (Math.abs(e.deltaY) < 1) return;
+  scale.nudge(Math.max(-0.35, Math.min(0.35, e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022))));
 }, { passive: true });
+let dragRot = 0, dragX: number | null = null, pinchD = 0;
+stageEl.addEventListener('pointerdown', (e) => { if (e.isPrimary && (e.target as HTMLElement).closest('button,a,input') == null) dragX = e.clientX; });
+addEventListener('pointermove', (e) => { if (dragX != null && e.isPrimary) { dragRot += (e.clientX - dragX) * 0.006; dragX = e.clientX; } });
+addEventListener('pointerup', () => { dragX = null; });
+stageEl.addEventListener('touchmove', (e) => {
+  if (e.touches.length !== 2) return;
+  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  if (pinchD) scale.nudge(-Math.log(d / pinchD) * 1.2); // разводим пальцы = внутрь
+  pinchD = d; e.preventDefault();
+}, { passive: false });
+stageEl.addEventListener('touchend', () => { pinchD = 0; });
 const LOOK = new THREE.Vector3(0, 0.95, 0);
 const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 1.2; };
 syncLook();
@@ -133,14 +139,12 @@ function loop(now = performance.now()) {
     if (slowFrames > 60) { degraded = true; stage.renderer.setPixelRatio(1); fit(); }
   }
   bodyPts.setReveal(reduceMotion ? 1 : Math.min(1, (now - t0) / 4200));
-  zoomNow += (zoomTarget - zoomNow) * 0.06;
-  const zf = Math.pow(1.9, zoomNow);
-  stage.camera.position.copy(baseCam).sub(LOOK).multiplyScalar(zf).add(LOOK);
+  stage.camera.position.copy(baseCam);
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     px += (tx - px) * 0.03; py += (ty - py) * 0.03;
-    body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35;
+    body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35 + dragRot;
     body.rotation.x = py * 0.08;
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000);
