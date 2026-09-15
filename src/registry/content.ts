@@ -113,6 +113,12 @@ export const CONTENT: ContentParam[] = [
 
 export function levelName(level: number): string { return LEVELS[level]?.name ?? ''; }
 
+// A4 пройдено (test/content-a4.test.ts, 15.09.2026): Horizons, BGS, Planck/FIRAS/Gaia. Только эти могут носить [ТОЧНО].
+export const VERIFIED = new Set<string>([
+  'c.hor.moon_dist', 'c.hor.moon_phase', 'c.orb.sun_dist', 'c.orb.light', 'c.orb.mars', 'c.orb.speed', 'c.mag.f',
+  'c.uni.cmb', 'c.uni.age', 'c.gal.proxima',
+]);
+
 // Почему слой погас: человек ещё не дал вход (§3.7 — только по действию), а не ошибка.
 const NEEDS: Array<[RegExp, string]> = [
   [/^c\.(body\.g|body\.spin|gal\.center|hor\.day|hor\.noon|hor\.polaris|hor\.refraction|mag\.f)$/, 'нужна твоя точка — кнопка «Показать, что происходит именно с тобой»'],
@@ -128,9 +134,10 @@ export function contentValues(ctx: Ctx, level?: number): Value[] {
     const need = out == null ? NEEDS.find(([re]) => re.test(p.id))?.[1] : undefined;
     return {
       // Правило реестра (§1.5, §3.8): [ТОЧНО] структурно недоступен до сверки A4 — понижаем до [ОЦЕНКА].
-      id: p.id, label: p.label, unit: p.unit, tag: p.tag === 'ТОЧНО' ? 'ОЦЕНКА' : p.tag, source: need ?? `${p.source} · не сверено`, explain: p.explain, verifyUrl: p.verifyUrl,
+      id: p.id, label: p.label, unit: p.unit, tag: p.tag === 'ТОЧНО' && !VERIFIED.has(p.id) ? 'ОЦЕНКА' : p.tag,
+      source: need ?? (VERIFIED.has(p.id) ? `${p.source} · сверено A4` : `${p.source} · не сверено`), explain: p.explain, verifyUrl: p.verifyUrl,
       value: typeof out === 'number' ? out : null, text: typeof out === 'string' ? out : undefined,
-      status: out == null ? 'unavailable' : 'ok', verification: 'unverified', computedAt: now,
+      status: out == null ? 'unavailable' : 'ok', verification: VERIFIED.has(p.id) ? 'verified' : 'unverified', computedAt: now,
     };
   });
 }

@@ -32,8 +32,8 @@ describe('контент-база (§2.3: 17 + 77 ≥ 92)', () => {
 describe('правило [ТОЧНО] до сверки', () => {
   it('ни одна несверенная карточка не получает [ТОЧНО]; источник помечен', () => {
     const vs = contentValues(ctx);
-    expect(vs.some((v) => v.tag === 'ТОЧНО')).toBe(false);
-    expect(vs.every((v) => v.verification === 'unverified')).toBe(true);
-    expect(vs.filter((v) => v.status === 'ok').every((v) => v.source.endsWith('не сверено'))).toBe(true);
+    const un = vs.filter((v) => v.verification === 'unverified');
+    expect(un.some((v) => v.tag === 'ТОЧНО')).toBe(false);
+    expect(un.filter((v) => v.status === 'ok').every((v) => v.source.endsWith('не сверено'))).toBe(true);
   });
 });
