@@ -45,7 +45,7 @@
       #stage { position: fixed; inset: 0; z-index: 0; }
       #scene { display: block; width: 100%; height: 100%; }
       /* Армиллярное кольцо (§4.5) — гравюрный обод за фигурой, оборот за 4 минуты */
-      #ring { position: absolute; left: 50%; top: 57%; width: min(66vh, 90vw); height: min(66vh, 90vw); transform: translate(-50%, -50%); pointer-events: none; opacity: .3; }
+      #ring { position: absolute; left: 50%; top: 52%; width: min(104vh, 96vw); height: min(104vh, 96vw); transform: translate(-50%, -50%); pointer-events: none; opacity: .3; }
       #ring g { transform-origin: 200px 200px; animation: ringspin 240s linear infinite; }
       @keyframes ringspin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) { #ring g { animation: none; } }
@@ -125,10 +125,14 @@
       /* Кино-раскладка (десктоп): сцена — весь экран и центр пустой; текст в нижнем левом углу как титры,
          приборы масштаба — в нижнем правом, легенда слоёв — под навигацией справа. Ничего не лежит на фигуре. */
       @media (min-width: 761px) {
-        #hero { left: 40px; right: auto; top: auto; bottom: 56px; max-width: min(440px, 36vw); padding: 0; text-align: left; margin: 0; }
-        #hero h1 { font-size: clamp(22px, 2.1vw, 32px); margin-bottom: 10px; }
-        #hero .open { margin: 0 0 4px; font-size: 14px; }
-        .hero-row { justify-content: flex-start; }
+        /* Титры одной полосой снизу по центру: [заголовок · строка] / [CTA · дата], без столбика */
+        #hero { left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%); max-width: 94vw; padding: 0; margin: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        #hero h1 { font-size: 20px; margin: 0; display: inline; white-space: nowrap; } #hero h1 br { display: none; } #hero h1 em { margin-left: .28em; }
+        #hero .open { display: inline; margin: 0 0 0 14px; font-size: 13px; max-width: none; white-space: nowrap; }
+        #hero > * { text-wrap: nowrap; }
+        .hero-row { margin-top: 0; }
+        .hero-line { display: flex; align-items: baseline; justify-content: center; }
+        .cta { padding: 9px 9px 9px 18px; } .cta i { width: 30px; height: 30px; }
         .natal-more summary { margin: 0; }
         #scale { left: auto; right: 40px; bottom: 56px; transform: none; width: 340px; text-align: right; }
         .scale-ticks { justify-content: flex-end; }
@@ -140,8 +144,8 @@
         html.idle #ring { opacity: .12; }
       }
       /* 3. подсказка жеста — один раз, исчезает после первого зума */
-      .hint { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, 8px); } }
-      .hint.out { opacity: 0; transform: translate(-50%, 6px); pointer-events: none; }
+      .hint { position: fixed; left: 50%; top: 74px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, -8px); } }
+      .hint.out { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
       /* 5. смена уровня — титр перетекает через blur, а не подменяется */
       .scale-lbl, .scale-fact { transition: filter .22s var(--ease), opacity .22s var(--ease); }
       .swap .scale-lbl, .swap .scale-fact { filter: blur(3px); opacity: .35; }
@@ -281,6 +285,7 @@
         html.menu-open #nav .links > :nth-child(2) { transition-delay: .08s; } html.menu-open #nav .links > :nth-child(3) { transition-delay: .16s; }
         .eb-more { display: inline; }
         #hero { position: relative; top: 0; max-width: 100%; padding: 74px 20px 0; }
+        .hero-line { display: block; }
         #hero h1 { font-size: 23px; margin-bottom: 8px; }
         #hero .open { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
         .hint { display: none; }
@@ -318,8 +323,8 @@
     </nav>
     <main id="main">
     <div id="hero">
-      <h1 class="stage" data-t="1400">Космос не вокруг тебя,<br /><em>а внутри тебя.</em></h1>
-      <p class="open stage" data-t="1900" id="open1">Прямо сейчас сквозь тебя летят <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p>
+      <div class="hero-line"><h1 class="stage" data-t="1400">Космос не вокруг тебя,<br /><em>а внутри тебя.</em></h1>
+      <p class="open stage" data-t="1900" id="open1">Прямо сейчас сквозь тебя летят <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p></div>
       <div class="hero-row stage" data-t="2400">
         <button id="reveal" class="cta">Показать, что происходит именно с тобой <i>→</i></button>
         <div class="instr">

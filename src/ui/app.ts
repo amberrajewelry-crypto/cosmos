@@ -102,7 +102,8 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 // §4.9: аура бури пульсирует с периодом в секунды, амплитуда — от реального Kp (0…9), не мигает.
 let kpLive = 0;
 function gain(now = performance.now()): void {
-  const base = stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 1;
+  // Камера близко (2.1) — спрайты крупнее и плотнее; гасим накопление, чтобы фигура не выгорала в bloom.
+  const base = stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 0.5;
   const pulse = reduceMotion ? 0 : (0.02 + 0.03 * (kpLive / 9)) * Math.sin((now / 1000) * (2 * Math.PI / 6));
   bodyPts.setGain(base * (1 + pulse));
 }
@@ -148,7 +149,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp' || e.key === ']') { scale.step(1); hintDone(); }
   else if (e.key === 'ArrowDown' || e.key === '[') { scale.step(-1); hintDone(); }
 });
-const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 1.2; };
+const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
 fit(); baseCam.copy(stage.camera.position);
