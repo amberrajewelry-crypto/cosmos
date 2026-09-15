@@ -116,7 +116,7 @@ export function levelName(level: number): string { return LEVELS[level]?.name ??
 // A4 пройдено (test/content-a4.test.ts, 15.09.2026): Horizons, BGS, Planck/FIRAS/Gaia. Только эти могут носить [ТОЧНО].
 export const VERIFIED = new Set<string>([
   'c.hor.moon_dist', 'c.hor.moon_phase', 'c.orb.sun_dist', 'c.orb.light', 'c.orb.mars', 'c.orb.speed', 'c.mag.f',
-  'c.uni.cmb', 'c.uni.age', 'c.gal.proxima',
+  'c.uni.cmb', 'c.uni.age', 'c.gal.proxima', 'c.hor.day', 'c.hor.noon', 'c.body.g',
 ]);
 
 // Почему слой погас: человек ещё не дал вход (§3.7 — только по действию), а не ошибка.

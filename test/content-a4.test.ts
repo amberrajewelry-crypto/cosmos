@@ -30,6 +30,15 @@ describe('A4 контент-базы против внешних эталоно�
   it('константы: T_CMB 2.7255 K (FIRAS), возраст 13.787 (Planck 2018), Проксима 4.246 св. лет (Gaia)', () => {
     expect(v('c.uni.cmb')).toBe(2.7255); expect(v('c.uni.age')).toBe(13.787); expect(v('c.gal.proxima')).toBe(4.246);
   });
+  it('Тбилиси 14.09.2026: восход 02:40, транзит 08:57, заход 15:13 UTC (Horizons, REFRACTED, шаг 1 мин) → день 12.55 ч, полдень 08:56–08:57', () => {
+    expect(Math.abs(v('c.hor.day') - 12.55)).toBeLessThanOrEqual(0.06);
+    const noon = contentValues(ctx).find((x) => x.id === 'c.hor.noon')!.text!;
+    const [h, m] = noon.split(' ')[0].split(':').map(Number);
+    expect(Math.abs(h * 60 + m - (8 * 60 + 57))).toBeLessThanOrEqual(1);
+  });
+  it('g на 45°: WGS84 (NGA.STND.0036) 9.8061977 м/с²', () => {
+    expect(contentValues({ ...ctx, lat: 45 }).find((x) => x.id === 'c.body.g')!.value).toBeCloseTo(9.8062, 4);
+  });
   it('сверенные получают verified и могут носить [ТОЧНО]; остальные — нет', () => {
     const all = contentValues(ctx);
     for (const id of VERIFIED) expect(all.find((x) => x.id === id)!.verification).toBe('verified');
