@@ -15,6 +15,9 @@ export interface Stage {
 export function createStage(canvas: HTMLCanvasElement): Stage {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Шейдеры точек/фона пишут готовый цвет без colorspace_fragment; композитор bloom выводит через
+  // MeshBasicMaterial, который конвертирует linear→sRGB и осветлял бы всё в 4 раза. Линейный выход = без конверсии.
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0820); // под туманностью-шейдером; не чёрный (§4.5)

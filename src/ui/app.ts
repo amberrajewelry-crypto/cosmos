@@ -47,6 +47,7 @@ import type { Value } from '../types';
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
 const stageEl = document.getElementById('stage') as HTMLElement;
 const stage = createStage(canvas);
+if (new URLSearchParams(location.search).has('nobloom')) stage.setBloom(false); // отладка свечения
 
 // Слои сцены: туманность (фон-шейдер) → звёзды → тело → поток сквозь тело.
 const nebula = createNebula();
@@ -98,6 +99,10 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
+// Иммерсия: интерфейс растворяется, когда курсор замер (только с мышью — на тач-экране нет «замершего курсора»).
+let idleT = 0;
+const wake = (): void => { document.documentElement.classList.remove('idle'); clearTimeout(idleT); idleT = window.setTimeout(() => { if (!document.documentElement.classList.contains('panel-open')) document.documentElement.classList.add('idle'); }, 4000); };
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) { ['pointermove', 'pointerdown', 'keydown', 'wheel'].forEach((e) => window.addEventListener(e, wake, { passive: true })); wake(); }
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // §4.9: аура бури пульсирует с периодом в секунды, амплитуда — от реального Kp (0…9), не мигает.
 let kpLive = 0;

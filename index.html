@@ -122,6 +122,23 @@
       .inner-legend span { display: inline-flex; align-items: center; gap: 6px; }
       .sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
       .sw-decay { background: #ffedb8; box-shadow: 0 0 8px #ffedb8; } .sw-nu { background: #9ee6ff; } .sw-mag { background: #8cf2d9; }
+      /* Кино-раскладка (десктоп): сцена — весь экран и центр пустой; текст в нижнем левом углу как титры,
+         приборы масштаба — в нижнем правом, легенда слоёв — под навигацией справа. Ничего не лежит на фигуре. */
+      @media (min-width: 761px) {
+        #hero { left: 40px; right: auto; top: auto; bottom: 56px; max-width: min(440px, 36vw); padding: 0; text-align: left; margin: 0; }
+        #hero h1 { font-size: clamp(22px, 2.1vw, 32px); margin-bottom: 10px; }
+        #hero .open { margin: 0 0 4px; font-size: 14px; }
+        .hero-row { justify-content: flex-start; }
+        .natal-more summary { margin: 0; }
+        #scale { left: auto; right: 40px; bottom: 56px; transform: none; width: 340px; text-align: right; }
+        .scale-ticks { justify-content: flex-end; }
+        .inner-legend { left: auto; right: 40px; bottom: auto; top: 84px; transform: none; flex-direction: column; align-items: flex-end; gap: 6px; }
+        /* Иммерсия: без движений курсора 4 с интерфейс растворяется, сцена остаётся; любое движение возвращает. */
+        #hero, #scale, .inner-legend, #nav { transition: opacity .9s var(--ease), transform .9s var(--ease); }
+        html.idle #hero, html.idle #scale, html.idle .inner-legend, html.idle #nav { opacity: .08; }
+        html.idle #stage { cursor: none; }
+        html.idle #ring { opacity: .12; }
+      }
       @media (max-width: 760px) { .inner-legend { position: static; transform: none; order: 4; margin: 6px auto 10px; } }
       .scale-fact .tag { font-size: 10px; margin-left: 4px; }
       #ring { transition: opacity 1.2s var(--ease); } html.ring-off #ring { opacity: 0; }
