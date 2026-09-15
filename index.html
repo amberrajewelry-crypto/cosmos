@@ -117,6 +117,12 @@
       .scale-ticks li { width: 1px; height: 8px; background: rgba(236,230,211,.25); transition: background .4s, height .4s var(--ease); }
       .scale-ticks li.on { background: var(--gold); height: 14px; box-shadow: 0 0 8px var(--gold); }
       .scale-fact { margin: 8px 0 0; font-family: var(--serif); font-weight: 300; font-size: 13px; line-height: 1.4; color: rgba(236,230,211,.78); text-wrap: balance; }
+      .inner-legend { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 2; margin: 0; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; max-width: 92vw; font-family: var(--mono); font-size: 10px; letter-spacing: .03em; color: var(--ink-2); transition: opacity .5s var(--ease); }
+      html.off-body .inner-legend { opacity: 0; pointer-events: none; }
+      .inner-legend span { display: inline-flex; align-items: center; gap: 6px; }
+      .sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+      .sw-decay { background: #ffedb8; box-shadow: 0 0 8px #ffedb8; } .sw-nu { background: #9ee6ff; } .sw-mag { background: #8cf2d9; }
+      @media (max-width: 760px) { .inner-legend { position: static; transform: none; order: 4; margin: 6px auto 10px; } }
       .scale-fact .tag { font-size: 10px; margin-left: 4px; }
       #ring { transition: opacity 1.2s var(--ease); } html.ring-off #ring { opacity: 0; }
       #hero { transition: opacity .9s var(--ease), transform .9s var(--ease); }
@@ -258,6 +264,7 @@
   <body>
     <div id="stage"><canvas id="scene"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
     <div id="scale" aria-label="Масштаб"></div>
+    <p id="innerLegend" class="inner-legend"><span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span></p>
     <nav id="nav" aria-label="Навигация">
       <a class="brand" href="/">COSMOS</a>
       <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>

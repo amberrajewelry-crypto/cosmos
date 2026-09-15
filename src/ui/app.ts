@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createStage, resize } from '../scene/renderer';
 import { createBodyParticles, createStarfield, createFlux } from '../scene/particles';
+import { createDecays, createNeutrinos, createFieldLines } from '../scene/inner';
 import { createNebula } from '../scene/nebula';
 import { renderPanel } from './panel';
 import { toValue } from '../registry/registry';
@@ -56,18 +57,22 @@ const bodyPts = createBodyParticles();
 body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
+// §4.1 внутренняя жизнь: распады сразу; нейтрино и магнитные линии — когда известна точка (§3.7).
+const decays = createDecays(bodyPts.body), neutrinos = createNeutrinos(), fieldLines = createFieldLines();
+body.add(decays.obj, neutrinos.obj, fieldLines.obj);
+const innerLegend = document.getElementById('innerLegend') as HTMLElement;
 // Анатомическая фигура (§4.1): 9000 точек внутри меша, 54 КБ; до загрузки — капсульная.
 fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
   const n = new DataView(buf).getUint32(0, true);
   const q = new Int16Array(buf, 4, n * 3);
   const f = new Float32Array(n * 3);
   for (let i = 0; i < f.length; i++) f[i] = q[i] / 10000;
-  bodyPts.replaceBody(f);
+  bodyPts.replaceBody(f); decays.rebind(f);
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
   trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
-  flux.points.visible = lvl === BODY_LEVEL;
+  flux.points.visible = decays.obj.visible = neutrinos.obj.visible = fieldLines.obj.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
 });
@@ -147,7 +152,7 @@ function loop(now = performance.now()) {
     body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35 + dragRot;
     body.rotation.x = py * 0.08;
     bodyPts.setTime(now / 1000);
-    flux.setTime(now / 1000);
+    flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
     stage.renderer.getDrawingBufferSize(dbSize);
     nebula.update(now / 1000, dbSize.x, dbSize.y);
@@ -268,6 +273,11 @@ btn.addEventListener('click', () => {
         neutrinoFlux(lat, lon, now),
       ].map(toValue);
       currentSky = sky; ctx.lat = lat; ctx.lon = lon;
+      // Сцена по живым данным (§2.3 #4, #8): направление на Солнце и вектор поля в твоей точке.
+      const alt = sunAltitude(lat, lon, now).value ?? 0, az = sunAzimuth(lat, lon, now).value ?? 180;
+      const incl = magneticInclination(lat, lon, now).value ?? 60, decl = magneticDeclination(lat, lon, now).value ?? 0;
+      neutrinos.setSun(alt, az); neutrinos.setOn(1); fieldLines.setField(incl, decl); fieldLines.setOn(1);
+      innerLegend.innerHTML = `<span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span><span><i class="sw sw-nu"></i>нейтрино от Солнца, высота ${alt.toFixed(0)}° — ${alt > 0 ? 'сверху, в грудь' : 'снизу, сквозь Землю'}</span><span><i class="sw sw-mag"></i>магнитные линии, наклонение ${incl.toFixed(0)}°</span>`;
       skyVisual = horizonSVG(skyBodies(lat, lon, now));
       render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
