@@ -143,6 +143,30 @@
         html.idle #stage { cursor: none; }
         html.idle #ring { opacity: .12; }
       }
+      /* Кнопки-«приборы»: одна оболочка на ряд, золотой CTA с бликом, поле даты и кнопка внутри одной капсулы,
+         фокус — золотое кольцо вместо синего браузерного. */
+      .cta { position: relative; overflow: hidden; gap: 12px; padding: 6px 6px 6px 20px; color: #14102b; font-weight: 500;
+        background: linear-gradient(180deg, #dcbf78 0%, #c9a85c 55%, #b8964a 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.12), 0 8px 26px -10px rgba(201,168,92,.55), 0 0 0 1px rgba(201,168,92,.35);
+        transition: transform .16s var(--ease), box-shadow .5s var(--ease), filter .5s var(--ease); }
+      .cta::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%); transform: translateX(-120%); transition: transform .9s var(--ease); pointer-events: none; }
+      @media (hover: hover) and (pointer: fine) { .cta:hover::after { transform: translateX(120%); } .cta:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(0,0,0,.12), 0 12px 32px -10px rgba(201,168,92,.75), 0 0 0 1px rgba(201,168,92,.5); filter: none; } }
+      .cta i { background: rgba(20,16,43,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); color: #14102b; }
+      .cta:active { transform: scale(.97); }
+      .instr { gap: 4px; padding: 4px; background: rgba(14,11,40,.55); border: 1px solid rgba(236,230,211,.1); box-shadow: 0 0 0 4px rgba(236,230,211,.025), inset 0 1px 0 rgba(255,255,255,.06); }
+      .instr input { border-radius: 999px; padding: 8px 10px 8px 14px; letter-spacing: .04em; font-variant-numeric: tabular-nums; transition: background .3s var(--ease), box-shadow .3s var(--ease); }
+      .instr input::-webkit-calendar-picker-indicator { opacity: .55; cursor: pointer; filter: invert(.85) sepia(.4); transition: opacity .3s; }
+      .instr input:hover::-webkit-calendar-picker-indicator { opacity: 1; }
+      .instr input:focus-visible, .natal-more-row input:focus-visible { outline: none; background: rgba(201,168,92,.08); box-shadow: 0 0 0 1px var(--gold-2), 0 0 0 4px rgba(201,168,92,.12); }
+      .instr input::selection { background: rgba(201,168,92,.35); color: var(--ink); }
+      .instr button { background: rgba(201,168,92,.10); border-color: rgba(201,168,92,.45); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); transition: background .4s var(--ease), transform .16s var(--ease), border-color .4s var(--ease); }
+      .instr button:hover { background: rgba(201,168,92,.2); border-color: rgba(201,168,92,.7); } .instr button:active { transform: scale(.97); }
+      .cta:focus-visible, .instr button:focus-visible, .scale-btn:focus-visible, .natal-more-row button:focus-visible, .natal-more summary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--gold); }
+      .natal-more summary { padding: 5px 12px 6px; border: 1px solid rgba(236,230,211,.1); border-radius: 999px; background: rgba(14,11,40,.45); backdrop-filter: blur(10px); letter-spacing: .03em; }
+      .natal-more summary::before { content: '+'; margin-right: 8px; color: var(--gold); font-weight: 500; }
+      .natal-more[open] summary::before { content: '−'; }
+      .natal-more-row button { transition: background .4s var(--ease), transform .16s var(--ease); } .natal-more-row button:hover { background: rgba(201,168,92,.14); } .natal-more-row button:active { transform: scale(.97); }
+      #status:empty { display: none; }
       /* 3. подсказка жеста — один раз, исчезает после первого зума */
       .hint { position: fixed; left: 50%; top: 74px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, -8px); } }
       .hint.out { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
