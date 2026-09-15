@@ -127,7 +127,8 @@ export function contentValues(ctx: Ctx, level?: number): Value[] {
     let out: Out; try { out = p.compute(ctx); } catch { out = null; }
     const need = out == null ? NEEDS.find(([re]) => re.test(p.id))?.[1] : undefined;
     return {
-      id: p.id, label: p.label, unit: p.unit, tag: p.tag, source: need ?? p.source, explain: p.explain, verifyUrl: p.verifyUrl,
+      // Правило реестра (§1.5, §3.8): [ТОЧНО] структурно недоступен до сверки A4 — понижаем до [ОЦЕНКА].
+      id: p.id, label: p.label, unit: p.unit, tag: p.tag === 'ТОЧНО' ? 'ОЦЕНКА' : p.tag, source: need ?? `${p.source} · не сверено`, explain: p.explain, verifyUrl: p.verifyUrl,
       value: typeof out === 'number' ? out : null, text: typeof out === 'string' ? out : undefined,
       status: out == null ? 'unavailable' : 'ok', verification: 'unverified', computedAt: now,
     };

@@ -28,3 +28,12 @@ describe('контент-база (§2.3: 17 + 77 ≥ 92)', () => {
     expect(byId('c.mag.f').value).toBeGreaterThan(45000); expect(byId('c.mag.f').value).toBeLessThan(52000);
   });
 });
+
+describe('правило [ТОЧНО] до сверки', () => {
+  it('ни одна несверенная карточка не получает [ТОЧНО]; источник помечен', () => {
+    const vs = contentValues(ctx);
+    expect(vs.some((v) => v.tag === 'ТОЧНО')).toBe(false);
+    expect(vs.every((v) => v.verification === 'unverified')).toBe(true);
+    expect(vs.filter((v) => v.status === 'ok').every((v) => v.source.endsWith('не сверено'))).toBe(true);
+  });
+});
