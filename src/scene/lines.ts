@@ -4,7 +4,6 @@ import { LEVELS } from './scales';
 // Линейные слои уровней (§4.2): линии, которые в точках читаются туманом, — отдельными LineSegments.
 // Масштабируются синхронно с формами точек вокруг того же PIVOT (см. particles.ts BODY_VERT).
 const PIVOT = new THREE.Vector3(0, 0.9, 0), CY = 0.95, R = 0.85;
-export const SHRINK = 0.1, GROW = 7;
 
 function polylines(paths: number[][][], color: number, opacity: number): THREE.LineSegments {
   const pts: number[] = [];
@@ -47,7 +46,7 @@ export function cytoskeletonLines(): THREE.LineSegments {
   return polylines(paths, 0xece6d3, 0.28);
 }
 
-export interface LevelLines { obj: THREE.Group; setZoom: (z: number) => void; }
+export interface LevelLines { obj: THREE.Group; setZoom: (z: number, sA: number, sB: number) => void; }
 
 // Слои по уровню; setZoom(z) повторяет масштаб/смешение форм точек: уходящая сжимается, входящая растёт.
 export function createLevelLines(): LevelLines {
@@ -63,11 +62,11 @@ export function createLevelLines(): LevelLines {
   const ease = (x: number): number => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   return {
     obj,
-    setZoom: (z) => {
+    setZoom: (z, sA, sB) => {
       const i = Math.min(LEVELS.length - 2, Math.floor(z)), k = ease(Math.min(1, Math.max(0, z - i)));
       for (const L of layers) {
         let s = 0, a = 0;
-        if (L.level === i) { s = Math.pow(SHRINK, k); a = 1 - k; } else if (L.level === i + 1) { s = Math.pow(GROW, 1 - k); a = k; }
+        if (L.level === i) { s = sA; a = 1 - k; } else if (L.level === i + 1) { s = sB; a = k; }
         L.mesh.visible = a > 0.02;
         if (!L.mesh.visible) continue;
         L.mesh.scale.setScalar(s); L.mesh.position.copy(PIVOT).multiplyScalar(1 - s);

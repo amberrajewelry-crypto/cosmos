@@ -13,7 +13,8 @@ const ease = (x: number): number => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * 
 export interface ScaleControl {
   level: () => number; step: (dir: -1 | 1) => boolean; nudge: (dz: number) => void; z: () => number;
   /** Живые данные пришли (геолокация, Kp) — перестроить формы уровней. */ refresh: () => void;
-  /** Вызывается на каждом кадре зума с дробным уровнем z (линейные слои повторяют масштаб). */ onZoom?: (z: number) => void;
+  /** Вызывается на каждом кадре зума: дробный уровень z и масштабы пары форм (линейные слои повторяют их). */ onZoom?: (z: number, sA: number, sB: number) => void;
+  /** Множитель форм не-тела под размер кадра (формы — во весь экран). */ setForm: (f: number) => void;
 }
 
 export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: number) => void, live: LiveShapes = {}): ScaleControl {
@@ -39,6 +40,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     let s = shapes.get(i); if (!s) { s = shapeFor(i, pts.body, pts.bodyColor, live); shapes.set(i, s); } return s;
   };
 
+  let form = 1;
   let zTarget = BODY_LEVEL, zNow = BODY_LEVEL, level = BODY_LEVEL, pair = -1, snapAt = 0, raf = 0;
 
   let painted = false;
@@ -62,8 +64,9 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     if (i !== pair) { pair = i; pts.setPair(shape(i), shape(i + 1)); }
     const k = ease(Math.min(1, Math.max(0, f)));
     pts.setMix(k);
-    pts.setScales(Math.pow(SHRINK, k), Math.pow(GROW, 1 - k));
-    ctl.onZoom?.(z);
+    const sA = Math.pow(SHRINK, k) * (i === BODY_LEVEL ? 1 : form), sB = Math.pow(GROW, 1 - k) * (i + 1 === BODY_LEVEL ? 1 : form);
+    pts.setScales(sA, sB);
+    ctl.onZoom?.(z, sA, sB);
     const lv = Math.round(z);
     if (lv !== level) { level = lv; paint(); onLevel(level); }
   }
@@ -87,7 +90,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
   }
   btns.forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.dir) as -1 | 1)));
   function refresh(): void { shapes.clear(); pair = -1; apply(zNow); }
-  const ctl: ScaleControl = { level: () => level, step, nudge, z: () => zNow, refresh };
+  const ctl: ScaleControl = { level: () => level, step, nudge, z: () => zNow, refresh, setForm: (f) => { form = f; apply(zNow); } };
   paint(); apply(zNow);
   return ctl;
 }

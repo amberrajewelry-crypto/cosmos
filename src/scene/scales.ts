@@ -141,8 +141,8 @@ export function shapeFor(level: number, body: Float32Array, bodyCol?: Float32Arr
         break;
       }
       case -10: { // ядро (3 %) + 1s-облако exp(-ρ)
-        if (k % 33 === 0) { sphere(r, 0.02, out, i); tint(col, i, C.red); }
-        else { sphere(r, Math.min(R, -Math.log(1 - r() * 0.98) * R * 0.28), out, i); tint(col, i, C.indigo, 0.9); }
+        if (k % 100 === 0) { sphere(r, 0.03 * Math.cbrt(r()), out, i); tint(col, i, C.red); }
+        else { sphere(r, Math.min(R, -Math.log(1 - r() * 0.98) * R * 0.4), out, i); tint(col, i, C.indigo, 0.9); }
         break;
       }
       case -5: { // клетка: мембрана, ядро, митохондрии, цитоскелет

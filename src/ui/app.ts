@@ -83,25 +83,17 @@ const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
 }, liveShapes);
-scale.onZoom = levelLines.setZoom; levelLines.setZoom(scale.z());
+scale.onZoom = levelLines.setZoom;
 stage.scene.add(body);
 
-// Курсор → точка на плоскости тела (z=0) в координатах группы: точки расступаются под лучом.
-const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
-const bodyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-window.addEventListener('pointerleave', () => bodyPts.setMouse(0, -10, 0));
-
-// Лёгкий параллакс от курсора: сцена отвечает на присутствие (без резких движений).
-let px = 0, py = 0, tx = 0, ty = 0;
-window.addEventListener('pointermove', (e) => {
-  tx = (e.clientX / innerWidth - 0.5); ty = (e.clientY / innerHeight - 0.5);
-  const r = stageEl.getBoundingClientRect();
-  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-  ray.setFromCamera(ndc, stage.camera);
-  if (ray.ray.intersectPlane(bodyPlane, hit)) { body.worldToLocal(hit); bodyPts.setMouse(hit.x, hit.y, 1); }
-}, { passive: true });
-
-function fit() { resize(stage, stageEl.clientWidth, stageEl.clientHeight); }
+// Курсор ничего не двигает: ни точки, ни параллакс — сцена отвечает только на явные жесты (зум, поворот).
+const LOOK = new THREE.Vector3(0, 0.95, 0);
+function fit() {
+  resize(stage, stageEl.clientWidth, stageEl.clientHeight);
+  // Формы уровней (кроме тела) — во весь кадр: радиус формы 0.85 → 0.82 полувысоты или полуширины кадра.
+  const halfH = Math.tan((stage.camera.fov / 2) * Math.PI / 180) * stage.camera.position.distanceTo(LOOK);
+  scale.setForm(Math.min(halfH * 0.82, halfH * stage.camera.aspect * 0.9) / 0.85);
+}
 // Иммерсия: интерфейс растворяется, когда курсор замер (только с мышью — на тач-экране нет «замершего курсора»).
 let idleT = 0;
 const wake = (): void => { document.documentElement.classList.remove('idle'); clearTimeout(idleT); idleT = window.setTimeout(() => { if (!document.documentElement.classList.contains('panel-open')) document.documentElement.classList.add('idle'); }, 4000); };
@@ -156,7 +148,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp' || e.key === ']') { scale.step(1); hintDone(); }
   else if (e.key === 'ArrowDown' || e.key === '[') { scale.step(-1); hintDone(); }
 });
-const LOOK = new THREE.Vector3(0, 0.95, 0);
 const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 1.2; };
 syncLook();
 const baseCam = stage.camera.position.clone();
@@ -176,9 +167,7 @@ function loop(now = performance.now()) {
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
-    px += (tx - px) * 0.03; py += (ty - py) * 0.03;
-    body.rotation.y = Math.sin(t * 0.3) * 0.18 + px * 0.35 + dragRot;
-    body.rotation.x = py * 0.08;
+    body.rotation.y = Math.sin(t * 0.3) * 0.18 + dragRot;
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
