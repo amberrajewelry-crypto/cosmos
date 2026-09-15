@@ -7,6 +7,7 @@ import { toValue } from '../registry/registry';
 import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
+import { dossier } from './dossier';
 
 export interface Place { lat: number; lon: number; }
 
@@ -34,6 +35,11 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place): void
         ? `<p class="natal-cap natal-star"><span class="tag tag-inline">[ОЦЕНКА]</span> Асцендент ${angles.asc.toFixed(1)}°, MC ${angles.mc.toFixed(1)}° — геометрия эклиптики для твоего времени и места. <span class="natal-src">точность зависит от точности времени: 4 минуты = 1°</span></p>`
         : `<p class="natal-cap natal-star natal-muted">Асцендент и MC не показаны: нужны время и место рождения — без них это было бы выдумкой.</p>`}
       <p class="natal-cap natal-star" id="natalStarLine">${starLine(star)}</p>
+      <section class="dossier" aria-label="Досье по реальным данным">
+        <h3>Досье по реальным данным</h3>
+        <p class="dossier-lead">Не толкования — факты о твоём дне, которые можно проверить. Каждый с тегом и источником.</p>
+        <ol>${dossier(when, new Date(), place).map((d) => `<li><span class="tag tag-inline tag-${d.tag}">[${d.tag}]</span><b>${d.title}</b><p>${d.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" target="_blank" rel="noopener">$1</a>')}</p><small>${d.source}</small></li>`).join('')}</ol>
+      </section>
       <div class="natal-share">
         <button id="natalPng">Скачать PNG</button>
         <button id="natalLink">Скопировать ссылку</button>

@@ -167,6 +167,18 @@
       .natal-more[open] summary::before { content: '−'; }
       .natal-more-row button { transition: background .4s var(--ease), transform .16s var(--ease); } .natal-more-row button:hover { background: rgba(201,168,92,.14); } .natal-more-row button:active { transform: scale(.97); }
       #status:empty { display: none; }
+      /* Досье по реальным данным (карта рождения) */
+      .dossier { max-width: 520px; margin: 26px auto 10px; text-align: left; }
+      .dossier h3 { font-family: var(--display); font-weight: 300; font-size: 15px; letter-spacing: -.01em; text-align: center; margin: 0 0 6px; }
+      .dossier-lead { font-family: var(--serif); font-size: 12.5px; color: var(--ink-2); text-align: center; margin: 0 0 14px; }
+      .dossier ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: d; }
+      .dossier li { position: relative; padding: 12px 14px 12px 40px; border-radius: 16px; background: rgba(236,230,211,.035); border: 1px solid rgba(236,230,211,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+      .dossier li::before { counter-increment: d; content: counter(d, decimal-leading-zero); position: absolute; left: 14px; top: 13px; font-family: var(--mono); font-size: 10px; color: var(--gold); letter-spacing: .1em; }
+      .dossier li b { display: block; font-family: var(--display); font-weight: 400; font-size: 12.5px; margin: 0 0 4px; padding-right: 70px; }
+      .dossier li .tag { position: absolute; right: 12px; top: 12px; }
+      .dossier li p { margin: 0; font-family: var(--serif); font-size: 13.5px; line-height: 1.45; color: var(--ink); }
+      .dossier li p a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-2); }
+      .dossier li small { display: block; margin-top: 5px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; color: var(--ink-2); opacity: .8; }
       /* 3. подсказка жеста — один раз, исчезает после первого зума */
       .hint { position: fixed; left: 50%; top: 74px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, -8px); } }
       .hint.out { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
