@@ -10,7 +10,7 @@ Live: https://cosmos-alpha-three.vercel.app
 - **LLM не вычисляет** (§3.3): все числа считает код (`src/compute`, `src/registry`), ответы модели проверяются на выдуманные числа.
 - **Приватность** (§3.7): координаты, дата и время рождения не покидают браузер; база городов и звёзд лежит в `public/`.
 - **Верификация — обязательство** (§3.8): `VERIFICATION.md`, тег `[ТОЧНО]` недоступен до сверки с внешним эталоном.
-- **Обратная связь** (блок 7): кнопка «число неверно» на каждой карточке; страница `/changelog/`; Issues здесь.
+- **Обратная связь** (блок 7): кнопка «число неверно» на каждой карточке; страница `/changelog/`; Issues: https://github.com/amberrajewelry-crypto/cosmos/issues
 
 ## Стек
 Vite + TypeScript + three.js, astronomy-engine, geomagnetism; serverless `/api` на Vercel. Тесты — vitest.
