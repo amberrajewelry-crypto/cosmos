@@ -17,7 +17,9 @@ import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
 import { openAsk } from './ask-ui';
 import { initScale } from './scale';
-import { BODY_LEVEL, LEVELS, expLabel } from '../scene/scales';
+import { BODY_LEVEL, LEVELS, expLabel, type LiveShapes } from '../scene/scales';
+import { helioPlanets, starsAltAz } from '../compute/liveshapes';
+import { loadStars } from '../data/stars';
 import { fetchKp } from '../live/noaa';
 import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
 import { localToUtc } from '../compute/localtime';
@@ -70,12 +72,14 @@ fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
   bodyPts.replaceBody(f); decays.rebind(f);
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
+// Живые данные форм: планеты на сейчас — сразу; звёзды и тела над горизонтом — после геолокации; Kp — из NOAA.
+const liveShapes: LiveShapes = { planets: helioPlanets(new Date()) };
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
   trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
   flux.points.visible = decays.obj.visible = neutrinos.obj.visible = fieldLines.obj.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
-});
+}, liveShapes);
 stage.scene.add(body);
 
 // Курсор → точка на плоскости тела (z=0) в координатах группы: точки расступаются под лучом.
@@ -247,7 +251,7 @@ function openWrong(v: Value): void {
 wrongDlg.querySelector('.natal-close')?.addEventListener('click', () => wrongDlg.close());
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
-fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; } render(); });
+fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); } render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;
@@ -278,7 +282,10 @@ btn.addEventListener('click', () => {
       const incl = magneticInclination(lat, lon, now).value ?? 60, decl = magneticDeclination(lat, lon, now).value ?? 0;
       neutrinos.setSun(alt, az); neutrinos.setOn(1); fieldLines.setField(incl, decl); fieldLines.setOn(1);
       innerLegend.innerHTML = `<span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span><span><i class="sw sw-nu"></i>нейтрино от Солнца, высота ${alt.toFixed(0)}° — ${alt > 0 ? 'сверху, в грудь' : 'снизу, сквозь Землю'}</span><span><i class="sw sw-mag"></i>магнитные линии, наклонение ${incl.toFixed(0)}°</span>`;
-      skyVisual = horizonSVG(skyBodies(lat, lon, now));
+      const bodies = skyBodies(lat, lon, now);
+      skyVisual = horizonSVG(bodies);
+      liveShapes.bodies = bodies.filter((b) => b.alt > 0);
+      loadStars().then((cat) => { liveShapes.stars = starsAltAz(cat, lat, lon, now); scale.refresh(); }).catch(() => scale.refresh());
       render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;

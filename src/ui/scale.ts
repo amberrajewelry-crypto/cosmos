@@ -3,15 +3,19 @@
 // текущая форма сжимается к точке, следующая входит из-за кадра — так виден сам масштаб, а не морф.
 import type { BodyPoints } from '../scene/particles';
 import { BODY_LEVEL, LEVELS, expLabel, shapeFor } from '../scene/scales';
+import type { LiveShapes, Shape } from '../scene/scales';
 
 const SHRINK = 0.1;   // во сколько раз сжимается уходящая форма
 const GROW = 7;       // во сколько раз крупнее кадра входит следующая
 const SNAP_MS = 220;  // пауза колеса → защёлкивание на ближайший уровень
 const ease = (x: number): number => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
-export interface ScaleControl { level: () => number; step: (dir: -1 | 1) => boolean; nudge: (dz: number) => void; z: () => number; }
+export interface ScaleControl {
+  level: () => number; step: (dir: -1 | 1) => boolean; nudge: (dz: number) => void; z: () => number;
+  /** Живые данные пришли (геолокация, Kp) — перестроить формы уровней. */ refresh: () => void;
+}
 
-export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: number) => void): ScaleControl {
+export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: number) => void, live: LiveShapes = {}): ScaleControl {
   root.innerHTML = `
     <div class="scale-row">
       <button type="button" class="scale-btn" data-dir="-1" aria-label="Внутрь: на уровень меньше">внутрь</button>
@@ -29,9 +33,9 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const MAX = LEVELS.length - 1;
 
-  const shapes = new Map<number, Float32Array>();
-  const shape = (i: number): Float32Array => {
-    let s = shapes.get(i); if (!s) { s = shapeFor(i, pts.body); shapes.set(i, s); } return s;
+  const shapes = new Map<number, Shape>();
+  const shape = (i: number): Shape => {
+    let s = shapes.get(i); if (!s) { s = shapeFor(i, pts.body, pts.bodyColor, live); shapes.set(i, s); } return s;
   };
 
   let zTarget = BODY_LEVEL, zNow = BODY_LEVEL, level = BODY_LEVEL, pair = -1, snapAt = 0, raf = 0;
@@ -73,6 +77,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     snapAt = performance.now() + SNAP_MS; kick();
   }
   btns.forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.dir) as -1 | 1)));
+  function refresh(): void { shapes.clear(); pair = -1; apply(zNow); }
   paint(); apply(zNow);
-  return { level: () => level, step, nudge, z: () => zNow };
+  return { level: () => level, step, nudge, z: () => zNow, refresh };
 }

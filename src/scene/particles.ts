@@ -69,13 +69,13 @@ const BODY_VERT = `
 ${NOISE_GLSL}
 uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal; uniform float uMix;
 uniform float uScaleA; uniform float uScaleB;
-attribute float aSeed; attribute vec3 aTarget;
+attribute float aSeed; attribute vec3 aTarget; attribute vec3 aColorB;
 const vec3 PIVOT = vec3(0., .9, 0.);
 varying vec3 vColor; varying float vTwinkle;
 void main(){
-  vColor = color;
   // §4.2 лестница масштабов: перестройка в форму другого уровня, каждая точка со своей задержкой.
   float mx = smoothstep(0., 1., clamp((uMix - fract(aSeed*.53)*.3) / .7, 0., 1.));
+  vColor = mix(color, aColorB, mx);
   // Непрерывный зум: текущая форма сжимается к точке, следующая входит из-за кадра (масштаб вокруг центра фигуры).
   vec3 p = mix((position - PIVOT) * uScaleA + PIVOT, (aTarget - PIVOT) * uScaleB + PIVOT, mx);
   // §2.4 «внутри неё медленно проступают точки»: сборка из рассеяния, каждая точка со своей задержкой.
@@ -107,11 +107,11 @@ void main(){
 
 export interface BodyPoints {
   points: THREE.Points; setMouse: (x: number, y: number, on: number) => void; setTime: (t: number) => void; setReveal: (r: number) => void;
-  /** Исходные позиции фигуры (для генерации форм уровней). */ body: Float32Array;
+  /** Исходные позиции и цвета фигуры (для генерации форм уровней). */ body: Float32Array; bodyColor: Float32Array;
   /** Задать форму-цель и долю смешения 0..1; commit — сделать цель текущей позицией. */
   setTarget: (t: Float32Array) => void; setMix: (m: number) => void; commitTarget: () => void;
   /** Пара форм A→B для непрерывного зума и их масштабы вокруг центра фигуры. */
-  setPair: (a: Float32Array, b: Float32Array) => void; setScales: (a: number, b: number) => void;
+  setPair: (a: { pos: Float32Array; col: Float32Array }, b: { pos: Float32Array; col: Float32Array }) => void; setScales: (a: number, b: number) => void;
   /** Яркость спрайтов: портретная камера дальше — точки плотнее, гасим накопление. */ setGain: (g: number) => void;
   /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
 }
@@ -141,6 +141,9 @@ export function createBodyParticles(count = 9000): BodyPoints {
   const bodyPos = pos.slice(0, i * 3);
   const target = new THREE.BufferAttribute(bodyPos.slice(), 3);
   geom.setAttribute('aTarget', target);
+  const bodyCol = col.slice(0, i * 3);
+  const colorB = new THREE.BufferAttribute(bodyCol.slice(), 3);
+  geom.setAttribute('aColorB', colorB);
   const mat = new THREE.ShaderMaterial({
     vertexShader: BODY_VERT, fragmentShader: BODY_FRAG, vertexColors: true,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -155,7 +158,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setMouse: (x, y, on) => { mat.uniforms.uMouse.value.set(x, y, 0); mat.uniforms.uMouseOn.value = on; },
     setTime: (t) => { mat.uniforms.uTime.value = t; },
     setReveal: (r) => { mat.uniforms.uReveal.value = r; },
-    body: bodyPos,
+    body: bodyPos, bodyColor: bodyCol,
     replaceBody: (b) => {
       const n = Math.min(b.length, bodyPos.length);
       bodyPos.set(b.subarray(0, n));
@@ -166,9 +169,11 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setTarget: (t) => { (target.array as Float32Array).set(t); target.needsUpdate = true; },
     setMix: (m) => { mat.uniforms.uMix.value = m; },
     setPair: (a, b) => {
-      const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
-      (posAttr.array as Float32Array).set(a); posAttr.needsUpdate = true;
-      (target.array as Float32Array).set(b); target.needsUpdate = true;
+      const posAttr = geom.getAttribute('position') as THREE.BufferAttribute, colAttr = geom.getAttribute('color') as THREE.BufferAttribute;
+      (posAttr.array as Float32Array).set(a.pos); posAttr.needsUpdate = true;
+      (colAttr.array as Float32Array).set(a.col); colAttr.needsUpdate = true;
+      (target.array as Float32Array).set(b.pos); target.needsUpdate = true;
+      (colorB.array as Float32Array).set(b.col); colorB.needsUpdate = true;
     },
     setScales: (a, b) => { mat.uniforms.uScaleA.value = a; mat.uniforms.uScaleB.value = b; },
     setGain: (g) => { mat.uniforms.uGain.value = g; },
