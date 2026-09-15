@@ -1,10 +1,15 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 // scene/ только рисует — ничего не считает и не грузит (§3.2).
 export interface Stage {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
+  /** Кадр: bloom-проход, если включён, иначе прямой рендер. */ render: () => void;
+  /** Свечение ярких точек (§4.5); выключается при деградации качества. */ setBloom: (on: boolean) => void;
 }
 
 export function createStage(canvas: HTMLCanvasElement): Stage {
@@ -20,11 +25,28 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
   camera.lookAt(0, 0.9, 0);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-  return { renderer, scene, camera };
+
+  // Bloom: порог выше фона-туманности, так светятся только точки; без OutputPass —
+  // шейдеры точек и фона пишут готовый цвет, конвертация всё сломала бы.
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.42, 0.45, 0.4);
+  composer.addPass(bloom);
+  let bloomOn = true;
+  return {
+    renderer, scene, camera,
+    render: () => { if (bloomOn) composer.render(); else renderer.render(scene, camera); },
+    setBloom: (on) => { bloomOn = on; },
+    composer, bloom,
+  } as Stage & { composer: EffectComposer; bloom: UnrealBloomPass };
 }
 
 export function resize(stage: Stage, w: number, h: number): void {
   stage.renderer.setSize(w, h, false);
+  const st = stage as Stage & { composer?: EffectComposer; bloom?: UnrealBloomPass };
+  if (st.composer) { st.composer.setPixelRatio(stage.renderer.getPixelRatio()); st.composer.setSize(w, h); }
+  // Портрет: точки плотнее и pixelRatio выше — свечение накапливается, гасим сильнее.
+  if (st.bloom) st.bloom.strength = h > w ? 0.18 : 0.42;
   stage.camera.aspect = w / h;
   // Портрет (мобилка): сцена — отдельное окно под hero, тело по центру, чуть дальше.
   const portrait = h > w;

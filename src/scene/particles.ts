@@ -88,9 +88,11 @@ void main(){
   vec3 toM = p - uMouse; float d = length(toM.xy);
   float push = smoothstep(.3, 0., d) * uMouseOn;
   p += normalize(vec3(toM.xy, 0.) + 1e-4) * push * .09;
-  vTwinkle = (.75 + .25*sin(uTime*1.7 + aSeed*31.)) * mix(.15, 1., rv);
   vec4 mv = modelViewMatrix * vec4(p, 1.);
-  gl_PointSize = (1.6 + 3.2*fract(aSeed*7.3)) * uPixelRatio * (2.8 / -mv.z);
+  // Глубина: ближние точки крупнее и ярче, дальние тонут — облако читается объёмом.
+  float depth = clamp((-mv.z - 2.4) / 3.2, 0., 1.);
+  vTwinkle = (.75 + .25*sin(uTime*1.7 + aSeed*31.)) * mix(.15, 1., rv) * mix(1.2, .5, depth);
+  gl_PointSize = (1.6 + 3.2*fract(aSeed*7.3)) * uPixelRatio * (2.8 / -mv.z) * mix(1.25, .8, depth);
   gl_Position = projectionMatrix * mv;
 }`;
 const BODY_FRAG = `

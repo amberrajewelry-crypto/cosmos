@@ -145,7 +145,7 @@ function loop(now = performance.now()) {
   if (!degraded) {
     const ft = now - lastFrame; lastFrame = now;
     slowFrames = ft > 33 ? slowFrames + 1 : 0;
-    if (slowFrames > 60) { degraded = true; stage.renderer.setPixelRatio(1); fit(); }
+    if (slowFrames > 60) { degraded = true; stage.renderer.setPixelRatio(1); stage.setBloom(false); fit(); }
   }
   bodyPts.setReveal(reduceMotion ? 1 : Math.min(1, (now - t0) / 4200));
   stage.camera.position.copy(baseCam);
@@ -161,7 +161,7 @@ function loop(now = performance.now()) {
     stage.renderer.getDrawingBufferSize(dbSize);
     nebula.update(now / 1000, dbSize.x, dbSize.y);
   }
-  stage.renderer.render(stage.scene, stage.camera);
+  stage.render();
   requestAnimationFrame(loop);
 }
 loop();
