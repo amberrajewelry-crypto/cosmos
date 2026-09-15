@@ -13,6 +13,7 @@ const ease = (x: number): number => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * 
 export interface ScaleControl {
   level: () => number; step: (dir: -1 | 1) => boolean; nudge: (dz: number) => void; z: () => number;
   /** Живые данные пришли (геолокация, Kp) — перестроить формы уровней. */ refresh: () => void;
+  /** Вызывается на каждом кадре зума с дробным уровнем z (линейные слои повторяют масштаб). */ onZoom?: (z: number) => void;
 }
 
 export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: number) => void, live: LiveShapes = {}): ScaleControl {
@@ -40,7 +41,14 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
 
   let zTarget = BODY_LEVEL, zNow = BODY_LEVEL, level = BODY_LEVEL, pair = -1, snapAt = 0, raf = 0;
 
+  let painted = false;
   function paint(): void {
+    // Титр перетекает через blur (класс swap на 160 мс), первая отрисовка — сразу.
+    if (painted && !reduce) { root.classList.add('swap'); setTimeout(() => { paintNow(); root.classList.remove('swap'); }, 160); }
+    else paintNow();
+    painted = true;
+  }
+  function paintNow(): void {
     const L = LEVELS[level];
     exp.textContent = expLabel(L.exp); name.textContent = L.name;
     fact.textContent = L.fact; tag.textContent = `[${L.tag}]`; tag.className = `tag tag-${L.tag}`;
@@ -55,6 +63,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     const k = ease(Math.min(1, Math.max(0, f)));
     pts.setMix(k);
     pts.setScales(Math.pow(SHRINK, k), Math.pow(GROW, 1 - k));
+    ctl.onZoom?.(z);
     const lv = Math.round(z);
     if (lv !== level) { level = lv; paint(); onLevel(level); }
   }
@@ -78,6 +87,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
   }
   btns.forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.dir) as -1 | 1)));
   function refresh(): void { shapes.clear(); pair = -1; apply(zNow); }
+  const ctl: ScaleControl = { level: () => level, step, nudge, z: () => zNow, refresh };
   paint(); apply(zNow);
-  return { level: () => level, step, nudge, z: () => zNow, refresh };
+  return ctl;
 }

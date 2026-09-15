@@ -3,6 +3,7 @@ import { createStage, resize } from '../scene/renderer';
 import { createBodyParticles, createStarfield, createFlux } from '../scene/particles';
 import { createDecays, createNeutrinos, createFieldLines } from '../scene/inner';
 import { createNebula } from '../scene/nebula';
+import { createLevelLines } from '../scene/lines';
 import { renderPanel } from './panel';
 import { toValue } from '../registry/registry';
 import { reliktPhotons, ownRadioactivity, primordialHydrogenPercent } from '../compute/body';
@@ -63,6 +64,7 @@ body.add(flux.points);
 // §4.1 внутренняя жизнь: распады сразу; нейтрино и магнитные линии — когда известна точка (§3.7).
 const decays = createDecays(bodyPts.body), neutrinos = createNeutrinos(), fieldLines = createFieldLines();
 body.add(decays.obj, neutrinos.obj, fieldLines.obj);
+const levelLines = createLevelLines(); body.add(levelLines.obj);
 const innerLegend = document.getElementById('innerLegend') as HTMLElement;
 // Анатомическая фигура (§4.1): 9000 точек внутри меша, 54 КБ; до загрузки — капсульная.
 fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
@@ -81,6 +83,7 @@ const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
 }, liveShapes);
+scale.onZoom = levelLines.setZoom; levelLines.setZoom(scale.z());
 stage.scene.add(body);
 
 // Курсор → точка на плоскости тела (z=0) в координатах группы: точки расступаются под лучом.
@@ -137,6 +140,22 @@ stageEl.addEventListener('touchmove', (e) => {
   pinchD = d; e.preventDefault();
 }, { passive: false });
 stageEl.addEventListener('touchend', () => { pinchD = 0; });
+// Подсказка жеста — один раз на устройство, гаснет после первого зума/поворота.
+const hint = document.getElementById('hint') as HTMLElement;
+const hintDone = (): void => { if (!hint.hidden && !hint.classList.contains('out')) { hint.classList.add('out'); try { localStorage.setItem('cosmos.hint', '1'); } catch { /* приватный режим */ } } };
+let hintSeen = false; try { hintSeen = !!localStorage.getItem('cosmos.hint'); } catch { /* ignore */ }
+if (!hintSeen && !reduceMotion) setTimeout(() => {
+  hint.textContent = matchMedia('(pointer: coarse)').matches ? 'щипок — масштаб · потяни — поворот' : 'колесо — масштаб · потяни — поворот · ↑ ↓';
+  hint.hidden = false; setTimeout(hintDone, 9000);
+}, 3600);
+stageEl.addEventListener('wheel', hintDone, { passive: true, once: true });
+stageEl.addEventListener('pointerdown', hintDone, { passive: true, once: true });
+// Клавиши — без анимации ожидания: ↑/] наружу, ↓/[ внутрь (§Emil: клавиатурные действия мгновенны).
+document.addEventListener('keydown', (e) => {
+  if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable]')) return;
+  if (e.key === 'ArrowUp' || e.key === ']') { scale.step(1); hintDone(); }
+  else if (e.key === 'ArrowDown' || e.key === '[') { scale.step(-1); hintDone(); }
+});
 const LOOK = new THREE.Vector3(0, 0.95, 0);
 const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 1.2; };
 syncLook();
@@ -189,11 +208,29 @@ const byId = (id: string) => bodyValues.find((v) => v.id === id);
   (byId('body.relikt.photons')?.value ?? 0).toLocaleString('ru-RU');
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.documentElement.classList.add('staged');
-  const stages = document.querySelectorAll<HTMLElement>('#hero .stage');
-  [2000, 5000].forEach((ms, i) => setTimeout(() => stages[i]?.classList.add('on'), ms));
+  document.querySelectorAll<HTMLElement>('.stage[data-t]').forEach((el) => setTimeout(() => el.classList.add('on'), Number(el.dataset.t)));
 }
 
 const panel = document.getElementById('panel') as HTMLElement;
+// Панель как drawer: свайп вправо закрывает — по расстоянию или по скорости флика (velocity > 0.11 px/мс).
+{
+  let sx = 0, sy = 0, dx = 0, t0d = 0, horiz: boolean | null = null;
+  panel.addEventListener('pointerdown', (e) => { if (matchMedia('(min-width: 761px)').matches) { sx = e.clientX; sy = e.clientY; dx = 0; t0d = performance.now(); horiz = null; } else horiz = false; });
+  panel.addEventListener('pointermove', (e) => {
+    if (horiz === false || !t0d) return;
+    const mx = e.clientX - sx, my = e.clientY - sy;
+    if (horiz === null) { if (Math.abs(mx) < 6 && Math.abs(my) < 6) return; horiz = Math.abs(mx) > Math.abs(my); if (!horiz) return; panel.classList.add('dragging'); panel.setPointerCapture(e.pointerId); }
+    dx = Math.max(0, mx); panel.style.transform = `translateX(${dx}px)`; panel.style.opacity = String(1 - dx / 600);
+  });
+  const end = (): void => {
+    if (!horiz) { t0d = 0; return; }
+    const v = dx / Math.max(1, performance.now() - t0d);
+    panel.classList.remove('dragging'); panel.style.transform = ''; panel.style.opacity = '';
+    if (dx > 120 || v > 0.11) document.documentElement.classList.remove('panel-open');
+    horiz = null; t0d = 0;
+  };
+  panel.addEventListener('pointerup', end); panel.addEventListener('pointercancel', end);
+}
 let currentSky: Value[] = [];
 let skyVisual = '';
 let liveValues: Value[] = [];
