@@ -16,12 +16,13 @@ import { openNatal } from '../natal/natal';
 import { openHonesty } from './honesty';
 import { openAsk } from './ask-ui';
 import { initScale } from './scale';
-import { BODY_LEVEL } from '../scene/scales';
+import { BODY_LEVEL, LEVELS, expLabel } from '../scene/scales';
 import { fetchKp } from '../live/noaa';
 import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
 import { localToUtc } from '../compute/localtime';
 import { sendFeedback, track, trackZoom } from '../live/feedback';
 import { wrongNumberMailto } from './panel';
+import { contentValues, levelName, type Ctx } from '../registry/content';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -65,7 +66,7 @@ fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
-  trackZoom(lvl);
+  trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
   flux.points.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
 });
@@ -178,12 +179,18 @@ const panel = document.getElementById('panel') as HTMLElement;
 let currentSky: Value[] = [];
 let skyVisual = '';
 let liveValues: Value[] = [];
-function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues]; }
+// §2.3 контент-база: 77 параметров по уровням масштаба. Контекст — всё, что человек уже дал (место, дата рождения, Kp).
+const ctx: Ctx = { when: new Date(), massKg: 70, heightM: 1.7 };
+let contentLevel = BODY_LEVEL;
+function contentAll(): Value[] { return contentValues({ ...ctx, when: new Date() }); }
+function contentHere(): Value[] { return contentValues({ ...ctx, when: new Date() }, contentLevel); }
+function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues, ...contentAll()]; }
 function render() {
   renderPanel(panel, [
     { title: 'Небо в твоей точке', note: 'Появится после «Показать, что происходит именно с тобой» — координаты не покидают браузер.', values: currentSky, visual: skyVisual },
     { title: 'Твоё тело', values: bodyValues },
     { title: 'Живое сейчас', note: 'NOAA Kp загружается…', values: liveValues },
+    { title: `${expLabel(LEVELS[contentLevel].exp)} — ${levelName(contentLevel)}`, note: 'Меняй масштаб кнопками «внутрь»/«наружу» — параметры следуют за уровнем.', values: contentHere() },
   ]);
 }
 render();
@@ -231,7 +238,7 @@ function openWrong(v: Value): void {
 wrongDlg.querySelector('.natal-close')?.addEventListener('click', () => wrongDlg.close());
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
-fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') kpLive = c.value; render(); });
+fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; } render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;
@@ -256,7 +263,7 @@ btn.addEventListener('click', () => {
         magneticDeclination(lat, lon, now),
         neutrinoFlux(lat, lon, now),
       ].map(toValue);
-      currentSky = sky;
+      currentSky = sky; ctx.lat = lat; ctx.lon = lon;
       skyVisual = horizonSVG(skyBodies(lat, lon, now));
       render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
@@ -272,7 +279,7 @@ const natalOverlay = document.getElementById('natal') as HTMLElement;
 const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
 const birth = document.getElementById('birth') as HTMLInputElement;
 // Уточнение времени/места показываем только когда дата введена — экран без лишних строк.
-birth.addEventListener('input', () => document.documentElement.classList.toggle('has-birth', !!birth.value));
+birth.addEventListener('input', () => { document.documentElement.classList.toggle('has-birth', !!birth.value); ctx.ageYears = birth.value ? (Date.now() - new Date(birth.value).getTime()) / (365.25 * 86_400_000) : undefined; render(); });
 (document.getElementById('openPanel') as HTMLButtonElement).addEventListener('click', () => {
   document.documentElement.classList.toggle('panel-open');
   document.getElementById('panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

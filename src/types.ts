@@ -11,6 +11,7 @@ export type ScaleLevel =
 
 // union, а не голый string — опечатка id не должна компилироваться. Пополняется реестром 92 параметров.
 export type LayerId =
+  | `c.${string}`
   | 'sky.sun.altitude'
   | 'sky.sun.azimuth'
   | 'sky.moon.altitude'
