@@ -214,7 +214,7 @@ section p{color:var(--ink2)}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a href="/">${BRAND[lang]}</a><a href="${s.altUrl}">${s.altLabel}</a></div>${s.inner}
+  <header class="top"><a href="/">${BRAND[lang]}</a><a href="${s.altUrl}">${s.altLabel}</a></header><main>${s.inner}</main>
 </div>
 </body>
 </html>`;
