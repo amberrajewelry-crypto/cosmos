@@ -3,6 +3,7 @@ import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
 import { natalBodies } from '../compute/natalbodies';
 import { dossier } from './dossier';
+import { dateFacts } from './datefacts';
 import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
@@ -26,6 +27,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   const when = new Date(Date.UTC(REF_YEAR, month - 1, day, 12, 0, 0));
   const { sunLon, signIndex, constellationLatin, matches } = sunSignAndConstellation(when);
   const precession = precessionOffsetDeg(when);
+  const df = dateFacts(REF_YEAR, month, day);
 
   const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
   const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
@@ -92,6 +94,31 @@ export function natalPage(month: number, day: number, lang: Lang): string {
         ...(isOphiuchus ? [[`Is Ophiuchus really the 13th zodiac sign?`,
          `Yes. On ${dateStr} the Sun really passes through the constellation Ophiuchus — horoscopes simply ignore it, though astronomically it is a full zodiac constellation.`] as [string, string]] : []),
       ];
+
+  // Небо этой даты (уникальные числа против thin-content): склонение, расстояние, скорость, окно созвездия, метеоры.
+  const fmtDate = (d: Date) => lang === 'ru' ? `${d.getUTCDate()} ${MONTHS_RU[d.getUTCMonth()]}` : `${MONTHS_EN[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  const n1 = (x: number) => x.toFixed(1), n2 = (x: number) => x.toFixed(2);
+  const north = df.dec > 0;
+  const showersTxt = df.showers.length
+    ? df.showers.map((sh) => `${lang === 'ru' ? sh.ru : sh.en} (${lang === 'ru' ? 'максимум' : 'peak'} ${fmtDate(new Date(Date.UTC(REF_YEAR, sh.peak[0] - 1, sh.peak[1])))}, ZHR ${sh.zhr})`).join('; ')
+    : (lang === 'ru' ? 'крупных потоков нет — небо для тихих звёзд' : 'no major showers — a night for quiet stars');
+  const sky = lang === 'ru'
+    ? [`Солнце в созвездии ${constellation} с <b>${fmtDate(df.entered)}</b> по <b>${fmtDate(df.leaves)}</b> — ${df.spanDays} дней; от точки весеннего равноденствия по эклиптике пройдено ${n1(df.sunLon)}°.`,
+       `Склонение Солнца <b>${n1(df.dec)}°</b>: ${north ? 'день длиннее ночи в северном полушарии' : 'ночь длиннее дня в северном полушарии'}${Math.abs(df.dec) < 1 ? ' — почти равноденствие' : ''}.`,
+       `Земля в этот день в <b>${n2(df.distAu * 149.597870700)} млн км</b> от Солнца (${df.distAu.toFixed(3)} а.е.) и летит по орбите <b>${n2(df.speedKms)} км/с</b>${df.speedKms > 30 ? ' — быстрее среднего: зима северного полушария ближе к перигелию' : df.speedKms < 29.5 ? ' — медленнее среднего: лето северного полушария ближе к афелию' : ''}.`,
+       `Метеорные потоки в этот день: ${showersTxt}.`]
+    : [`The Sun sits in ${constellation} from <b>${fmtDate(df.entered)}</b> to <b>${fmtDate(df.leaves)}</b> — ${df.spanDays} days; its ecliptic longitude is ${n1(df.sunLon)}°.`,
+       `Solar declination <b>${n1(df.dec)}°</b>: ${north ? 'days are longer than nights in the northern hemisphere' : 'nights are longer than days in the northern hemisphere'}${Math.abs(df.dec) < 1 ? ' — almost an equinox' : ''}.`,
+       `Earth is <b>${n2(df.distAu * 149.597870700)} million km</b> from the Sun (${df.distAu.toFixed(3)} AU), moving at <b>${n2(df.speedKms)} km/s</b>${df.speedKms > 30 ? ' — faster than average, near perihelion' : df.speedKms < 29.5 ? ' — slower than average, near aphelion' : ''}.`,
+       `Meteor showers active today: ${showersTxt}.`];
+  const skyHtml = `<div class="facts"><h2>${lang === 'ru' ? `Небо ${dateStr}: цифры, которые не зависят от года` : `The sky on ${dateStr}: numbers that do not depend on the year`}</h2><ul>${sky.map((x) => `<li>${x}</li>`).join('')}</ul>
+    <p class="note">${lang === 'ru' ? 'Эфемериды astronomy-engine (VSOP87, сверено с JPL Horizons); метеорные потоки — рабочий список IMO.' : 'Ephemerides: astronomy-engine (VSOP87, checked against JPL Horizons); meteor showers: IMO working list.'}</p></div>`;
+  faq.push(lang === 'ru'
+    ? [`Когда Солнце входит в созвездие ${constellation} и выходит из него?`, `В опорном году Солнце входит в ${constellation} ${fmtDate(df.entered)} и выходит ${fmtDate(df.leaves)} — всего ${df.spanDays} дней. Границы созвездий — IAU 1930, они неравные, поэтому «знаки» разной длины.`]
+    : [`When does the Sun enter and leave ${constellation}?`, `In the reference year the Sun enters ${constellation} on ${fmtDate(df.entered)} and leaves on ${fmtDate(df.leaves)} — ${df.spanDays} days. Constellation boundaries are the IAU 1930 ones and are unequal, so the “signs” differ in length.`]);
+  // Соседние даты и страница знака — перелинковка кластера.
+  const prev = new Date(Date.UTC(REF_YEAR, month - 1, day - 1)), next = new Date(Date.UTC(REF_YEAR, month - 1, day + 1));
+  const navHtml = `<nav class="dates"><a href="${urlFor(lang, prev.getUTCMonth() + 1, prev.getUTCDate())}">← ${fmtDate(prev)}</a><a href="${signUrl(lang, signIndex)}">${lang === 'ru' ? `все даты знака ${sign}` : `all ${sign} dates`}</a><a href="${urlFor(lang, next.getUTCMonth() + 1, next.getUTCDate())}">${fmtDate(next)} →</a></nav>`;
   const faqHtml = `<div class="faq"><h2>${lang === 'ru' ? 'Частые вопросы' : 'FAQ'}</h2>${
     faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>`;
   const faqLd = `<script type="application/ld+json">${JSON.stringify({
@@ -109,9 +136,11 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <p class="why">${t.why}</p>
+  ${skyHtml}
   ${isOphiuchus ? `<p class="why"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold)">${lang === 'ru' ? 'Твоё созвездие — Змееносец, настоящий 13-й знак зодиака →' : 'Your constellation is Ophiuchus — the real 13th zodiac sign →'}</a></p>` : ''}
   ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>
+  ${navHtml}
   <p class="privacy">${t.privacy}</p>`;
 
   return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
@@ -175,6 +204,7 @@ h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;c
 .days a{color:var(--ink2);font-family:var(--mono);font-size:12px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
 .days a:hover{color:var(--ink);border-color:var(--gold2)}
 .faq{margin:30px 0}
+.dates{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:26px 0 8px;font-size:14px}.dates a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(214,180,106,.35)}
 .faq details{border-bottom:1px solid rgba(236,230,211,.1);padding:12px 0}
 .faq summary{cursor:pointer;font-size:19px;font-weight:500}
 .faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
