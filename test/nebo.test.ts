@@ -6,7 +6,8 @@ describe('/nebo/{дата}', () => {
     const h = neboPage('2001-09-14', 'ru');
     expect(h).toContain('созвездии <b>Лев</b>');
     expect(h).toContain('«Дева»');
-    expect((h.match(/<li>/g) ?? []).length).toBe(8);
+    expect((h.match(/<li>/g) ?? []).length).toBe(8 + 7); // 7 тел + Луна; + 7 пунктов досье дня (с APOD)
+    expect(h).toContain("Досье дня по реальным данным"); expect(h).toContain("ap010914.html");
     expect(h).toContain('/nebo/2001-09-13/');
     expect(h).toContain('href="/?birth=2001-09-14"');
   });
