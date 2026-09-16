@@ -25,3 +25,12 @@ for (const [tag, ctx] of [['desktop', { viewport: { width: 1440, height: 900 } }
     });
   });
 }
+
+// Ссылка шеринга открывает карту сразу и в тех же терминах (местное время + tz): ASC не должен «уплыть».
+test('ссылка шеринга открывает карту с тем же ASC', async ({ page }) => {
+  await page.goto('/?nobloom&birth=1991-03-14&t=08:30&lat=41.716&lon=44.783&tz=Asia%2FTbilisi');
+  await expect(page.locator('.dossier li').first()).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('html')).toHaveClass(/has-birth/);
+  const text = await page.locator('#natal').innerText();
+  expect(text).toMatch(/ASC|асцендент/i);
+});

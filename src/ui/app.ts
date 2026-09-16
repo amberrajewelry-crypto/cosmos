@@ -18,8 +18,9 @@ import { initScale } from './scale';
 import { BODY_LEVEL, LEVELS, expLabel, type LiveShapes } from '../scene/scales';
 import { helioPlanets } from '../compute/liveshapes';
 import { fetchKp } from '../live/noaa';
-import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
-import { localToUtc } from '../compute/localtime';
+import { initBirthForm } from './birth-form';
+import { initGestures } from './gestures';
+import { initDrawer } from './drawer';
 import { sendFeedback, track, trackZoom } from '../live/feedback';
 import { wrongNumberMailto } from './panel';
 import { contentValues, levelName, type Ctx } from '../registry/content';
@@ -121,38 +122,7 @@ const t0 = performance.now();
 const openNatal = async (...a: Parameters<typeof import('../natal/natal').openNatal>) => (await import('../natal/natal')).openNatal(...a);
 const openAsk = async (...a: Parameters<typeof import('./ask-ui').openAsk>) => (await import('./ask-ui')).openAsk(...a);
 const openHonesty = async (...a: Parameters<typeof import('./honesty').openHonesty>) => (await import('./honesty')).openHonesty(...a);
-// Зум (§4.2): колесо и пинч ведут непрерывный z лестницы масштабов; перетаскивание крутит фигуру.
-stageEl.addEventListener('wheel', (e) => {
-  if (Math.abs(e.deltaY) < 1) return;
-  scale.nudge(Math.max(-0.35, Math.min(0.35, e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022))));
-}, { passive: true });
-let dragRot = 0, dragV = 0, dragX: number | null = null, pinchD = 0;
-stageEl.addEventListener('pointerdown', (e) => { if (e.isPrimary && (e.target as HTMLElement).closest('button,a,input') == null) dragX = e.clientX; });
-addEventListener('pointermove', (e) => { if (dragX != null && e.isPrimary) { const d = (e.clientX - dragX) * 0.006; dragRot += d; dragV = d; dragX = e.clientX; } });
-addEventListener('pointerup', () => { dragX = null; });
-stageEl.addEventListener('touchmove', (e) => {
-  if (e.touches.length !== 2) return;
-  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-  if (pinchD) scale.nudge(-Math.log(d / pinchD) * 1.2); // разводим пальцы = внутрь
-  pinchD = d; e.preventDefault();
-}, { passive: false });
-stageEl.addEventListener('touchend', () => { pinchD = 0; });
-// Подсказка жеста — один раз на устройство, гаснет после первого зума/поворота.
-const hint = document.getElementById('hint') as HTMLElement;
-const hintDone = (): void => { if (!hint.hidden && !hint.classList.contains('out')) { hint.classList.add('out'); try { localStorage.setItem('cosmos.hint', '1'); } catch { /* приватный режим */ } } };
-let hintSeen = false; try { hintSeen = !!localStorage.getItem('cosmos.hint'); } catch { /* ignore */ }
-if (!hintSeen && !reduceMotion) setTimeout(() => {
-  hint.textContent = matchMedia('(pointer: coarse)').matches ? 'щипок — масштаб · потяни — поворот' : 'колесо — масштаб · потяни — поворот · ↑ ↓';
-  hint.hidden = false; setTimeout(hintDone, 9000);
-}, 3600);
-stageEl.addEventListener('wheel', hintDone, { passive: true, once: true });
-stageEl.addEventListener('pointerdown', hintDone, { passive: true, once: true });
-// Клавиши — без анимации ожидания: ↑/] наружу, ↓/[ внутрь (§Emil: клавиатурные действия мгновенны).
-document.addEventListener('keydown', (e) => {
-  if ((e.target as HTMLElement).closest('input,textarea,select,[contenteditable]')) return;
-  if (e.key === 'ArrowUp' || e.key === ']') { scale.step(1); hintDone(); }
-  else if (e.key === 'ArrowDown' || e.key === '[') { scale.step(-1); hintDone(); }
-});
+const drag = initGestures(stageEl, scale, reduceMotion);
 const syncLook = (): void => { LOOK.y = portrait ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
@@ -172,8 +142,8 @@ function loop(now = performance.now()) {
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
-    if (dragX == null) { dragRot += dragV; dragV *= 0.93; } // инерция после отпускания: докручивается и гаснет
-    body.rotation.y = Math.sin(t * 0.3) * 0.18 + dragRot;
+    if (drag.x == null) { drag.rot += drag.v; drag.v *= 0.93; } // инерция после отпускания: докручивается и гаснет
+    body.rotation.y = Math.sin(t * 0.3) * 0.18 + drag.rot;
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
@@ -207,25 +177,7 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 }
 
 const panel = document.getElementById('panel') as HTMLElement;
-// Панель как drawer: свайп вправо закрывает — по расстоянию или по скорости флика (velocity > 0.11 px/мс).
-{
-  let sx = 0, sy = 0, dx = 0, t0d = 0, horiz: boolean | null = null;
-  panel.addEventListener('pointerdown', (e) => { if (matchMedia('(min-width: 761px)').matches) { sx = e.clientX; sy = e.clientY; dx = 0; t0d = performance.now(); horiz = null; } else horiz = false; });
-  panel.addEventListener('pointermove', (e) => {
-    if (horiz === false || !t0d) return;
-    const mx = e.clientX - sx, my = e.clientY - sy;
-    if (horiz === null) { if (Math.abs(mx) < 6 && Math.abs(my) < 6) return; horiz = Math.abs(mx) > Math.abs(my); if (!horiz) return; panel.classList.add('dragging'); panel.setPointerCapture(e.pointerId); }
-    dx = Math.max(0, mx); panel.style.transform = `translateX(${dx}px)`; panel.style.opacity = String(1 - dx / 600);
-  });
-  const end = (): void => {
-    if (!horiz) { t0d = 0; return; }
-    const v = dx / Math.max(1, performance.now() - t0d);
-    panel.classList.remove('dragging'); panel.style.transform = ''; panel.style.opacity = '';
-    if (dx > 120 || v > 0.11) document.documentElement.classList.remove('panel-open');
-    horiz = null; t0d = 0;
-  };
-  panel.addEventListener('pointerup', end); panel.addEventListener('pointercancel', end);
-}
+initDrawer(panel);
 let currentSky: Value[] = [];
 let skyVisual = '';
 let liveValues: Value[] = [];
@@ -277,7 +229,7 @@ function openWrong(v: Value): void {
   form.onsubmit = async (e) => {
     e.preventDefault();
     const f = new FormData(form);
-    const attach = f.get('attach') === 'on' && birthLat.value ? `lat ${birthLat.value}, lon ${birthLon.value}, birth ${birth.value} ${birthTime.value} ${birthTz.value}` : undefined;
+    const attach = f.get('attach') === 'on' ? bf.inputsText() : undefined;
     const fb = { kind: 'wrong' as const, id: v.id, shown: `${v.value ?? '—'} ${v.unit}`, expected: String(f.get('expected')), source: String(f.get('source')), inputs: attach };
     const ok = await sendFeedback(fb);
     wrongDlg.close();
@@ -335,7 +287,8 @@ btn.addEventListener('click', () => {
 // --- Второе лицо: карта рождения на выбранную дату (§2.1, §4.8) ---
 const natalOverlay = document.getElementById('natal') as HTMLElement;
 const openBtn = document.getElementById('openNatal') as HTMLButtonElement;
-const birth = document.getElementById('birth') as HTMLInputElement;
+const bf = initBirthForm();
+const birth = bf.birth;
 // Уточнение времени/места показываем только когда дата введена — экран без лишних строк.
 birth.addEventListener('input', () => { document.documentElement.classList.toggle('has-birth', !!birth.value); ctx.ageYears = birth.value ? (Date.now() - new Date(birth.value).getTime()) / (365.25 * 86_400_000) : undefined; render(); });
 (document.getElementById('openPanel') as HTMLButtonElement).addEventListener('click', () => {
@@ -347,86 +300,10 @@ const burger = document.getElementById('burger') as HTMLButtonElement;
 const setMenu = (on: boolean): void => { document.documentElement.classList.toggle('menu-open', on); burger.setAttribute('aria-expanded', String(on)); };
 burger.addEventListener('click', () => setMenu(!document.documentElement.classList.contains('menu-open')));
 document.querySelectorAll('#menu a, #menu button').forEach((el) => el.addEventListener('click', () => setMenu(false)));
-const birthTime = document.getElementById('birthTime') as HTMLInputElement;
-const birthLat = document.getElementById('birthLat') as HTMLInputElement;
-const birthLon = document.getElementById('birthLon') as HTMLInputElement;
-const birthTz = document.getElementById('birthTz') as HTMLInputElement;
-const birthPlace = document.getElementById('birthPlace') as HTMLInputElement;
-const placeList = document.getElementById('placeList') as HTMLUListElement;
-const placeHint = document.getElementById('placeHint') as HTMLElement;
-
-// Город рождения: база в браузере (§3.7), подсказки по префиксу, выбор → координаты + зона.
-let places: Place[] = [];
-let sel = -1;
-function showPlaces(items: Place[]): void {
-  placeList.innerHTML = items.map((p, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${placeLabel(p)}<small>${p.tz}</small></li>`).join('');
-  placeList.hidden = items.length === 0;
-}
-function pickPlace(p: Place): void {
-  birthPlace.value = placeLabel(p); birthLat.value = String(p.lat); birthLon.value = String(p.lon); birthTz.value = p.tz;
-  placeList.hidden = true; sel = -1;
-  placeHint.textContent = `время — местное (${p.tz}); координаты остаются в браузере`;
-}
-let shown: Place[] = [];
-birthPlace.addEventListener('focus', () => { loadPlaces().then((p) => { places = p; }); });
-birthPlace.addEventListener('input', async () => {
-  birthTz.value = ''; birthLat.value = ''; birthLon.value = '';
-  if (!places.length) places = await loadPlaces();
-  sel = -1; shown = searchPlaces(places, birthPlace.value); showPlaces(shown);
-});
-birthPlace.addEventListener('keydown', (e) => {
-  if (placeList.hidden) return;
-  if (e.key === 'ArrowDown') { sel = Math.min(shown.length - 1, sel + 1); showPlaces(shown); e.preventDefault(); }
-  else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); showPlaces(shown); e.preventDefault(); }
-  else if (e.key === 'Enter' && sel >= 0) { pickPlace(shown[sel]); e.preventDefault(); }
-  else if (e.key === 'Escape') { placeList.hidden = true; }
-});
-placeList.addEventListener('mousedown', (e) => {
-  const li = (e.target as HTMLElement).closest('li'); if (li) pickPlace(shown[Number(li.dataset.i)]);
-});
-birthPlace.addEventListener('blur', () => setTimeout(() => { placeList.hidden = true; }, 150));
-
-// Момент рождения: дата (+ местное время по зоне города, иначе полдень UTC); место — если есть координаты.
-function birthMoment(): { when: Date; place?: { lat: number; lon: number } } {
-  const t = birthTime.value || '12:00';
-  const when = birth.value ? localToUtc(birth.value, t, birthTz.value || undefined) : new Date();
-  const lat = parseFloat(birthLat.value), lon = parseFloat(birthLon.value);
-  const place = birthTime.value && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : undefined;
-  return { when, place };
-}
-openBtn.addEventListener('click', () => {
-  const { when, place } = birthMoment();
-  // Ссылка шеринга — в тех же терминах, что ввод: местное время + tz + координаты (§2.1); без времени — только дата.
-  const link = `${location.origin}/?birth=${birth.value}${place ? `&t=${birthTime.value}&lat=${place.lat.toFixed(3)}&lon=${place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
-  track('natal'); openNatal(natalOverlay, when, place, link);
-});
-(document.getElementById('birthHere') as HTMLButtonElement).addEventListener('click', () => {
-  navigator.geolocation?.getCurrentPosition((pos) => {
-    birthLat.value = pos.coords.latitude.toFixed(3);
-    birthLon.value = pos.coords.longitude.toFixed(3);
-    birthTz.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    birthPlace.value = `здесь (${birthLat.value}, ${birthLon.value})`;
-    placeHint.textContent = `время — местное (${birthTz.value}); координаты остаются в браузере`;
-  });
-});
-// Шеринг-ссылка (§2.1): /?birth=YYYY-MM-DD[&t=HH:MM&lat=..&lon=..] открывает карту сразу.
-const qs = new URLSearchParams(location.search);
-const shared = qs.get('birth');
-if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
-  birth.value = shared;
-  if (/^\d{2}:\d{2}$/.test(qs.get('t') ?? '')) {
-    birthTime.value = qs.get('t')!;
-    birthLat.value = qs.get('lat') ?? '';
-    birthLon.value = qs.get('lon') ?? '';
-    birthTz.value = qs.get('tz') ?? '';
-    if (birthLat.value) { birthPlace.value = `${birthLat.value}, ${birthLon.value}`; placeHint.textContent = birthTz.value ? `из ссылки: время местное (${birthTz.value})` : 'из ссылки: время по UTC, координаты заданы'; }
-    (document.getElementById('natalMore') as HTMLDetailsElement).open = true;
-  }
-  const { when, place } = birthMoment();
-  // Ссылка шеринга — в тех же терминах, что ввод: местное время + tz + координаты (§2.1); без времени — только дата.
-  const link = `${location.origin}/?birth=${birth.value}${place ? `&t=${birthTime.value}&lat=${place.lat.toFixed(3)}&lon=${place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
-  track('natal'); openNatal(natalOverlay, when, place, link);
-}
+const showNatal = (): void => { const m = bf.moment(); track('natal'); openNatal(natalOverlay, m.when, m.place, bf.link(m)); };
+openBtn.addEventListener('click', showNatal);
+// Шеринг-ссылка (§2.1): /?birth=… открывает карту сразу.
+if (bf.applyQuery(new URLSearchParams(location.search))) { birth.dispatchEvent(new Event('input')); showNatal(); }
 
 // Esc закрывает любой открытый оверлей (§3.10).
 document.addEventListener('keydown', (e) => {
