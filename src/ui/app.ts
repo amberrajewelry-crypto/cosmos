@@ -391,7 +391,9 @@ function birthMoment(): { when: Date; place?: { lat: number; lon: number } } {
 }
 openBtn.addEventListener('click', () => {
   const { when, place } = birthMoment();
-  track('natal'); openNatal(natalOverlay, when, place);
+  // Ссылка шеринга — в тех же терминах, что ввод: местное время + tz + координаты (§2.1); без времени — только дата.
+  const link = `${location.origin}/?birth=${birth.value}${place ? `&t=${birthTime.value}&lat=${place.lat.toFixed(3)}&lon=${place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
+  track('natal'); openNatal(natalOverlay, when, place, link);
 });
 (document.getElementById('birthHere') as HTMLButtonElement).addEventListener('click', () => {
   navigator.geolocation?.getCurrentPosition((pos) => {
@@ -412,11 +414,13 @@ if (shared && /^\d{4}-\d{2}-\d{2}$/.test(shared)) {
     birthLat.value = qs.get('lat') ?? '';
     birthLon.value = qs.get('lon') ?? '';
     birthTz.value = qs.get('tz') ?? '';
-    if (birthLat.value) { birthPlace.value = `${birthLat.value}, ${birthLon.value}`; placeHint.textContent = 'из ссылки: время по UTC, координаты заданы'; }
+    if (birthLat.value) { birthPlace.value = `${birthLat.value}, ${birthLon.value}`; placeHint.textContent = birthTz.value ? `из ссылки: время местное (${birthTz.value})` : 'из ссылки: время по UTC, координаты заданы'; }
     (document.getElementById('natalMore') as HTMLDetailsElement).open = true;
   }
   const { when, place } = birthMoment();
-  track('natal'); openNatal(natalOverlay, when, place);
+  // Ссылка шеринга — в тех же терминах, что ввод: местное время + tz + координаты (§2.1); без времени — только дата.
+  const link = `${location.origin}/?birth=${birth.value}${place ? `&t=${birthTime.value}&lat=${place.lat.toFixed(3)}&lon=${place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
+  track('natal'); openNatal(natalOverlay, when, place, link);
 }
 
 // Esc закрывает любой открытый оверлей (§3.10).

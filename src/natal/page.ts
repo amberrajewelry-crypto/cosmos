@@ -2,6 +2,7 @@ import { natalSVG } from './chart';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
 import { natalBodies } from '../compute/natalbodies';
+import { dossier } from './dossier';
 import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
@@ -161,6 +162,7 @@ h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;c
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
 .facts h2{font-size:20px;margin:0 0 10px}
+.dossier ol{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:d}.dossier li{position:relative;padding:12px 14px 12px 40px;border-radius:16px;background:rgba(236,230,211,.035);border:1px solid rgba(236,230,211,.07)}.dossier li::before{counter-increment:d;content:counter(d,decimal-leading-zero);position:absolute;left:14px;top:13px;font-family:var(--mono);font-size:10px;color:var(--gold)}.dossier li b{display:block;font-size:14px;margin:0 0 4px}.dossier li .tag{position:absolute;right:12px;top:12px}.dossier li p{margin:0;font-size:14px;line-height:1.45}.dossier li small{display:block;margin-top:5px;font-family:var(--mono);font-size:10px;opacity:.7}
 .facts ul{margin:0;padding:0}
 .facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:8px 0;color:var(--ink)}
 .facts li b{color:var(--gold);font-weight:400}
@@ -425,6 +427,10 @@ export function neboPage(iso: string, lang: Lang): string {
     <ul>${rows.join('')}<li>☽︎ ${t.moonL}</li></ul>
     <p class="note">${t.note}</p>
   </div>
+  <section class="dossier"><h2>${lang === 'ru' ? 'Досье дня по реальным данным' : 'The day’s dossier, from real data'}</h2>
+    <p class="note">${lang === 'ru' ? 'Не толкования — проверяемые факты. У каждого тег и источник.' : 'No interpretations — checkable facts, each with a tag and a source.'}</p>
+    <ol>${dossier(when, new Date(), undefined, 70, { mode: 'date', lang }).map((x) => `<li><b>${x.title}</b> <span class="tag">[${lang === 'ru' ? x.tag : x.tag === 'ТОЧНО' ? 'EXACT' : 'ESTIMATE'}]</span><p>${x.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" rel="noopener">$1</a>')}</p><small>${x.source}</small></li>`).join('')}</ol>
+  </section>
   <section><h2>${t.hub}</h2><div class="days">${links} <a href="${dayPage}">${lang === 'ru' ? 'все родившиеся' : 'everyone born'} ${lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]}` : `${MONTHS_EN[m - 1]} ${d}`}</a></div></section>
   <a class="cta" href="/?birth=${iso}">${t.cta}</a>
   <p class="privacy">${t.privacy}</p>`;
