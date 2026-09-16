@@ -21,7 +21,7 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
   root.innerHTML = `
     <div class="scale-row">
       <button type="button" class="scale-btn" data-dir="-1" aria-label="Внутрь: на уровень меньше">внутрь</button>
-      <span class="scale-lbl"><b id="scaleExp"></b><i id="scaleName"></i></span>
+      <span class="scale-lbl" aria-live="polite" aria-atomic="true"><b id="scaleExp"></b><i id="scaleName"></i></span>
       <button type="button" class="scale-btn" data-dir="1" aria-label="Наружу: на уровень больше">наружу</button>
     </div>
     <ol class="scale-ticks" aria-hidden="true">${LEVELS.map(() => '<li></li>').join('')}</ol>

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import type { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 // scene/ только рисует — ничего не считает и не грузит (§3.2).
 export interface Stage {
@@ -10,6 +9,7 @@ export interface Stage {
   camera: THREE.PerspectiveCamera;
   /** Кадр: bloom-проход, если включён, иначе прямой рендер. */ render: () => void;
   /** Свечение ярких точек (§4.5); выключается при деградации качества. */ setBloom: (on: boolean) => void;
+  /** Подгрузить композитор и включить bloom (десктоп). */ enableBloom: () => Promise<void>;
 }
 
 export function createStage(canvas: HTMLCanvasElement): Stage {
@@ -29,27 +29,30 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
-  // Bloom: порог выше фона-туманности, так светятся только точки; без OutputPass —
-  // шейдеры точек и фона пишут готовый цвет, конвертация всё сломала бы.
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.42, 0.45, 0.4);
-  composer.addPass(bloom);
-  let bloomOn = true;
-  return {
+  // Bloom подгружается лениво (~60 КБ): без OutputPass — шейдеры точек и фона пишут готовый цвет.
+  let composer: EffectComposer | null = null, bloom: UnrealBloomPass | null = null, bloomOn = false, size: [number, number] = [1, 1];
+  const st = {
     renderer, scene, camera,
-    render: () => { if (bloomOn) composer.render(); else renderer.render(scene, camera); },
-    setBloom: (on) => { bloomOn = on; },
-    composer, bloom,
-  } as Stage & { composer: EffectComposer; bloom: UnrealBloomPass };
+    render: () => { if (bloomOn && composer) composer.render(); else renderer.render(scene, camera); },
+    setBloom: (on) => { bloomOn = on && !!composer; },
+    enableBloom: async () => {
+      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }] = await Promise.all([
+        import('three/examples/jsm/postprocessing/EffectComposer.js'), import('three/examples/jsm/postprocessing/RenderPass.js'), import('three/examples/jsm/postprocessing/UnrealBloomPass.js')]);
+      composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.42, 0.45, 0.4);
+      composer.addPass(bloom);
+      composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(size[0], size[1]);
+      bloomOn = true;
+    },
+    _size: (w: number, h: number) => { size = [w, h]; if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h); } if (bloom) bloom.strength = h > w ? 0.18 : 0.42; },
+  } as Stage & { _size: (w: number, h: number) => void };
+  return st;
 }
 
 export function resize(stage: Stage, w: number, h: number): void {
   stage.renderer.setSize(w, h, false);
-  const st = stage as Stage & { composer?: EffectComposer; bloom?: UnrealBloomPass };
-  if (st.composer) { st.composer.setPixelRatio(stage.renderer.getPixelRatio()); st.composer.setSize(w, h); }
-  // Портрет: точки плотнее и pixelRatio выше — свечение накапливается, гасим сильнее.
-  if (st.bloom) st.bloom.strength = h > w ? 0.18 : 0.42;
+  (stage as Stage & { _size?: (w: number, h: number) => void })._size?.(w, h);
   stage.camera.aspect = w / h;
   // Портрет (мобилка): сцена — отдельное окно под hero, тело по центру, чуть дальше.
   const portrait = h > w;

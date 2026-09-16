@@ -5,7 +5,7 @@ interface Req { query: Record<string, string | string[] | undefined>; }
 interface Res { setHeader(k: string, v: string): Res; status(n: number): Res; send(b: string): void; }
 export default function handler(req: Req, res: Res): void {
   const q = req.query as Record<string, string>;
-  res.setHeader('Cache-Control', 'public, s-maxage=31536000, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=3600'); // досье дня содержит «сейчас» — сутки
   if (q.sitemap === 'index') { res.setHeader('Content-Type', 'application/xml'); res.send(neboSitemapIndex()); return; }
   if (q.sitemap) {
     const y = Number(q.sitemap);

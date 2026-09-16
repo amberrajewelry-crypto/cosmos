@@ -14,13 +14,9 @@ import { cmbVelocity, timeGradient, muonFlux } from '../compute/physics';
 import { magneticInclination, magneticDeclination, neutrinoFlux } from '../compute/magnetic';
 import { planetsAbove, skyBodies } from '../compute/planets';
 import { horizonSVG } from './panel';
-import { openNatal } from '../natal/natal';
-import { openHonesty } from './honesty';
-import { openAsk } from './ask-ui';
 import { initScale } from './scale';
 import { BODY_LEVEL, LEVELS, expLabel, type LiveShapes } from '../scene/scales';
-import { helioPlanets, starsAltAz } from '../compute/liveshapes';
-import { loadStars } from '../data/stars';
+import { helioPlanets } from '../compute/liveshapes';
 import { fetchKp } from '../live/noaa';
 import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
 import { localToUtc } from '../compute/localtime';
@@ -48,7 +44,8 @@ import type { Value } from '../types';
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
 const stageEl = document.getElementById('stage') as HTMLElement;
 const stage = createStage(canvas);
-if (new URLSearchParams(location.search).has('nobloom')) stage.setBloom(false); // отладка свечения
+// Bloom — только десктоп с мышью: на телефоне он стоит 20–30 % кадра и грузит лишние 60 КБ; ?nobloom — отладка.
+if (!new URLSearchParams(location.search).has('nobloom') && matchMedia('(hover: hover) and (pointer: fine) and (min-width: 761px)').matches) stage.enableBloom();
 
 // Слои сцены: туманность (фон-шейдер) → звёзды → тело → поток сквозь тело.
 const nebula = createNebula();
@@ -117,14 +114,18 @@ const dbSize = new THREE.Vector2();
 let paused = false;
 // Сборка фигуры за ~3.2 с после загрузки (reduced-motion — сразу).
 const t0 = performance.now();
+// Тяжёлые части — только по действию (§3.7): натальная карта с досье и каталогом звёзд, «спросить», «погрешности».
+const openNatal = async (...a: Parameters<typeof import('../natal/natal').openNatal>) => (await import('../natal/natal')).openNatal(...a);
+const openAsk = async (...a: Parameters<typeof import('./ask-ui').openAsk>) => (await import('./ask-ui')).openAsk(...a);
+const openHonesty = async (...a: Parameters<typeof import('./honesty').openHonesty>) => (await import('./honesty')).openHonesty(...a);
 // Зум (§4.2): колесо и пинч ведут непрерывный z лестницы масштабов; перетаскивание крутит фигуру.
 stageEl.addEventListener('wheel', (e) => {
   if (Math.abs(e.deltaY) < 1) return;
   scale.nudge(Math.max(-0.35, Math.min(0.35, e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022))));
 }, { passive: true });
-let dragRot = 0, dragX: number | null = null, pinchD = 0;
+let dragRot = 0, dragV = 0, dragX: number | null = null, pinchD = 0;
 stageEl.addEventListener('pointerdown', (e) => { if (e.isPrimary && (e.target as HTMLElement).closest('button,a,input') == null) dragX = e.clientX; });
-addEventListener('pointermove', (e) => { if (dragX != null && e.isPrimary) { dragRot += (e.clientX - dragX) * 0.006; dragX = e.clientX; } });
+addEventListener('pointermove', (e) => { if (dragX != null && e.isPrimary) { const d = (e.clientX - dragX) * 0.006; dragRot += d; dragV = d; dragX = e.clientX; } });
 addEventListener('pointerup', () => { dragX = null; });
 stageEl.addEventListener('touchmove', (e) => {
   if (e.touches.length !== 2) return;
@@ -168,6 +169,7 @@ function loop(now = performance.now()) {
   if (!reduceMotion) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
+    if (dragX == null) { dragRot += dragV; dragV *= 0.93; } // инерция после отпускания: докручивается и гаснет
     body.rotation.y = Math.sin(t * 0.3) * 0.18 + dragRot;
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
@@ -232,13 +234,13 @@ function contentHere(): Value[] { return contentValues({ ...ctx, when: new Date(
 function allValues(): Value[] { return [...currentSky, ...bodyValues, ...liveValues, ...contentAll()]; }
 function render() {
   renderPanel(panel, [
-    { title: 'Небо в твоей точке', note: 'Появится после «Показать, что происходит именно с тобой» — координаты не покидают браузер.', values: currentSky, visual: skyVisual },
+    { title: 'Небо в твоей точке', note: 'Появится после «Что происходит с тобой сейчас» — координаты не покидают браузер.', values: currentSky, visual: skyVisual },
     { title: 'Твоё тело', values: bodyValues },
     { title: 'Живое сейчас', note: 'NOAA Kp загружается…', values: liveValues },
     { title: `${expLabel(LEVELS[contentLevel].exp)} — ${levelName(contentLevel)}`, note: 'Меняй масштаб кнопками «внутрь»/«наружу» — параметры следуют за уровнем.', values: contentHere() },
   ]);
 }
-render();
+(window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 200)))(() => render());
 
 // «Спросить дальше» на карточках (§2.2): один оверлей, контекст — все видимые значения.
 const askOverlay = document.getElementById('ask') as HTMLElement;
@@ -317,7 +319,7 @@ btn.addEventListener('click', () => {
       const bodies = skyBodies(lat, lon, now);
       skyVisual = horizonSVG(bodies);
       liveShapes.bodies = bodies.filter((b) => b.alt > 0);
-      loadStars().then((cat) => { liveShapes.stars = starsAltAz(cat, lat, lon, now); scale.refresh(); }).catch(() => scale.refresh());
+      Promise.all([import('../data/stars'), import('../compute/liveshapes')]).then(([st, ls]) => st.loadStars().then((cat) => { liveShapes.stars = ls.starsAltAz(cat, lat, lon, now); scale.refresh(); })).catch(() => scale.refresh());
       render();
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;

@@ -132,6 +132,7 @@
         #hero > * { text-wrap: nowrap; }
         .hero-row { margin-top: 0; }
         .hero-line { display: flex; align-items: baseline; justify-content: center; }
+        @media (max-height: 800px) { #hero .open { display: none; } #hero { bottom: 10px; gap: 5px; } }
         .cta { padding: 9px 9px 9px 18px; } .cta i { width: 30px; height: 30px; }
         .natal-more summary { margin: 0; }
         #scale { left: auto; right: 40px; bottom: 56px; transform: none; width: 340px; text-align: right; }
@@ -206,7 +207,7 @@
       .scale-fact .tag { font-size: 10px; margin-left: 4px; }
       #ring { transition: opacity 1.2s var(--ease); } html.ring-off #ring { opacity: 0; }
       #hero { transition: opacity .9s var(--ease), transform .9s var(--ease); }
-      @media (min-width: 761px) { html.off-body #hero { opacity: 0; transform: translateY(-10px); pointer-events: none; } }
+      @media (min-width: 761px) { html.off-body #hero { opacity: 0; transform: translate(-50%, -10px); pointer-events: none; } }
       #stage { touch-action: pan-y; cursor: grab; } #stage:active { cursor: grabbing; }
       html.off-body #legend { opacity: 0; pointer-events: none; }
       #legend { transition: opacity .5s var(--ease); }
@@ -324,7 +325,7 @@
         .hero-line { display: block; }
         #hero h1 { font-size: 23px; margin-bottom: 8px; }
         #hero .open { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
-        .hint { display: none; }
+        .hint { top: 64px; font-size: 10px; }
         .cta { font-size: 12px; }
         #stage { position: relative; height: 72vh; margin-top: -14vh; }
         #scale { position: relative; left: 0; bottom: 0; transform: none; order: 3; margin: -110px auto 12px; width: calc(100% - 32px); }
@@ -346,7 +347,7 @@
   <body>
     <div id="stage"><canvas id="scene"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
     <div id="scale" class="stage" data-t="3000" aria-label="Масштаб"></div>
-    <p id="hint" class="hint" hidden></p>
+    <p id="hint" class="hint" role="status" hidden></p>
     <p id="innerLegend" class="inner-legend"><span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span></p>
     <nav id="nav" aria-label="Навигация">
       <a class="brand" href="/">COSMOS</a>
@@ -362,7 +363,7 @@
       <div class="hero-line"><h1 class="stage" data-t="1400">Космос не вокруг тебя,<br /><em>а внутри тебя.</em></h1>
       <p class="open stage" data-t="1900" id="open1">Прямо сейчас сквозь тебя летят <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p></div>
       <div class="hero-row stage" data-t="2400">
-        <button id="reveal" class="cta">Показать, что происходит именно с тобой <i>→</i></button>
+        <button id="reveal" class="cta">Что происходит с тобой сейчас <i>→</i></button>
         <div class="instr">
           <input type="date" id="birth" aria-label="Дата рождения" />
           <button id="openNatal" type="button">Карта рождения</button>

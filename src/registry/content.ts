@@ -28,7 +28,7 @@ export const CONTENT: ContentParam[] = [
   { id: 'c.nuc.volume', level: 0, label: 'Доля объёма тела, занятая ядрами', unit: '', tag: 'ОЦЕНКА', source: 'r_p = 0.84 фм / r_атома ≈ 1 Å', explain: 'Вся твоя масса сидит в квадриллионной доле объёма. Остальное — поле.', compute: () => '10⁻¹⁵' },
   { id: 'c.nuc.mass_in_nuclei', level: 0, label: 'Масса, сидящая в ядрах', unit: '%', tag: 'ТОЧНО', source: 'm_e/m_p = 1/1836', explain: 'Электроны весят почти ничего: 99.97 % тебя — это ядра.', compute: () => 99.97 },
   { id: 'c.nuc.k40', level: 0, label: 'Атомов калия-40 в теле', unit: '', tag: 'ОЦЕНКА', source: '140 г K, 0.0117 % ⁴⁰K', explain: 'Каждый из них однажды распадётся — вместе они дают 4400 распадов в секунду.', compute: (c) => sci(c.massKg / 70 * 2.5e20) },
-  { id: 'c.nuc.decays_life', level: 0, label: 'Распадов внутри тебя с рождения', unit: '', tag: 'ОЦЕНКА', source: '7400 Бк × возраст', explain: 'Столько ядер уже превратились в другие элементы внутри твоего тела.', compute: (c) => (c.ageYears != null ? sci(7400 * c.ageYears * YEAR_S * c.massKg / 70) : null) },
+  { id: 'c.nuc.decays_life', level: 0, label: 'Распадов внутри тебя с рождения', unit: '', tag: 'ОЦЕНКА', source: 'K-40 4.3 кБк + C-14 3.1 кБк ≈ 7.4 кБк × возраст', explain: 'Столько ядер уже превратились в другие элементы внутри твоего тела.', compute: (c) => (c.ageYears != null ? sci(7400 * c.ageYears * YEAR_S * c.massKg / 70) : null) },
   { id: 'c.nuc.binding', level: 0, label: 'Масса тела, которая есть энергия связи', unit: 'г', tag: 'ОЦЕНКА', source: '≈8 МэВ/нуклон из 938', explain: 'Около 600 граммов тебя — не вещество, а энергия, которой ядра держатся вместе (E=mc²).', compute: (c) => Math.round(c.massKg * 1000 * 0.0085) },
   { id: 'c.nuc.fusion', level: 0, label: 'Если бы твой водород сгорел как в Солнце', unit: 'ТВт·ч', tag: 'ОЦЕНКА', source: '10 % массы — H; 0.7 % массы → энергия', explain: 'Столько энергии — потребление России за месяц.', compute: (c) => Math.round(c.massKg * 0.1 * 0.007 * C * C / 3.6e15) },
   // ——— 10⁻¹⁰ атом ———
@@ -81,17 +81,17 @@ export const CONTENT: ContentParam[] = [
   { id: 'c.mag.sats', level: 5, label: 'Активных спутников над Землёй', unit: '', tag: 'ОЦЕНКА', source: 'UCS / Jonathan McDowell 2026', explain: 'Над твоим горизонтом в любой момент — несколько сотен из них.', compute: () => '≈ 13 000' },
   // ——— 10¹¹ орбита ———
   { id: 'c.orb.speed', level: 6, label: 'Скорость Земли по орбите сейчас', unit: 'км/с', tag: 'ТОЧНО', source: 'astronomy-engine, |Δr/Δt|', explain: 'В январе (перигелий) быстрее, в июле медленнее — Кеплер прямо в твоём кресле.', compute: (c) => { const a = HelioVector(Body.Earth, c.when), b = HelioVector(Body.Earth, new Date(c.when.getTime() + 3600e3)); return Math.round(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * AU_KM / 3600 * 100) / 100; } },
-  { id: 'c.orb.path', level: 6, label: 'Пройдено по орбите с рождения', unit: 'млрд км', tag: 'ТОЧНО', source: '940 млн км/год', explain: 'Ты уже проехал вокруг Солнца дальше, чем до Плутона и обратно.', compute: (c) => (c.ageYears != null ? Math.round(0.94 * c.ageYears * 10) / 10 : null) },
+  { id: 'c.orb.path', level: 6, label: 'Пройдено по орбите с рождения', unit: 'млрд км', tag: 'ТОЧНО', source: '2π·а.е. = 939.95 млн км/год', explain: 'Ты уже проехал вокруг Солнца дальше, чем до Плутона и обратно.', compute: (c) => (c.ageYears != null ? Math.round(0.94 * c.ageYears * 10) / 10 : null) },
   { id: 'c.orb.sun_dist', level: 6, label: 'До Солнца сейчас', unit: 'млн км', tag: 'ТОЧНО', source: 'astronomy-engine (VSOP87)', explain: 'Свет отсюда идёт к тебе 8 с лишним минут — ты видишь Солнце прошлым.', compute: (c) => Math.round(HelioVector(Body.Earth, c.when).Length() * AU_KM / 1e4) / 100 },
   { id: 'c.orb.light', level: 6, label: 'Свет от Солнца идёт', unit: 'с', tag: 'ТОЧНО', source: 'd / c', explain: 'Если Солнце погаснет, ты узнаешь через восемь минут.', compute: (c) => Math.round(HelioVector(Body.Earth, c.when).Length() * AU_KM * 1000 / C) },
-  { id: 'c.orb.moon_away', level: 6, label: 'Луна отдалилась с твоего рождения', unit: 'см', tag: 'ТОЧНО', source: 'лазерная локация, 3.8 см/год', explain: 'Приливы тормозят Землю и отталкивают Луну — пока ты рос, она ушла на метр.', compute: (c) => (c.ageYears != null ? Math.round(3.8 * c.ageYears) : null) },
+  { id: 'c.orb.moon_away', level: 6, label: 'Луна отдалилась с твоего рождения', unit: 'см', tag: 'ТОЧНО', source: 'LLR: 38.08 мм/год (Williams & Boggs 2016)', explain: 'Приливы тормозят Землю и отталкивают Луну — пока ты рос, она ушла на метр.', compute: (c) => (c.ageYears != null ? Math.round(3.8 * c.ageYears) : null) },
   { id: 'c.orb.tide', level: 6, label: 'Луна меняет твой вес на', unit: 'мг', tag: 'ТОЧНО', source: 'Δg = 2GMr/d³', explain: 'Приливная сила Луны действует и на тебя — на миллиграммы.', compute: (c) => Math.round(c.massKg * 2 * G * M_MOON * R_EARTH / (geoDist(Body.Moon, c.when) * 1000) ** 3 / 9.81 * 1e6 * 10) / 10 },
   { id: 'c.orb.sun_pull', level: 6, label: 'Солнце тянет тебя с силой', unit: 'Н', tag: 'ТОЧНО', source: 'GMm/d²', explain: 'Как 40 граммов на ладони — и этого хватает, чтобы держать тебя на орбите.', compute: (c) => Math.round(G * M_SUN * c.massKg / (HelioVector(Body.Earth, c.when).Length() * AU_KM * 1000) ** 2 * 1000) / 1000 },
   { id: 'c.orb.mars', level: 6, label: 'До Марса сейчас', unit: 'млн км', tag: 'ТОЧНО', source: 'astronomy-engine', explain: 'От 55 до 400 млн км — сигнал туда идёт от 3 до 22 минут.', compute: (c) => Math.round(geoDist(Body.Mars, c.when) / 1e6) },
   { id: 'c.orb.photon_age', level: 6, label: 'Возраст солнечного света', unit: 'лет', tag: 'СПОРНО', source: 'диффузия из ядра, 10⁴–10⁵ лет (оценки расходятся)', explain: 'Фотон, греющий тебя, родился в ядре Солнца задолго до цивилизации.', compute: () => '10 000–170 000' },
   // ——— 10²¹ Галактика ———
   { id: 'c.gal.speed', level: 7, label: 'Скорость Солнца вокруг центра Галактики', unit: 'км/с', tag: 'ОЦЕНКА', source: 'GRAVITY 2019, ~230 км/с', explain: 'Двести тридцать километров каждую секунду — и один оборот за 230 млн лет.', compute: () => 230 },
-  { id: 'c.gal.path', level: 7, label: 'Пролетел вокруг центра Галактики с рождения', unit: 'млрд км', tag: 'ОЦЕНКА', source: '230 км/с × возраст', explain: 'Дальше любого зонда человечества — не вставая с места.', compute: (c) => (c.ageYears != null ? Math.round(230 * YEAR_S * c.ageYears / 1e9) : null) },
+  { id: 'c.gal.path', level: 7, label: 'Пролетел вокруг центра Галактики с рождения', unit: 'млрд км', tag: 'ОЦЕНКА', source: 'Θ₀ = 229–236 км/с (Reid+2019; GRAVITY 2019) × возраст', explain: 'Дальше любого зонда человечества — не вставая с места.', compute: (c) => (c.ageYears != null ? Math.round(230 * YEAR_S * c.ageYears / 1e9) : null) },
   { id: 'c.gal.year', level: 7, label: 'Доля галактического года, прожитая тобой', unit: '', tag: 'ОЦЕНКА', source: '230 млн лет', explain: 'Динозавры видели Галактику с другой стороны орбиты.', compute: (c) => (c.ageYears != null ? `${(c.ageYears / 230e6 * 100).toExponential(1)} %` : null) },
   { id: 'c.gal.center', level: 7, label: 'Центр Галактики (Стрелец A*) сейчас', unit: '° над горизонтом', tag: 'ТОЧНО', source: 'RA 17h45m40s, Dec −29°00′', explain: 'Чёрная дыра в 4 млн масс Солнца — вот в этой стороне неба.', compute: (c) => { const a = altOf(c, 17.7611, -29.0078); return a == null ? null : Math.round(a); } },
   { id: 'c.gal.proxima', level: 7, label: 'Ближайшая звезда', unit: 'св. лет', tag: 'ТОЧНО', source: 'Gaia DR3, Проксима Центавра', explain: 'Свет, который ты видел бы от неё сегодня, вышел 4 года назад.', compute: () => 4.246 },
@@ -117,11 +117,13 @@ export function levelName(level: number): string { return LEVELS[level]?.name ??
 export const VERIFIED = new Set<string>([
   'c.hor.moon_dist', 'c.hor.moon_phase', 'c.orb.sun_dist', 'c.orb.light', 'c.orb.mars', 'c.orb.speed', 'c.mag.f',
   'c.uni.cmb', 'c.uni.age', 'c.gal.proxima', 'c.hor.day', 'c.hor.noon', 'c.body.g',
+  // Проход 3 (16.09) — параметры, попавшие в досье карты рождения: константы сверены с первоисточниками (VERIFICATION.md).
+  'c.orb.path', 'c.orb.moon_away', 'c.nuc.decays_life', 'c.cell.heartbeats', 'c.gal.path',
 ]);
 
 // Почему слой погас: человек ещё не дал вход (§3.7 — только по действию), а не ошибка.
 const NEEDS: Array<[RegExp, string]> = [
-  [/^c\.(body\.g|body\.spin|gal\.center|hor\.day|hor\.noon|hor\.polaris|hor\.refraction|mag\.f)$/, 'нужна твоя точка — кнопка «Показать, что происходит именно с тобой»'],
+  [/^c\.(body\.g|body\.spin|gal\.center|hor\.day|hor\.noon|hor\.polaris|hor\.refraction|mag\.f)$/, 'нужна твоя точка — кнопка «Что происходит с тобой сейчас»'],
   [/^c\.(nuc\.decays_life|cell\.heartbeats|orb\.path|orb\.moon_away|gal\.path|gal\.year)$/, 'нужна дата рождения — поле рядом с «Карта рождения»'],
   [/^c\.mag\.aurora$/, 'ждёт живой Kp'],
 ];

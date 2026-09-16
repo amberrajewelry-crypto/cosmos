@@ -1,13 +1,14 @@
 import { defineConfig } from '@playwright/test';
 
-// E2E только для сцены (скриншот-регрессии §3.11). Юниты — отдельно, в vitest.
+// E2E по собранному preview (как на проде: чанки, ленивые импорты). Юниты — в vitest.
 export default defineConfig({
   testDir: 'test-e2e',
-  use: { baseURL: 'http://localhost:5173' },
+  timeout: 60_000,
+  use: { baseURL: 'http://localhost:4179', launchOptions: { args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] } },
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: 'npm run build && npx vite preview --port 4179 --strictPort',
+    url: 'http://localhost:4179',
     reuseExistingServer: true,
-    timeout: 30_000,
+    timeout: 120_000,
   },
 });

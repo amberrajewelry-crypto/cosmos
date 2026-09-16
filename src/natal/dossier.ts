@@ -62,11 +62,12 @@ export function dossier(when: Date, now: Date = new Date(), place?: Place, massK
   const cs = constellationVsSign(when);
   if (cs.text && birth && ru) out.push({ tag: 'ТОЧНО', title: 'Где было Солнце на самом деле', source: 'границы созвездий IAU 1930', text: cs.text.replace('Солнце сейчас', 'В день рождения Солнце') });
   // 4. Путь.
-  const orbit = N(ageY * YEAR / 1000 * 29.78 / 1e6), gal = N(ageY * YEAR / 1000 * 230 / 1e9, 1);
+  const orbitKm = ageY * YEAR / 1000 * 29.78, galKm = ageY * YEAR / 1000 * 230;
+  const orbit = N(orbitKm / 1e6), gal = N(galKm / 1e9, 1), moonTrips = N(orbitKm / (2 * 384_400)), lightDays = galKm / (299_792.458 * 86_400);
   out.push({ tag: 'ТОЧНО', title: ru ? (birth ? 'Сколько ты уже пролетел' : 'Сколько Земля пролетела с тех пор') : (birth ? 'How far you have travelled' : 'How far Earth has travelled since'),
     source: ru ? '29.78 км/с по орбите; 230 км/с вокруг центра Галактики' : '29.78 km/s along the orbit; 230 km/s around the Galactic centre',
-    text: ru ? `${N(ageY, 1)} оборота вокруг Солнца — ${orbit} млн км по орбите; ${N(days)} оборотов Земли; вместе с Солнцем — ${gal} млрд км вокруг центра Галактики.`
-      : `${N(ageY, 1)} orbits of the Sun — ${orbit} million km; ${N(days)} rotations of Earth; with the Sun — ${gal} billion km around the Galactic centre.` });
+    text: ru ? `${N(ageY, 1)} оборота вокруг Солнца — ${orbit} млн км по орбите, это ${moonTrips} поездок до Луны и обратно; ${N(days)} оборотов Земли; вместе с Солнцем — ${gal} млрд км вокруг центра Галактики, свет летит столько ${N(lightDays, 1)} суток.`
+      : `${N(ageY, 1)} orbits of the Sun — ${orbit} million km, that is ${moonTrips} return trips to the Moon; ${N(days)} rotations of Earth; with the Sun — ${gal} billion km around the Galactic centre, ${N(lightDays, 1)} light-days.` });
   // 5. Тело — из контент-базы (только режим рождения).
   if (birth && ru) {
     const cv = contentValues({ when: now, massKg, heightM: 1.7, ageYears: ageY });

@@ -46,3 +46,14 @@ describe('A4 контент-базы против внешних эталоно�
     expect(all.filter((x) => !VERIFIED.has(x.id)).some((x) => x.tag === 'ТОЧНО')).toBe(false);
   });
 });
+
+describe('A4 проход 3: константы досье', () => {
+  const ctx = { when: new Date('2026-09-14T12:00:00Z'), massKg: 70, heightM: 1.7, ageYears: 10 };
+  const get = (id: string) => contentValues(ctx).find((x) => x.id === id)!;
+  it('орбита за 10 лет = 9.4 млрд км (2π·а.е.·10)', () => { expect(get('c.orb.path').value).toBeCloseTo(2 * Math.PI * 149_597_870.7 * 10 / 1e9, 1); });
+  it('Луна за 10 лет = 38 см (LLR 38.08 мм/год)', () => { expect(get('c.orb.moon_away').value).toBe(38); });
+  it('распады: 7400 Бк × 10 лет ≈ 2.3·10¹²; сверенные помечены', () => {
+    expect(get('c.nuc.decays_life').text).toBe('2.3·10¹²');
+    for (const id of ['c.orb.path', 'c.orb.moon_away', 'c.nuc.decays_life', 'c.cell.heartbeats', 'c.gal.path']) expect(get(id).verification).toBe('verified');
+  });
+});
