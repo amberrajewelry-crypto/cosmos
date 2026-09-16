@@ -40,6 +40,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
         <h3>Досье по реальным данным</h3>
         <p class="dossier-lead">Не толкования — факты о твоём дне, которые можно проверить. Каждый с тегом и источником.</p>
         <ol>${facts.map((d) => `<li><span class="tag tag-inline tag-${d.tag}">[${d.tag}]</span><b>${d.title}</b><p>${d.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" target="_blank" rel="noopener">$1</a>')}</p><small>${d.source}</small></li>`).join('')}</ol>
+        <p class="dossier-more">Дальше: <a href="/natalnaya-karta/${String(when.getUTCMonth() + 1).padStart(2, '0')}-${String(when.getUTCDate()).padStart(2, '0')}/">страница этой даты</a> (созвездие, окно, метеоры) · <a href="/nebo/${when.toISOString().slice(0, 10)}/">небо в день рождения</a> (Луна, планеты, APOD).</p>
       </section>
       <div class="natal-share">
         <button id="natalPng">Поделиться карточкой</button>

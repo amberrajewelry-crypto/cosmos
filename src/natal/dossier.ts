@@ -73,7 +73,7 @@ export function dossier(when: Date, now: Date = new Date(), place?: Place, massK
     const cv = contentValues({ when: now, massKg, heightM: 1.7, ageYears: ageY });
     const pick = (id: string): string | null => { const v = cv.find((x) => x.id === id); return v && v.status === 'ok' ? `${v.label.toLowerCase()} — ${v.text ?? fmt(v.value ?? 0)}${v.unit ? ' ' + v.unit : ''}` : null; };
     const body = [pick('c.cell.heartbeats'), pick('c.nuc.decays_life'), pick('c.orb.moon_away')].filter(Boolean);
-    if (body.length) out.push({ tag: 'ОЦЕНКА', title: 'Что накопилось с тех пор', source: 'контент-база COSMOS · не сверено', text: body.join('; ') + '.' });
+    if (body.length) out.push({ tag: 'ОЦЕНКА', title: 'Что накопилось с тех пор', source: 'ЧСС 70/мин (AHA 60–100); K-40 + C-14 ≈ 7.4 кБк (HPS); LLR 38.08 мм/год (Williams & Boggs 2016) — VERIFICATION.md, проход 3', text: body.join('; ') + '.' });
   }
   // 6. Марс тогда и сейчас.
   const mThen = dist(Body.Mars, when) / 1e6, mNow = dist(Body.Mars, now) / 1e6, ratio = N(Math.max(mThen, mNow) / Math.min(mThen, mNow), 1);

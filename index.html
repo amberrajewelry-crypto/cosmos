@@ -181,6 +181,8 @@
       .dossier li p a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-2); }
       .dossier li small { display: block; margin-top: 5px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; color: var(--ink-2); opacity: .8; }
       /* 3. подсказка жеста — один раз, исчезает после первого зума */
+      .nogl { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 24px; color: var(--ink-2); font: 15px var(--display), system-ui, sans-serif; line-height: 1.5; } .nogl a { color: var(--gold); }
+      .dossier-more { margin: 14px 0 0; font-size: 13px; color: var(--ink-2); } .dossier-more a { color: var(--gold); }
       .hint { position: fixed; left: 50%; top: 74px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, -8px); } }
       .hint.out { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
       /* 5. смена уровня — титр перетекает через blur, а не подменяется */
@@ -344,6 +346,15 @@
         .ph-note { flex: 0 0 calc(100vw - 40px); margin: 0; }
       }
     </style>
+      <script>
+      // Без WebGL сцена не запустится — вместо пустого экрана честное объяснение и рабочий путь к карте по дате.
+      (function () { var c = document.createElement('canvas'); var gl = c.getContext('webgl2') || c.getContext('webgl');
+        function fb() { var s = document.getElementById('stage'); if (!s || s.dataset.fb) return; s.dataset.fb = '1';
+          document.querySelectorAll('.inner-legend').forEach(function (l) { l.hidden = true; }); s.innerHTML = '<div class="nogl"><p>Сцена не запустилась: в этом браузере нет WebGL.</p><p>Карта по дате рождения работает и без неё — <a href="/natalnaya-karta/">выбери дату</a>.</p></div>'; }
+        if (!gl) document.addEventListener('DOMContentLoaded', fb);
+        window.addEventListener('error', function (e) { if (/WebGL/i.test(String(e.message || ''))) fb(); });
+      })();
+    </script>
   </head>
   <body>
     <div id="stage"><canvas id="scene" role="img" aria-label="Сцена: тело человека из точек"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
