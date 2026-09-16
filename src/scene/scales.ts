@@ -182,12 +182,13 @@ export function shapeFor(level: number, body: Float32Array, bodyCol?: Float32Arr
         break;
       }
       case 7: { // Земля, дипольные линии, сжатые Солнцем (+X), хвост на ночной стороне, аврора и солнечный ветер по Kp
-        const wind = 0.08 + 0.22 * kp / 9, aur = 0.06 + 0.06 * kp / 9;
-        const s = seg(f, [0.16, 0.62 - wind - aur + 0.08, aur, wind]);
+        // Оболочки рисуют линии (lines.ts), точкам — 40 %; ветер забирает остаток и при тихом Kp тусклее.
+        const aur = 0.035 + 0.05 * kp / 9, wind = 0.36 - aur;
+        const s = seg(f, [0.24, 0.40, aur, wind]);
         if (s === 0) { sphere(r, R * 0.28 * (0.9 + 0.1 * r()), out, i); tint(col, i, C.earth, 0.8); }
         else if (s === 1) {
           const Ls = R * (0.4 + 0.12 * Math.floor(r() * 5)), lat = (r() * 2 - 1) * 1.35;
-          const lon = (Math.floor(r() * 12) / 12) * Math.PI * 2 + gauss(r) * 0.008;
+          const lon = ((Math.floor(r() * 12) + 0.5) / 12) * Math.PI * 2 + gauss(r) * 0.008; // +0.5 — как в lines.ts
           const day = Math.cos(lat) * Math.cos(lon); // >0 — к Солнцу
           const squash = day > 0 ? 1 - 0.3 * day : 1 + 0.9 * (-day); // магнитопауза ~10 R⊕, хвост в разы длиннее
           const rad = Math.max(R * 0.28, Ls * Math.cos(lat) ** 2 * squash);
@@ -196,12 +197,12 @@ export function shapeFor(level: number, body: Float32Array, bodyCol?: Float32Arr
         } else if (s === 2) { // авроральные овалы: колатитуда растёт с Kp (~15°+2°·Kp)
           const colat = (15 + 2.2 * kp) * Math.PI / 180 + gauss(r) * 0.02, hemi = r() < 0.5 ? 1 : -1, lon = r() * Math.PI * 2, rad = R * 0.29;
           out[i] = rad * Math.sin(colat) * Math.cos(lon); out[i + 1] = CY + hemi * rad * Math.cos(colat); out[i + 2] = rad * Math.sin(colat) * Math.sin(lon);
-          tint(col, i, C.green);
+          tint(col, i, C.green, 0.5);
         } else { // солнечный ветер: летит с +X, огибает магнитопаузу
           const y = gauss(r) * R * 0.5, z = gauss(r) * R * 0.35, rho = Math.hypot(y, z), stand = R * 0.62;
           let x = R * 1.05 - r() * R * 1.6;
           if (rho < stand && x < stand) x = Math.max(x, stand * Math.sqrt(1 - (rho / stand) ** 2) + 0.02);
-          out[i] = x; out[i + 1] = CY + y; out[i + 2] = z; tint(col, i, C.gold, 0.55 + 0.45 * kp / 9);
+          out[i] = x; out[i + 1] = CY + y; out[i + 2] = z; tint(col, i, C.gold, 0.35 + 0.6 * kp / 9);
         }
         break;
       }

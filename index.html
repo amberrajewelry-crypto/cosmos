@@ -325,7 +325,8 @@
         .hero-line { display: block; }
         #hero h1 { font-size: 23px; margin-bottom: 8px; }
         #hero .open { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
-        .hint { top: 64px; font-size: 10px; }
+        .hint { top: auto; bottom: 21vh; font-size: 10px; white-space: nowrap; } .hint.out { transform: translate(-50%, 6px); }
+        @media (max-height: 700px) { .hint { display: none; } }
         .cta { font-size: 12px; }
         #stage { position: relative; height: 72vh; margin-top: -14vh; }
         #scale { position: relative; left: 0; bottom: 0; transform: none; order: 3; margin: -110px auto 12px; width: calc(100% - 32px); }
@@ -345,7 +346,7 @@
     </style>
   </head>
   <body>
-    <div id="stage"><canvas id="scene"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+    <div id="stage"><canvas id="scene" role="img" aria-label="Сцена: тело человека из точек"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
     <div id="scale" class="stage" data-t="3000" aria-label="Масштаб"></div>
     <p id="hint" class="hint" role="status" hidden></p>
     <p id="innerLegend" class="inner-legend"><span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span></p>

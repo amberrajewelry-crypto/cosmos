@@ -55,6 +55,8 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     exp.textContent = expLabel(L.exp); name.textContent = L.name;
     fact.textContent = L.fact; tag.textContent = `[${L.tag}]`; tag.className = `tag tag-${L.tag}`;
     tag.title = L.source;
+    // Текстовая альтернатива сцены (§3.10): canvas без неё — пустое место для скринридера.
+    document.getElementById('scene')?.setAttribute('aria-label', `Сцена уровня «${L.name}», 10^${L.exp} м: ${L.fact}`);
     ticks.forEach((t, i) => t.classList.toggle('on', i === level));
     btns[0].disabled = level === 0; btns[1].disabled = level === MAX;
     root.dataset.body = String(level === BODY_LEVEL);
@@ -70,13 +72,16 @@ export function initScale(root: HTMLElement, pts: BodyPoints, onLevel: (level: n
     const lv = Math.round(z);
     if (lv !== level) { level = lv; paint(); onLevel(level); }
   }
-  function loop(): void {
+  // Сглаживание по времени, не по кадрам: 0.085 за кадр 60 Гц ≈ постоянная 190 мс — на 120 Гц и при просадках скорость та же.
+  let lastT = 0;
+  function loop(now = performance.now()): void {
     raf = 0;
-    if (snapAt && performance.now() > snapAt) { zTarget = Math.round(zTarget); snapAt = 0; }
-    zNow += (zTarget - zNow) * (reduce ? 1 : 0.085);
+    const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 1 / 60; lastT = now;
+    if (snapAt && now > snapAt) { zTarget = Math.round(zTarget); snapAt = 0; }
+    zNow += (zTarget - zNow) * (reduce ? 1 : 1 - Math.exp(-dt / 0.19));
     if (Math.abs(zTarget - zNow) < 0.0005) zNow = zTarget;
     apply(zNow);
-    if (zNow !== zTarget || snapAt) raf = requestAnimationFrame(loop);
+    if (zNow !== zTarget || snapAt) raf = requestAnimationFrame(loop); else lastT = 0;
   }
   const kick = (): void => { if (!raf) raf = requestAnimationFrame(loop); };
   function step(dir: -1 | 1): boolean {

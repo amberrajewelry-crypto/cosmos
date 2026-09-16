@@ -18,7 +18,8 @@ function polylines(paths: number[][][], color: number, opacity: number): THREE.L
 export function magnetosphereLines(): THREE.LineSegments {
   const paths: number[][][] = [];
   for (let m = 0; m < 12; m++) for (let sh = 0; sh < 5; sh++) {
-    const lon = (m / 12) * Math.PI * 2, Ls = R * (0.4 + 0.12 * sh), path: number[][] = [];
+    // +0.5: ни один меридиан не виден с ребра — иначе яркая вертикаль по центру.
+    const lon = ((m + 0.5) / 12) * Math.PI * 2, Ls = R * (0.4 + 0.12 * sh), path: number[][] = [];
     for (let i = 0; i <= 48; i++) {
       const lat = -1.35 + (2.7 * i) / 48, day = Math.cos(lat) * Math.cos(lon);
       const squash = day > 0 ? 1 - 0.3 * day : 1 + 0.9 * -day;
