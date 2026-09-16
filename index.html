@@ -185,6 +185,7 @@
       .dossier-more { margin: 14px 0 0; font-size: 13px; color: var(--ink-2); } .dossier-more a { color: var(--gold); }
       .hint { position: fixed; left: 50%; top: 74px; transform: translateX(-50%); z-index: 2; margin: 0; padding: 7px 14px; border-radius: 999px; background: var(--glass); border: 1px solid rgba(236,230,211,.08); backdrop-filter: blur(14px); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ink-2); opacity: 1; transition: opacity .6s var(--ease), transform .6s var(--ease); @starting-style { opacity: 0; transform: translate(-50%, -8px); } }
       .hint.out { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
+      @media (min-width: 761px) { .hint { left: 28px; top: 50%; transform: translate(0, -50%); } .hint.out { transform: translate(-8px, -50%); } }
       /* 5. смена уровня — титр перетекает через blur, а не подменяется */
       .scale-lbl, .scale-fact { transition: filter .22s var(--ease), opacity .22s var(--ease); }
       .swap .scale-lbl, .swap .scale-fact { filter: blur(3px); opacity: .35; }
