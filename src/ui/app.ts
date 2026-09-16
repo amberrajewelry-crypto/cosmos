@@ -85,7 +85,10 @@ stage.scene.add(body);
 
 // Курсор ничего не двигает: ни точки, ни параллакс — сцена отвечает только на явные жесты (зум, поворот).
 const LOOK = new THREE.Vector3(0, 0.95, 0);
+// Портрет/альбом читаем один раз на resize: clientWidth в кадре форсирует layout (Lighthouse: ~1 с Style & Layout).
+let portrait = false;
 function fit() {
+  portrait = stageEl.clientWidth < stageEl.clientHeight;
   resize(stage, stageEl.clientWidth, stageEl.clientHeight);
   // Формы уровней (кроме тела) — во весь кадр: радиус формы 0.85 → 0.82 полувысоты или полуширины кадра.
   const halfH = Math.tan((stage.camera.fov / 2) * Math.PI / 180) * stage.camera.position.distanceTo(LOOK);
@@ -100,13 +103,13 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 let kpLive = 0;
 function gain(now = performance.now()): void {
   // Камера близко (2.1) — спрайты крупнее и плотнее; гасим накопление, чтобы фигура не выгорала в bloom.
-  const base = stageEl.clientWidth < stageEl.clientHeight ? 0.55 : 0.5;
+  const base = portrait ? 0.55 : 0.5;
   const pulse = reduceMotion ? 0 : (0.02 + 0.03 * (kpLive / 9)) * Math.sin((now / 1000) * (2 * Math.PI / 6));
   bodyPts.setGain(base * (1 + pulse));
 }
 window.addEventListener('resize', () => { fit(); baseCam.copy(stage.camera.position); gain(); syncLook(); });
-gain();
 fit();
+gain();
 
 // Движение медленное, дыхательное (§4.9); уважаем prefers-reduced-motion (§3.10).
 let t = 0;
@@ -150,7 +153,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp' || e.key === ']') { scale.step(1); hintDone(); }
   else if (e.key === 'ArrowDown' || e.key === '[') { scale.step(-1); hintDone(); }
 });
-const syncLook = (): void => { LOOK.y = stageEl.clientWidth < stageEl.clientHeight ? 0.95 : 0.84; };
+const syncLook = (): void => { LOOK.y = portrait ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
 fit(); baseCam.copy(stage.camera.position);
