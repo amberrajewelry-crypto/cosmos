@@ -97,7 +97,7 @@ export const CONTENT: ContentParam[] = [
   { id: 'c.gal.proxima', level: 7, label: 'Ближайшая звезда', unit: 'св. лет', tag: 'ТОЧНО', source: 'Gaia DR3, Проксима Центавра', explain: 'Свет, который ты видел бы от неё сегодня, вышел 4 года назад.', compute: () => 4.246 },
   { id: 'c.gal.visible', level: 7, label: 'Звёзд, видимых глазом', unit: '', tag: 'ОЦЕНКА', source: 'V < 6.5, Hipparcos', explain: 'Около 9 000 на всём небе; в одну ночь с одного места — до 2 500.', compute: () => '≈ 9 000' },
   { id: 'c.gal.bh', level: 7, label: 'Масса центральной чёрной дыры', unit: 'млн M☉', tag: 'ТОЧНО', source: 'GRAVITY 2019', explain: 'До неё 26 000 св. лет; её свет, который дошёл сегодня, вышел в ледниковый период.', compute: () => 4.3 },
-  { id: 'c.gal.dm', level: 7, label: 'Частиц тёмной материи сквозь тебя', unit: '/с', tag: 'СПОРНО', source: 'если WIMP 100 ГэВ, ρ = 0.3 ГэВ/см³', explain: 'Гипотеза: триллионы в секунду. Ни одна не поймана — тег честно говорит «спорно».', compute: () => '≈ 10¹²' },
+  { id: 'c.gal.dm', level: 7, label: 'Частиц тёмной материи сквозь тебя', unit: '/с', tag: 'СПОРНО', source: 'если WIMP 100 ГэВ: n = 0.3 ГэВ/см³ ÷ 100 ГэВ, v = 230 км/с, сечение тела 0.7 м²', explain: 'Гипотеза: полмиллиарда в секунду. Ни одна не поймана — тег честно говорит «спорно».', compute: () => '≈ 5·10⁸' },
   { id: 'c.gal.sun_orbits', level: 7, label: 'Оборотов Солнца вокруг Галактики', unit: '', tag: 'ОЦЕНКА', source: '4.6 млрд / 230 млн лет', explain: 'Солнцу двадцать галактических лет.', compute: () => 20 },
   // ——— 10²⁶ Вселенная ———
   { id: 'c.uni.cmb', level: 8, label: 'Температура реликтового излучения', unit: 'K', tag: 'ТОЧНО', source: 'COBE/FIRAS, Planck', explain: 'Свет Большого взрыва остыл до 2.7 К — и до сих пор проходит сквозь тебя.', compute: () => 2.7255 },
@@ -124,6 +124,12 @@ export const VERIFIED = new Set<string>([
   'c.body.mc2', 'c.body.rs', 'c.body.ir', 'c.hor.dist', 'c.hor.curve', 'c.hor.air',
   'c.mag.pause', 'c.mag.flip', 'c.mag.tilt', 'c.orb.tide', 'c.orb.sun_pull', 'c.gal.bh', 'c.gal.sun_orbits', 'c.gal.year',
   'c.uni.dark', 'c.uni.galaxies', 'c.uni.photon_ratio', 'c.uni.neutrinos',
+  // Проход 5 (16.09) — остаток констант и формул; вне списка только 5 параметров, зависящих от точки/Kp пользователя.
+  'c.nuc.protons', 'c.nuc.volume', 'c.nuc.mass_in_nuclei', 'c.nuc.binding', 'c.nuc.fusion',
+  'c.atom.top3', 'c.atom.stellar', 'c.atom.oldest', 'c.atom.empty', 'c.atom.turnover', 'c.atom.electrons', 'c.atom.line',
+  'c.cell.rbc', 'c.cell.atp', 'c.cell.dna_damage', 'c.body.water', 'c.body.gravity', 'c.body.light', 'c.body.co2',
+  'c.mag.pole', 'c.mag.wind', 'c.mag.sats', 'c.orb.photon_age', 'c.gal.speed', 'c.gal.visible', 'c.gal.dm',
+  'c.uni.h0', 'c.uni.atoms', 'c.uni.first_light',
 ]);
 
 // Почему слой погас: человек ещё не дал вход (§3.7 — только по действию), а не ошибка.

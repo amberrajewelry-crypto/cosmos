@@ -68,3 +68,12 @@ describe('A4 проход 4', () => {
     expect(contentValues(ctx).filter((x) => x.verification === 'verified').length).toBeGreaterThanOrEqual(43);
   });
 });
+
+describe('A4 проход 5', () => {
+  const ctx = { when: new Date('2026-09-16T12:00:00Z'), massKg: 70, heightM: 1.7, ageYears: 35 };
+  it('72 из 77 сверены; тёмная материя — полмиллиарда, не триллион', () => {
+    const all = contentValues(ctx);
+    expect(all.filter((x) => x.verification === 'verified').length).toBe(72);
+    expect(all.find((x) => x.id === 'c.gal.dm')!.text).toBe('≈ 5·10⁸');
+  });
+});
