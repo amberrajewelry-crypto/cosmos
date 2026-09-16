@@ -28,6 +28,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
   overlay.innerHTML = `
     <div class="natal-box">
       <button class="natal-close" aria-label="Закрыть">✕</button>
+      <h2 class="natal-title">${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}${place ? ` · ${when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC · ${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°` : ' · полдень UTC, без места'}</h2>
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
       <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
       <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
