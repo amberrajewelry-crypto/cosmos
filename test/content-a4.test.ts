@@ -57,3 +57,14 @@ describe('A4 проход 3: константы досье', () => {
     for (const id of ['c.orb.path', 'c.orb.moon_away', 'c.nuc.decays_life', 'c.cell.heartbeats', 'c.gal.path']) expect(get(id).verification).toBe('verified');
   });
 });
+
+describe('A4 проход 4', () => {
+  const ctx = { when: new Date('2026-09-16T12:00:00Z'), massKg: 70, heightM: 1.7, ageYears: 35 };
+  const get = (id: string) => contentValues(ctx).find((x) => x.id === id)!;
+  it('наклон диполя — IGRF 9.3°, не учебные 11°', () => { expect(get('c.mag.tilt').value).toBe(9.3); });
+  it('E=mc² для 70 кг = 1504 Мт; горизонт 4.5 км; 25 параметров помечены сверенными', () => {
+    expect(get('c.body.mc2').value).toBe(1504);
+    expect(get('c.hor.dist').value).toBe(4.5);
+    expect(contentValues(ctx).filter((x) => x.verification === 'verified').length).toBeGreaterThanOrEqual(43);
+  });
+});

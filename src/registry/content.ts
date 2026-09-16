@@ -77,7 +77,7 @@ export const CONTENT: ContentParam[] = [
   { id: 'c.mag.wind', level: 5, label: 'Солнечный ветер', unit: 'км/с', tag: 'ОЦЕНКА', source: 'типичный, NOAA SWPC', explain: 'Поток протонов от Солнца до тебя — четверо суток пути.', compute: () => 400 },
   { id: 'c.mag.aurora', level: 5, label: 'Граница сияний сейчас (широта)', unit: '°', tag: 'ОЦЕНКА', source: 'Kp → ~67° − 2°·Kp', explain: 'При Kp 9 сияния спускаются до 50°. Число зависит от живого Kp.', compute: (c) => (c.kp == null ? null : Math.round(67 - 2 * c.kp)) },
   { id: 'c.mag.flip', level: 5, label: 'Последняя инверсия поля', unit: 'тыс. лет назад', tag: 'ТОЧНО', source: 'Брюнес–Матуяма', explain: 'Северный и южный полюс менялись местами сотни раз. Следующая — неизвестно когда.', compute: () => 780 },
-  { id: 'c.mag.tilt', level: 5, label: 'Наклон магнитной оси к оси вращения', unit: '°', tag: 'ТОЧНО', source: 'IGRF-14, диполь', explain: 'Поэтому компас не показывает на географический север.', compute: () => 11 },
+  { id: 'c.mag.tilt', level: 5, label: 'Наклон магнитной оси к оси вращения', unit: '°', tag: 'ТОЧНО', source: 'IGRF-13/14: геомагнитный полюс ≈80.7° N → 9.3° (учебные 11.5° — 1980-е)', explain: 'Поэтому компас не показывает на географический север.', compute: () => 9.3 },
   { id: 'c.mag.sats', level: 5, label: 'Активных спутников над Землёй', unit: '', tag: 'ОЦЕНКА', source: 'UCS / Jonathan McDowell 2026', explain: 'Над твоим горизонтом в любой момент — несколько сотен из них.', compute: () => '≈ 13 000' },
   // ——— 10¹¹ орбита ———
   { id: 'c.orb.speed', level: 6, label: 'Скорость Земли по орбите сейчас', unit: 'км/с', tag: 'ТОЧНО', source: 'astronomy-engine, |Δr/Δt|', explain: 'В январе (перигелий) быстрее, в июле медленнее — Кеплер прямо в твоём кресле.', compute: (c) => { const a = HelioVector(Body.Earth, c.when), b = HelioVector(Body.Earth, new Date(c.when.getTime() + 3600e3)); return Math.round(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * AU_KM / 3600 * 100) / 100; } },
@@ -119,6 +119,11 @@ export const VERIFIED = new Set<string>([
   'c.uni.cmb', 'c.uni.age', 'c.gal.proxima', 'c.hor.day', 'c.hor.noon', 'c.body.g',
   // Проход 3 (16.09) — параметры, попавшие в досье карты рождения: константы сверены с первоисточниками (VERIFICATION.md).
   'c.orb.path', 'c.orb.moon_away', 'c.nuc.decays_life', 'c.cell.heartbeats', 'c.gal.path',
+  // Проход 4 (16.09) — формулы пересчитаны вручную, литературные числа сверены с первоисточником (VERIFICATION.md).
+  'c.nuc.k40', 'c.atom.count', 'c.atom.iron', 'c.cell.count', 'c.cell.bacteria', 'c.cell.neurons', 'c.cell.dna',
+  'c.body.mc2', 'c.body.rs', 'c.body.ir', 'c.hor.dist', 'c.hor.curve', 'c.hor.air',
+  'c.mag.pause', 'c.mag.flip', 'c.mag.tilt', 'c.orb.tide', 'c.orb.sun_pull', 'c.gal.bh', 'c.gal.sun_orbits', 'c.gal.year',
+  'c.uni.dark', 'c.uni.galaxies', 'c.uni.photon_ratio', 'c.uni.neutrinos',
 ]);
 
 // Почему слой погас: человек ещё не дал вход (§3.7 — только по действию), а не ошибка.
