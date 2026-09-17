@@ -143,17 +143,31 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   ${navHtml}
   <p class="privacy">${t.privacy}</p>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  const hubUrl = lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/';
+  const crumbs = [{ name: BRAND[lang], url: '/' }, { name: lang === 'ru' ? 'Натальная карта' : 'Natal chart', url: hubUrl }, { name: t.title, url: selfUrl }];
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, crumbs });
 }
 
 // Общая HTML-оболочка (DRY): голова с SEO-тегами + тёмная тема. bodyInner вставляется в .wrap.
-interface Shell { title: string; desc: string; selfUrl: string; altUrl: string; altLabel: string; inner: string; }
-function shell(lang: Lang, s: Shell): string {
-  const jsonLd = {
+export interface Crumb { name: string; url: string; }
+export interface Shell {
+  title: string; desc: string; selfUrl: string; altUrl: string; altLabel: string; inner: string;
+  crumbs?: Crumb[]; datePublished?: string; dateModified?: string;
+}
+export function shell(lang: Lang, s: Shell): string {
+  const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org', '@type': 'Article', headline: s.title, description: s.desc,
     inLanguage: lang, isPartOf: { '@type': 'WebSite', name: BRAND[lang], url: SITE },
     mainEntity: { '@type': 'Question', name: s.title, acceptedAnswer: { '@type': 'Answer', text: s.desc } },
   };
+  if (s.datePublished) { jsonLd.datePublished = s.datePublished; jsonLd.dateModified = s.dateModified ?? s.datePublished; }
+  // BreadcrumbList: Главная → раздел → страница (протокол эксперимента, этап 5.3).
+  const crumbs = s.crumbs ?? [{ name: BRAND[lang], url: '/' }, { name: s.title, url: s.selfUrl }];
+  const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url.startsWith('http') ? c.url : SITE + c.url })) };
+  const altLinks = s.altUrl ? `<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
+<link rel="alternate" hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${s.altUrl}">` : '';
+  const altNav = s.altUrl ? `<a href="${s.altUrl}">${s.altLabel}</a>` : `<a href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${s.altLabel}</a>`;
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -162,8 +176,7 @@ function shell(lang: Lang, s: Shell): string {
 <title>${s.title}</title>
 <meta name="description" content="${s.desc}">
 <link rel="canonical" href="${s.selfUrl}">
-<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
-<link rel="alternate" hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${s.altUrl}">
+${altLinks}
 <meta property="og:type" content="article">
 <meta property="og:title" content="${s.title}">
 <meta property="og:description" content="${s.desc}">
@@ -174,6 +187,7 @@ function shell(lang: Lang, s: Shell): string {
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<script type="application/ld+json">${JSON.stringify(crumbLd)}</script>
 <style>
 @font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Unbounded';font-style:normal;font-weight:200 900;font-display:swap;src:url(/fonts/Unboundedwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
 :root{--ink:#ece6d3;--ink2:rgba(236,230,211,.68);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--display:'Unbounded','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
@@ -214,7 +228,7 @@ section p{color:var(--ink2)}
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><a href="/">${BRAND[lang]}</a><a href="${s.altUrl}">${s.altLabel}</a></header><main>${s.inner}</main>
+  <header class="top"><a href="/">${BRAND[lang]}</a>${altNav}</header><main>${s.inner}</main>
 </div>
 </body>
 </html>`;

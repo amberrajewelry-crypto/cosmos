@@ -64,6 +64,15 @@
       #nav a, #nav button { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); background: transparent; border: none; padding: 7px 12px; border-radius: 999px; text-decoration: none; transition: color .5s var(--ease), background .5s var(--ease); }
       #nav .links { display: contents; }
       #burger { display: none; }
+      #read { position: relative; }
+      #read summary { list-style: none; cursor: pointer; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); padding: 7px 12px; border-radius: 999px; }
+      #read summary::-webkit-details-marker { display: none; }
+      #read[open] summary { background: rgba(236,230,211,.08); }
+      #read .rd { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: min(70vh, 560px); overflow: auto; display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 18px; background: rgba(10,8,32,.9); backdrop-filter: blur(18px); border: 1px solid rgba(236,230,211,.1); box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+      #read .rd a { display: block; padding: 7px 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-family: var(--serif); font-size: 14px; letter-spacing: 0; }
+      #read .rd a:hover { background: rgba(236,230,211,.07); }
+      #read .rd a.rd-meta { color: var(--ink-2); font-size: 12px; }
+      #read .rd a.rd-meta:first-of-type { margin-top: 6px; border-top: 1px solid rgba(236,230,211,.08); padding-top: 12px; }
       #nav a:hover, #nav button:hover { color: var(--ink); background: rgba(236,230,211,.06); }
 
       /* Hero — редакционный сплит: типографика слева, живая сцена в центре, приборы справа */
@@ -323,6 +332,10 @@
         html.menu-open #nav .links { opacity: 1; pointer-events: auto; }
         #nav .links a, #nav .links button { font-family: var(--serif); font-weight: 300; font-size: 34px; letter-spacing: -.02em; text-align: left; padding: 10px 0; color: var(--ink); background: none; border-bottom: 1px solid rgba(236,230,211,.08); border-radius: 0; opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
         html.menu-open #nav .links > * { opacity: 1; transform: none; }
+        #nav .links #read summary { font-family: var(--serif); font-weight: 300; font-size: 34px; letter-spacing: -.02em; padding: 10px 0; border-bottom: 1px solid rgba(236,230,211,.08); border-radius: 0; }
+        #nav .links #read[open] summary { background: none; }
+        #nav .links #read .rd { position: static; width: auto; max-height: 38vh; background: none; border: 0; box-shadow: none; backdrop-filter: none; padding: 6px 0; mask-image: linear-gradient(#000 85%, transparent); }
+        #nav .links #read .rd a { font-size: 17px; opacity: 1; transform: none; border: 0; padding: 6px 0; }
         html.menu-open #nav .links > :nth-child(2) { transition-delay: .08s; } html.menu-open #nav .links > :nth-child(3) { transition-delay: .16s; }
         .eb-more { display: inline; }
         #hero { position: relative; top: 0; max-width: 100%; padding: 74px 20px 0; }
@@ -370,6 +383,7 @@
         <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">Натальная </span>карта</a>
         <button id="openPanel" type="button">Параметры</button>
         <button id="openHonesty" type="button">Погрешности</button>
+        <details id="read"><summary>Читать</summary><div class="rd"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки зодиака по датам</a><a href="/ekliptika/">Эклиптика</a><a href="/precessiya/">Прецессия</a><a href="/zodiakalnye-sozvezdiya/">Зодиакальные созвездия</a><a href="/nebo-v-den-rozhdeniya/">Небо в день рождения</a><a href="/kakoe-sozvezdie-v-den-rozhdeniya/">Какое созвездие в день рождения</a><a href="/polozhenie-planet-v-den-rozhdeniya/">Положение планет в день рождения</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/novolunie-oktyabr-2026/">Новолуние октябрь 2026</a><a href="/polnolunie-oktyabr-2026/">Полнолуние октябрь 2026</a><a href="/magnitnye-buri-oktyabr-2026/">Магнитные бури октябрь 2026</a><a class="rd-meta" href="/o-proekte/">О проекте</a><a class="rd-meta" href="/kontakty/">Контакты</a><a class="rd-meta" href="/politika/">Политика</a></div></details>
       </div>
     </nav>
     <main id="main">
