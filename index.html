@@ -289,6 +289,16 @@
       .natal-bodies b { font-family: var(--mono); font-weight: 400; font-size: 11px; color: var(--ink); }
       .natal-cap b { font-family: var(--mono); font-weight: 400; color: var(--gold); }
       .natal-cap { font-family: var(--serif); font-size: 17px; line-height: 1.45; text-align: center; max-width: 470px; margin: 16px auto 12px; }
+      .natal-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 14px auto 0; }
+      .natal-tabs button { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); background: rgba(236,230,211,.05); border: 1px solid rgba(236,230,211,.1); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: color .4s var(--ease), background .4s var(--ease); }
+      .natal-tabs button.on, .natal-tabs button:hover { color: #120f2a; background: var(--gold); border-color: var(--gold); }
+      .natal-view { margin: 12px 0 4px; overflow-x: auto; }
+      .nt { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--serif); }
+      .nt th { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(236,230,211,.12); }
+      .nt td { padding: 6px 8px; border-bottom: 1px solid rgba(236,230,211,.07); vertical-align: top; white-space: nowrap; }
+      .nt td:first-child { color: var(--ink); } .nt small { opacity: .6; } .nt-near { color: var(--gold); }
+      .nt-cap { font-family: var(--serif); font-size: 13px; line-height: 1.45; color: var(--ink-2); margin: 6px 0 8px; }
+      .nt-pick { margin: 4px 0 8px; font-size: 13px; } .nt-pick input { margin-left: 8px; padding: 6px 8px; border-radius: 10px; border: 1px solid rgba(236,230,211,.15); background: rgba(236,230,211,.04); color: var(--ink); font: inherit; }
       .natal-star { font-size: 15.5px; color: var(--ink-2); }
       .natal-src { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .04em; opacity: .6; margin-top: 5px; }
       .natal-muted { opacity: .55; }
@@ -383,7 +393,7 @@
         <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">Натальная </span>карта</a>
         <button id="openPanel" type="button">Параметры</button>
         <button id="openHonesty" type="button">Погрешности</button>
-        <details id="read"><summary>Читать</summary><div class="rd"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки зодиака по датам</a><a href="/ekliptika/">Эклиптика</a><a href="/precessiya/">Прецессия</a><a href="/zodiakalnye-sozvezdiya/">Зодиакальные созвездия</a><a href="/nebo-v-den-rozhdeniya/">Небо в день рождения</a><a href="/kakoe-sozvezdie-v-den-rozhdeniya/">Какое созвездие в день рождения</a><a href="/polozhenie-planet-v-den-rozhdeniya/">Положение планет в день рождения</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/novolunie-oktyabr-2026/">Новолуние октябрь 2026</a><a href="/polnolunie-oktyabr-2026/">Полнолуние октябрь 2026</a><a href="/magnitnye-buri-oktyabr-2026/">Магнитные бури октябрь 2026</a><a class="rd-meta" href="/o-proekte/">О проекте</a><a class="rd-meta" href="/kontakty/">Контакты</a><a class="rd-meta" href="/politika/">Политика</a></div></details>
+        <details id="read"><summary>Читать</summary><div class="rd"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки зодиака по датам</a><a href="/ekliptika/">Эклиптика</a><a href="/precessiya/">Прецессия</a><a href="/zodiakalnye-sozvezdiya/">Зодиакальные созвездия</a><a href="/nebo-v-den-rozhdeniya/">Небо в день рождения</a><a href="/kakoe-sozvezdie-v-den-rozhdeniya/">Какое созвездие в день рождения</a><a href="/polozhenie-planet-v-den-rozhdeniya/">Положение планет в день рождения</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/novolunie-oktyabr-2026/">Новолуние октябрь 2026</a><a href="/polnolunie-oktyabr-2026/">Полнолуние октябрь 2026</a><a href="/magnitnye-buri-oktyabr-2026/">Магнитные бури октябрь 2026</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a><a href="/direkcii/">Дирекции</a><a class="rd-meta" href="/o-proekte/">О проекте</a><a class="rd-meta" href="/kontakty/">Контакты</a><a class="rd-meta" href="/politika/">Политика</a></div></details>
       </div>
     </nav>
     <main id="main">

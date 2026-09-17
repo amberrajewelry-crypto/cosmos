@@ -8,6 +8,7 @@ import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
+import { planetsTable, anglesTable, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
 export interface Place { lat: number; lon: number; }
 
@@ -31,6 +32,10 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       <h2 class="natal-title">${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}${place ? ` · ${when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC · ${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°` : ' · полдень UTC, без места'}</h2>
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
       <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
+      <nav class="natal-tabs" aria-label="Виды карты">
+        <button data-view="planets">Положения</button><button data-view="angles">Углы</button><button data-view="transits">Сейчас</button><button data-view="solar">Возврат Солнца</button><button data-view="synastry">Две даты</button><button data-view="returns">Возвраты</button>
+      </nav>
+      <div class="natal-view" id="natalView" hidden></div>
       <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
       <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия</button>
       ${angles
@@ -60,6 +65,24 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()) });
     if (rotated) (overlay.querySelector('#realSky') as SVGGElement | null)?.style.setProperty('opacity', '1');
   }).catch(() => { /* без каталога остаётся встроенный список */ });
+
+  // Виды по образцу астропроцессоров — таблицы, транзиты, соляр, синастрия, возвраты — но только вычислимое.
+  const view = overlay.querySelector('#natalView') as HTMLElement;
+  const tabs = Array.from(overlay.querySelectorAll('.natal-tabs button')) as HTMLButtonElement[];
+  let solYear = new Date().getUTCFullYear(), synDate = '';
+  const render = (kind: string): void => {
+    view.innerHTML = kind === 'planets' ? planetsTable(when)
+      : kind === 'angles' ? anglesTable(when)
+      : kind === 'transits' ? transitsTable(when)
+      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarTable(when, solYear)
+      : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
+      : returnsTable(when);
+    view.hidden = false;
+    tabs.forEach((b) => b.classList.toggle('on', b.dataset.view === kind));
+    view.querySelector('#solYear')?.addEventListener('change', (e) => { solYear = Number((e.target as HTMLInputElement).value) || solYear; render('solar'); });
+    view.querySelector('#synDate')?.addEventListener('change', (e) => { synDate = (e.target as HTMLInputElement).value; render('synastry'); });
+  };
+  tabs.forEach((b) => b.addEventListener('click', () => { if (b.classList.contains('on')) { view.hidden = true; b.classList.remove('on'); } else render(b.dataset.view!); }));
 
   const rotateBtn = overlay.querySelector('#natalRotate') as HTMLButtonElement;
   const cap = overlay.querySelector('#natalCap') as HTMLElement;
