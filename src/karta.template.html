@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Астропроцессор: настоящая натальная карта онлайн — положения, углы, транзиты, соляр</title>
+    <meta name="description" content="Натальная карта онлайн по дате, времени и месту рождения: реальные положения планет и созвездия по МАС рядом со знаками гороскопа, углы, транзиты, возврат Солнца, сравнение двух дат. Расчёт в браузере, без регистрации." />
+    <link rel="canonical" href="https://cosmos-alpha-three.vercel.app/karta/" />
+    <meta property="og:title" content="Астропроцессор — настоящая натальная карта" />
+    <meta property="og:description" content="Положения планет, созвездия, углы, транзиты, соляр, синастрия — только вычислимое." />
+    <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/og.png" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Unboundedwght.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/GeistMonowght.woff2" />
+    <!--STYLE-->
+    <style>
+      html, body { overflow: auto; height: auto; }
+      body { background: radial-gradient(120% 80% at 50% -10%, #1a1340 0%, var(--bg) 60%); min-height: 100vh; font-family: var(--serif); }
+      .kp, .kform, .kfaq { font-family: var(--serif); }
+      #nav { position: sticky; top: 14px; margin: 14px auto 0; left: auto; transform: none; width: fit-content; }
+      .kp { max-width: 760px; margin: 0 auto; padding: 28px 22px 80px; }
+      .kp h1 { font-family: var(--display); font-weight: 300; font-size: clamp(26px, 3.6vw, 40px); line-height: 1.12; letter-spacing: -.02em; text-align: center; margin: 24px 0 10px; }
+      .kp h1 em { font-style: italic; color: var(--gold); }
+      .kp .lede { text-align: center; color: var(--ink-2); font-size: 17px; line-height: 1.5; max-width: 600px; margin: 0 auto 26px; }
+      .kform { display: grid; gap: 10px; padding: 18px; border-radius: 22px; background: rgba(14,11,40,.6); border: 1px solid rgba(236,230,211,.1); box-shadow: 0 0 0 5px rgba(236,230,211,.03); }
+      .kform label { display: grid; min-width: 0; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+      .kform input { font-family: var(--serif); font-size: 15px; color: var(--ink); background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; width: 100%; min-width: 0; box-sizing: border-box; }
+      .kform .row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 10px; }
+      @media (max-width: 640px) { .kform .row { grid-template-columns: 1fr; } }
+      .kform .place-box { display: block; position: relative; } .kform .place-box input { width: 100%; }
+      .kform .act { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+      .kform #openNatal { font-family: var(--serif); font-size: 16px; font-weight: 500; color: #120f2a; background: var(--gold); border: none; border-radius: 999px; padding: 10px 22px; cursor: pointer; }
+      .kform #birthHere { font-family: var(--mono); font-size: 11px; color: var(--ink-2); background: none; border: 1px solid rgba(236,230,211,.14); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+      .kform .natal-hint { font-family: var(--mono); font-size: 10px; opacity: .55; }
+      #natalMore { display: block; } .natal-more summary { display: none; }
+      #natal { position: static; display: block; background: none; backdrop-filter: none; margin-top: 26px; }
+      #natal .natal-box { width: auto; padding: 0; }
+      .natal-close { display: none; }
+      .kfaq { margin-top: 40px; } .kfaq h2 { font-family: var(--display); font-weight: 300; font-size: 20px; color: var(--gold); text-align: center; }
+      .kfaq details { border-bottom: 1px solid rgba(236,230,211,.1); padding: 12px 0; } .kfaq summary { cursor: pointer; font-size: 17px; font-weight: 500; } .kfaq p { color: var(--ink-2); font-size: 15px; margin: 8px 0 0; }
+      .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 26px 0 0; } .klinks a { font-family: var(--mono); font-size: 11px; color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(236,230,211,.1); } .klinks a:hover { color: var(--ink); border-color: var(--gold-2); }
+    </style>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Астропроцессор — настоящая натальная карта","url":"https://cosmos-alpha-three.vercel.app/karta/","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"description":"Натальная карта по эфемеридам: положения планет, созвездия МАС, углы, транзиты, возврат Солнца, сравнение двух дат."}</script>
+  </head>
+  <body>
+    <nav id="nav" aria-label="Навигация">
+      <a class="brand" href="/">COSMOS</a>
+      <div id="menu" class="links"><a href="/natalnaya-karta/">По дате</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a></div>
+    </nav>
+    <main class="kp">
+      <h1>Настоящая натальная карта <em>онлайн</em></h1>
+      <p class="lede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
+      <form class="kform" onsubmit="return false">
+        <div class="row">
+          <label>Дата рождения <input type="date" id="birth" required /></label>
+          <label>Время (местное) <input type="time" id="birthTime" /></label>
+          <label>Город рождения <span class="place-box"><input type="text" id="birthPlace" placeholder="начните вводить" autocomplete="off" aria-autocomplete="list" aria-controls="placeList" /><ul id="placeList" role="listbox" hidden></ul></span></label>
+        </div>
+        <details class="natal-more" id="natalMore" open><summary></summary><div class="natal-more-row">
+          <input type="hidden" id="birthLat" /><input type="hidden" id="birthLon" /><input type="hidden" id="birthTz" />
+          <span class="natal-hint" id="placeHint">время — местное для города; без времени Асцендент и MC не считаются</span>
+        </div></details>
+        <div class="act"><button id="openNatal" type="button">Построить карту</button><button id="birthHere" type="button">я здесь</button><span id="status"></span></div>
+      </form>
+      <div id="natal" hidden aria-label="Карта рождения"></div>
+      <section class="kfaq"><h2>Вопросы</h2>
+        <details><summary>Чем это отличается от других астропроцессоров?</summary><p>Те же таблицы — положения, углы, транзиты, соляр, синастрия — но без толкований. Каждое число вычислено по эфемеридам VSOP87 и помечено тегом ТОЧНО / ОЦЕНКА / ГЕОМЕТРИЯ. Рядом со знаком гороскопа показано настоящее созвездие по границам МАС.</p></details>
+        <details><summary>Что если я не знаю время рождения?</summary><p>Введите только дату: Солнце и планеты определяются точно, Луна — с погрешностью до 6,5°. Асцендент и MC без времени не показываем — их без него не существует.</p></details>
+        <details><summary>Где расшифровка?</summary><p>Её нет. Характер и судьбу из положения планет вывести нельзя — это проверяли (Карлсон, Nature, 1985; Силверман, 1971). Есть факты: где были тела, какие углы между ними, какая звезда светит вам светом года рождения.</p></details>
+        <details><summary>Можно ли поделиться картой?</summary><p>Да: кнопка «Скопировать ссылку» даёт адрес с датой (и временем/координатами, если вводили), «Поделиться карточкой» — картинку 1080×1350.</p></details>
+      </section>
+      <p class="klinks"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки по датам</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/precessiya/">Прецессия</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a><a href="/politika/">Политика</a></p>
+    </main>
+    <script type="module" src="/src/ui/karta.ts"></script>
+  </body>
+</html>

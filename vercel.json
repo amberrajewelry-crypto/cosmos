@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/karta/",
+      "destination": "/karta.html"
+    },
+    {
+      "source": "/karta",
+      "destination": "/karta.html"
+    },
+    {
       "source": "/nebo/:date(\\d{4}-\\d{2}-\\d{2})/",
       "destination": "/api/nebo?date=:date&lang=ru"
     },
