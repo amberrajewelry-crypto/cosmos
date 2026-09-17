@@ -38,8 +38,8 @@ const tbl = (head: string[], body: string[][]) =>
   `<table class="nt"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 
 // Таблица положений: знак гороскопа рядом с настоящим созвездием — расхождение видно в каждой строке.
-export function planetsTable(when: Date): string {
-  const r = rows(when);
+export function planetsTable(when: Date, outer = true): string {
+  const r = outer ? rows(when) : rows(when).slice(0, 7);
   return `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Геоцентрические долготы на момент, созвездие — по границам МАС, ℞ — видимое попятное движение.</p>` +
     tbl(['', 'Долгота', 'Знак (гороскоп)', 'Созвездие (небо)', 'Расстояние'],
       r.map((x) => [`${x.glyph}︎ ${x.name}${x.retro ? ' <small>℞</small>' : ''}`, `${x.lon.toFixed(2)}° <small>(${fmtDeg(x.lon)})</small>`, x.sign, `<b>${x.constellation}</b>`, x.dist]));
