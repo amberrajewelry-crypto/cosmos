@@ -231,6 +231,14 @@
       /* Панель — приборный столбец справа, карточки с двойным ободом (§2.5, §4.4) */
       #panel { position: fixed; top: 0; right: 0; z-index: 1; transform: translateX(24px); opacity: 0; pointer-events: none; transition: transform .9s var(--ease), opacity .9s var(--ease); width: min(400px, 94vw); height: 100vh; box-sizing: border-box; padding: 84px 24px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
       html.panel-open #panel { transform: none; opacity: 1; pointer-events: auto; }
+      /* Panel open (desktop): scale widget, legend and hero line move left of the panel — nothing overlaps it */
+      @media (min-width: 761px) {
+        #scale, .inner-legend { transition: right .9s var(--ease); }
+        html.panel-open #scale, html.panel-open .inner-legend { right: calc(min(400px, 94vw) + 24px); }
+        html.panel-open #hero { left: calc(50% - min(200px, 47vw)); max-width: calc(100vw - min(400px, 94vw) - 32px); }
+        html.panel-open #hero > * { text-wrap: balance; white-space: normal; }
+        #stage { transition: transform .9s var(--ease); } html.panel-open #stage { transform: translateX(calc(min(400px, 94vw) / -2)); }
+      }
       #panel::-webkit-scrollbar { display: none; }
       .pg, .rail { display: contents; }
       .ph { display: flex; align-items: center; gap: 12px; margin: 10px 4px 0; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); opacity: .8; }
