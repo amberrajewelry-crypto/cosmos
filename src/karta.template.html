@@ -16,39 +16,83 @@
     <!--STYLE-->
     <style>
       html, body { overflow: auto; height: auto; }
-      body { background: radial-gradient(120% 80% at 50% -10%, #1a1340 0%, var(--bg) 60%); min-height: 100vh; font-family: var(--serif); }
+      body { background: radial-gradient(120% 80% at 50% -10%, #1a1340 0%, var(--bg) 60%); min-height: 100dvh; font-family: var(--serif); }
       .kp, .kform, .kfaq { font-family: var(--serif); }
       #nav { position: sticky; top: 14px; margin: 14px auto 0; left: auto; transform: none; width: fit-content; }
-      .kp { max-width: 760px; margin: 0 auto; padding: 28px 22px 80px; }
-      .kp h1 { font-family: var(--display); font-weight: 300; font-size: clamp(26px, 3.6vw, 40px); line-height: 1.12; letter-spacing: -.02em; text-align: center; margin: 24px 0 10px; }
+      .kp { max-width: 1120px; margin: 0 auto; padding: 40px 22px 96px; }
+      /* Editorial split hero: copy left, image right; stacks below 900px */
+      .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; margin: 24px 0 40px; }
+      @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 28px; } }
+      .eyebrow-k { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(201,168,92,.28); background: rgba(201,168,92,.06); margin: 0 0 18px; }
+      .eyebrow-k::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 2.6s var(--ease) infinite; }
+      @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
+      .kp h1 { font-family: var(--display); font-weight: 300; font-size: clamp(30px, 4.2vw, 50px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
       .kp h1 em { font-style: italic; color: var(--gold); }
-      .kp .lede { text-align: center; color: var(--ink-2); font-size: 17px; line-height: 1.5; max-width: 600px; margin: 0 auto 26px; }
-      .kform { display: grid; gap: 10px; padding: 18px; border-radius: 22px; background: rgba(14,11,40,.6); border: 1px solid rgba(236,230,211,.1); box-shadow: 0 0 0 5px rgba(236,230,211,.03); }
-      .kform label { display: grid; min-width: 0; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
-      .kform input { font-family: var(--serif); font-size: 15px; color: var(--ink); background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; width: 100%; min-width: 0; box-sizing: border-box; }
-      .kform .row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 10px; }
-      @media (max-width: 640px) { .kform .row { grid-template-columns: 1fr; } }
+      .kp .lede { text-align: left; color: var(--ink-2); font-size: 17px; line-height: 1.55; max-width: 56ch; margin: 0 0 22px; }
+      .hero-fig { position: relative; padding: 6px; border-radius: 30px; background: rgba(236,230,211,.045); border: 1px solid rgba(236,230,211,.09); box-shadow: 0 30px 60px -30px rgba(3,2,14,.9); }
+      .hero-fig .core { position: relative; overflow: hidden; border-radius: 24px; aspect-ratio: 4 / 3; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+      .hero-fig img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .hero-fig .core::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,32,0) 55%, rgba(10,8,32,.75) 100%); }
+      .hero-fig figcaption { position: absolute; left: 22px; bottom: 20px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(236,230,211,.7); }
+      @media (max-width: 900px) { .hero-fig .core { aspect-ratio: 16 / 9; } }
+      /* Mode switch: island of pills */
+      .modes { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; width: fit-content; max-width: 100%; margin: 0 0 14px; border-radius: 999px; background: rgba(236,230,211,.045); border: 1px solid rgba(236,230,211,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+      .modes button { font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 9px 16px; cursor: pointer; transition: color .5s var(--ease), background .5s var(--ease), transform .5s var(--ease); }
+      .modes button:hover { color: var(--ink); background: rgba(236,230,211,.05); }
+      .modes button:active { transform: scale(.97); }
+      .modes button.on { color: #120f2a; background: var(--gold); box-shadow: 0 8px 20px -10px rgba(201,168,92,.7); }
+      @media (max-width: 640px) { .modes { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: auto; } .modes::-webkit-scrollbar { display: none; } .modes button { flex: 0 0 auto; } }
+      /* Double-bezel shells: outer tray + inner core */
+      .shell { padding: 6px; border-radius: 30px; background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.08); box-shadow: 0 40px 80px -40px rgba(3,2,14,.9); }
+      .core { border-radius: 24px; background: linear-gradient(180deg, rgba(20,16,52,.82), rgba(12,10,32,.82)); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
+      .kform { display: grid; gap: 14px; padding: 26px; }
+      @media (max-width: 640px) { .kform { padding: 18px; } }
+      .kform label { display: grid; min-width: 0; gap: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+      .kform input, .kform select { font-family: var(--serif); font-size: 15px; color: var(--ink); background: rgba(236,230,211,.035); border: 1px solid rgba(236,230,211,.1); border-radius: 14px; padding: 12px 14px; color-scheme: dark; width: 100%; min-width: 0; box-sizing: border-box; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .5s var(--ease), background .5s var(--ease), box-shadow .5s var(--ease); }
+      .kform input:focus, .kform select:focus { outline: none; border-color: rgba(201,168,92,.55); background: rgba(236,230,211,.05); box-shadow: 0 0 0 4px rgba(201,168,92,.12); }
+      .kform .row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px; }
+      .kform .row4 { grid-template-columns: 1fr 1fr 2fr 1.2fr; }
+      @media (max-width: 760px) { .kform .row, .kform .row4 { grid-template-columns: 1fr; } }
       .kform .place-box { display: block; position: relative; } .kform .place-box input { width: 100%; }
-      .kform .act { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-      .kform #openNatal { font-family: var(--serif); font-size: 16px; font-weight: 500; color: #120f2a; background: var(--gold); border: none; border-radius: 999px; padding: 10px 22px; cursor: pointer; }
-      .kform #birthHere { font-family: var(--mono); font-size: 11px; color: var(--ink-2); background: none; border: 1px solid rgba(236,230,211,.14); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
-      .kform .natal-hint { font-family: var(--mono); font-size: 10px; opacity: .55; }
-      #natalMore { display: block; } .natal-more summary { display: none; }
-      #natal { position: static; display: block; background: none; backdrop-filter: none; margin-top: 26px; }
-      #natal .natal-box { width: auto; padding: 0; }
-      .natal-close { display: none; }
-      .eyebrow-k { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; color: var(--gold); text-align: center; margin: 26px 0 0; }
-      .modes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 0 16px; }
-      .modes button { font-family: var(--serif); font-size: 15px; color: var(--ink-2); background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.12); border-radius: 999px; padding: 10px 18px; cursor: pointer; transition: color .4s var(--ease), background .4s var(--ease), border-color .4s var(--ease); }
-      .modes button.on { color: #120f2a; background: var(--gold); border-color: var(--gold); }
-      .kform .row4 { grid-template-columns: 1fr 1fr 2fr 1.2fr; } @media (max-width: 760px) { .kform .row4 { grid-template-columns: 1fr; } }
-      .kform select { font-family: var(--serif); font-size: 15px; color: var(--ink); background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.14); border-radius: 12px; padding: 10px 12px; color-scheme: dark; width: 100%; }
-      .kform .sub { display: none; border-top: 1px dashed rgba(236,230,211,.12); padding-top: 12px; } .kform .sub.on { display: block; }
-      .kform .sub h3 { font-family: var(--display); font-weight: 300; font-size: 16px; color: var(--gold); margin: 0 0 10px; }
+      .kform .act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+      .kform #openNatal { display: inline-flex; align-items: center; gap: 14px; font-family: var(--serif); font-size: 16px; font-weight: 500; color: #120f2a; background: var(--gold); border: none; border-radius: 999px; padding: 8px 8px 8px 22px; cursor: pointer; transition: transform .5s var(--ease), box-shadow .5s var(--ease); box-shadow: 0 14px 30px -14px rgba(201,168,92,.7); }
+      .kform #openNatal .ic { width: 34px; height: 34px; border-radius: 50%; background: rgba(10,8,32,.14); display: grid; place-items: center; font-family: var(--mono); font-size: 14px; transition: transform .5s var(--ease); }
+      .kform #openNatal:hover .ic { transform: translate(2px, -1px) scale(1.05); }
+      .kform #openNatal:active { transform: scale(.98); }
+      .kform #birthHere { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .kform #birthHere:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
+      #status { font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
+      .kform .natal-hint { font-family: var(--mono); font-size: 10px; line-height: 1.5; color: var(--ink-2); opacity: .75; }
+      #natalMore { display: block; } .natal-more summary { display: none; } .kform .natal-more-row { justify-content: flex-start; margin-top: 0; }
+      .kform .sub { display: none; border-top: 1px solid rgba(236,230,211,.08); padding-top: 16px; } .kform .sub.on { display: block; animation: subin .7s var(--ease) both; }
+      @keyframes subin { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+      .kform .sub h3 { font-family: var(--mono); font-weight: 400; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 12px; }
       .kform .sub .row { grid-template-columns: 1fr 1fr; } @media (max-width: 640px) { .kform .sub .row { grid-template-columns: 1fr; } }
-      .kfaq { margin-top: 40px; } .kfaq h2 { font-family: var(--display); font-weight: 300; font-size: 20px; color: var(--gold); text-align: center; }
-      .kfaq details { border-bottom: 1px solid rgba(236,230,211,.1); padding: 12px 0; } .kfaq summary { cursor: pointer; font-size: 17px; font-weight: 500; } .kfaq p { color: var(--ink-2); font-size: 15px; margin: 8px 0 0; }
-      .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 26px 0 0; } .klinks a { font-family: var(--mono); font-size: 11px; color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(236,230,211,.1); } .klinks a:hover { color: var(--ink); border-color: var(--gold-2); }
+      /* Result: chart + tabs inside their own tray */
+      #natal { position: static; display: block; background: none; backdrop-filter: none; margin-top: 22px; }
+      #natal .natal-box { width: auto; padding: 22px; margin: 0; }
+      @media (max-width: 640px) { #natal .natal-box { padding: 14px; } }
+      .natal-close { display: none; }
+      .natal-tabs { justify-content: flex-start; }
+      #natalView { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+      /* FAQ: asymmetric two-column at desktop */
+      .kfaq { display: grid; grid-template-columns: .8fr 1.6fr; gap: 32px; margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(236,230,211,.08); }
+      @media (max-width: 900px) { .kfaq { grid-template-columns: 1fr; gap: 16px; margin-top: 56px; } }
+      .kfaq h2 { font-family: var(--display); font-weight: 300; font-size: 24px; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
+      .kfaq h2 small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-top: 10px; }
+      .kfaq details { border-bottom: 1px solid rgba(236,230,211,.08); padding: 16px 0; }
+      .kfaq summary { position: relative; cursor: pointer; list-style: none; padding-right: 40px; font-size: 17px; font-weight: 500; }
+      .kfaq summary::-webkit-details-marker { display: none; }
+      .kfaq summary::after { content: '+'; position: absolute; right: 0; top: -2px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(236,230,211,.14); font-family: var(--mono); font-size: 14px; color: var(--gold); transition: transform .6s var(--ease), background .6s var(--ease); }
+      .kfaq details[open] summary::after { transform: rotate(45deg); background: rgba(201,168,92,.12); }
+      .kfaq p { color: var(--ink-2); font-size: 15px; line-height: 1.55; margin: 10px 0 0; max-width: 62ch; }
+      .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin: 40px 0 0; }
+      .klinks a { font-family: var(--mono); font-size: 11px; color: var(--ink-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(236,230,211,.1); transition: color .5s var(--ease), border-color .5s var(--ease), transform .5s var(--ease); }
+      .klinks a:hover { color: var(--ink); border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
+      /* Entry reveals: transform + opacity only, staggered by --i */
+      .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
+      .rv.in { opacity: 1; transform: none; }
+      @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } .eyebrow-k::before { animation: none; } }
     </style>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Астропроцессор — настоящая натальная карта","url":"https://cosmos-alpha-three.vercel.app/karta/","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"description":"Натальная карта по эфемеридам: положения планет, созвездия МАС, углы, транзиты, возврат Солнца, сравнение двух дат."}</script>
   </head>
@@ -58,12 +102,18 @@
       <div id="menu" class="links"><a href="/natalnaya-karta/">По дате</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a></div>
     </nav>
     <main class="kp">
-      <p class="eyebrow-k">COSMOS · АСТРОПРОЦЕССОР</p>
-      <h1 id="modeTitle">Настоящая натальная карта <em>онлайн</em></h1>
-      <p class="lede" id="modeLede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
-      <nav class="modes" id="modes" aria-label="Виды карт">
+      <section class="hero">
+        <div>
+          <p class="eyebrow-k rv" style="--i:0">COSMOS · Астропроцессор</p>
+          <h1 id="modeTitle" class="rv" style="--i:1">Настоящая натальная карта <em>онлайн</em></h1>
+          <p class="lede rv" style="--i:2" id="modeLede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
+        </div>
+        <figure class="hero-fig rv" style="--i:2"><div class="core"><img src="/img/karta-hero.webp" width="1536" height="1152" alt="Эклиптика и линии созвездий Змееносца, Скорпиона и Стрельца на тёмном небе" fetchpriority="high" /></div><figcaption>Эклиптика · созвездия по МАС</figcaption></figure>
+      </section>
+      <nav class="modes rv" style="--i:3" id="modes" aria-label="Виды карт">
         <button data-mode="natal" class="on">Натал</button><button data-mode="transits">Транзиты к наталу</button><button data-mode="sky">Карта неба</button><button data-mode="solar">Соляр</button><button data-mode="synastry">Синастрия</button><button data-mode="directions">Дирекции</button>
       </nav>
+      <div class="shell rv" style="--i:4"><div class="core">
       <form class="kform" onsubmit="return false">
         <div class="row row4">
           <label>Дата рождения <input type="date" id="birth" required /></label>
@@ -80,16 +130,17 @@
         <div class="sub" data-for="solar"><h3>Данные соляра</h3><div class="row"><label>Год соляра <input type="number" id="solYear" min="1900" max="2100" /></label></div><p class="natal-hint">Место встречи соляра не нужно: момент возвращения Солнца один для всей Земли.</p></div>
         <div class="sub" data-for="synastry"><h3>Данные партнёра</h3><div class="row"><label>Дата рождения партнёра <input type="date" id="synDate" /></label><label>Время (UTC, необязательно) <input type="time" id="synTime" /></label></div></div>
         <div class="sub" data-for="directions"><h3>Данные дирекции</h3><div class="row"><label>Целевая дата <input type="date" id="dirDate" /></label></div><p class="natal-hint">Покажем не символический сдвиг «1° = год», а реальные положения тел на целевую дату и обороты планет.</p></div>
-        <div class="act"><button id="openNatal" type="button">Построить карту</button><button id="birthHere" type="button">я здесь</button><span id="status"></span></div>
+        <div class="act"><button id="openNatal" type="button">Построить карту<span class="ic" aria-hidden="true">→</span></button><button id="birthHere" type="button">я здесь</button><span id="status"></span></div>
       </form>
-      <div id="natal" hidden aria-label="Карта рождения"></div>
-      <section class="kfaq"><h2>Вопросы</h2>
+      </div></div>
+      <div id="natal" class="shell" hidden aria-label="Карта рождения"></div>
+      <section class="kfaq rv" style="--i:0"><h2>Вопросы<small>честно о том, что считаем</small></h2><div>
         <details><summary>Чем это отличается от других астропроцессоров?</summary><p>Те же таблицы — положения, углы, транзиты, соляр, синастрия — но без толкований. Каждое число вычислено по эфемеридам VSOP87 и помечено тегом ТОЧНО / ОЦЕНКА / ГЕОМЕТРИЯ. Рядом со знаком гороскопа показано настоящее созвездие по границам МАС.</p></details>
         <details><summary>Что если я не знаю время рождения?</summary><p>Введите только дату: Солнце и планеты определяются точно, Луна — с погрешностью до 6,5°. Асцендент и MC без времени не показываем — их без него не существует.</p></details>
         <details><summary>Где расшифровка?</summary><p>Её нет. Характер и судьбу из положения планет вывести нельзя — это проверяли (Карлсон, Nature, 1985; Силверман, 1971). Есть факты: где были тела, какие углы между ними, какая звезда светит вам светом года рождения.</p></details>
         <details><summary>Можно ли поделиться картой?</summary><p>Да: кнопка «Скопировать ссылку» даёт адрес с датой (и временем/координатами, если вводили), «Поделиться карточкой» — картинку 1080×1350.</p></details>
-      </section>
-      <p class="klinks"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки по датам</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/precessiya/">Прецессия</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a><a href="/politika/">Политика</a></p>
+      </div></section>
+      <p class="klinks rv" style="--i:1"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки по датам</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/precessiya/">Прецессия</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a><a href="/politika/">Политика</a></p>
     </main>
     <script type="module" src="/src/ui/karta.ts"></script>
   </body>
