@@ -704,7 +704,7 @@ export function renderPage(p: Page): string {
   <a class="cta" href="${HUB}">Что было в небе в твой день</a>
   <p class="privacy"><a href="/">Главная</a> · <a href="/o-proekte/">О проекте</a> · <a href="/kontakty/">Контакты</a> · <a href="/politika/">Политика</a></p>`;
   const crumbs = [{ name: 'Космос внутри тебя', url: '/' }, { name: p.h1.replace(/<[^>]+>/g, ''), url: pageUrl(p) }];
-  return shell('ru', { title: esc(p.title), desc: esc(p.desc), selfUrl, altUrl: '', altLabel: 'Натальная карта', inner, crumbs,
+  return shell('ru', { title: esc(p.title), desc: esc(p.desc), selfUrl, altUrl: '', altLabel: 'Натальная карта', inner, crumbs, eyebrow: 'Читать',
     datePublished: p.datePublished, dateModified: p.dateModified })
     // Таблицы и формы в шаблоне дат не используются — добавляем их стили точечно.
     .replace('</style>', 'table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid rgba(236,230,211,.1);vertical-align:top}th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.steps{padding-left:22px}.steps li{margin:6px 0}.fb label{display:block;margin:10px 0;font-size:15px}.fb textarea,.fb input{width:100%;padding:10px;border-radius:12px;border:1px solid rgba(236,230,211,.15);background:rgba(236,230,211,.04);color:var(--ink);font:inherit}code{font-family:var(--mono);font-size:14px}</style>');

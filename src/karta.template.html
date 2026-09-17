@@ -27,7 +27,8 @@
       .eyebrow-k::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 2.6s var(--ease) infinite; }
       @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
       .kp h1 { font-family: var(--display); font-weight: 300; font-size: clamp(30px, 4.2vw, 50px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
-      .kp h1 em { font-style: italic; color: var(--gold); }
+      .kp h1 em { font-style: normal; font-weight: 200; color: var(--gold); }
+      .kp p, .kp li { text-wrap: pretty; } .kp { font-variant-numeric: tabular-nums; } ::selection { background: rgba(201,168,92,.35); }
       .kp .lede { text-align: left; color: var(--ink-2); font-size: 17px; line-height: 1.55; max-width: 56ch; margin: 0 0 22px; }
       .hero-fig { position: relative; padding: 6px; border-radius: 30px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.09); box-shadow: 0 30px 60px -30px rgba(3,2,14,.9); }
       .hero-fig .core { position: relative; overflow: hidden; border-radius: 24px; aspect-ratio: 4 / 3; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }

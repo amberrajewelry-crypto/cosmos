@@ -9,7 +9,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://cosmos-alpha-three.vercel.app';
 
 const vite = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl } = await vite.ssrLoadModule('/src/natal/page.ts');
+const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl, shell } = await vite.ssrLoadModule('/src/natal/page.ts');
 const { sunSignAndConstellation, SIGNS_RU, SIGNS_EN } = await vite.ssrLoadModule('/src/compute/sign.ts');
 
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -92,45 +92,9 @@ function hub(lang) {
     body += `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) })}</script>`;
   }
   const selfUrl = SITE + (lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/');
-  return `<!doctype html><html lang="${lang}"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${h1} — ${brand}</title>
-<meta name="description" content="${lede}"><link rel="canonical" href="${selfUrl}">
-<style>
-@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Unbounded';font-style:normal;font-weight:200 900;font-display:swap;src:url(/fonts/Unboundedwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
-:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.68);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--display:'Unbounded','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.6;font-size:18px;-webkit-font-smoothing:antialiased}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.wrap{max-width:760px;margin:0 auto;padding:36px 22px 80px}
-.top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08)}
-.top a{color:var(--gold);text-decoration:none;padding:6px 10px;border-radius:999px}
-h1{font-family:var(--display);font-weight:300;font-size:clamp(26px,3.6vw,40px);line-height:1.12;letter-spacing:-.02em;text-wrap:balance;text-align:center;color:var(--ink);margin:40px 0 12px}
-h1 em,h1 b{font-style:italic;font-weight:400;color:var(--gold)}
-h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;color:var(--gold);margin:30px 0 8px}
-.lede{font-size:22px;line-height:1.4;margin:14px 0 24px;color:var(--ink2)}
-.chart{width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
-.why{font-size:18px;opacity:.94}
-.facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
-.facts h2{font-size:20px;margin:0 0 10px}
-.facts ul{margin:0;padding:0}
-.facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:8px 0;color:var(--ink)}
-.facts li b{color:var(--gold);font-weight:400}
-.note{font-family:var(--mono);font-size:11px;opacity:.55;margin:8px 0 0}
-.cta{display:inline-flex;align-items:center;gap:12px;margin:22px 0 10px;font-size:18px;font-weight:500;color:#120f2a;background:var(--gold);padding:8px 8px 8px 22px;border-radius:999px;text-decoration:none;transition:transform .6s var(--ease)}
-.cta::after{content:'→';width:34px;height:34px;border-radius:50%;background:rgba(10,8,32,.14);display:grid;place-items:center;font-family:var(--mono);font-size:14px}
-.cta:active{transform:scale(.98)}
-.privacy{font-family:var(--mono);font-size:11px;opacity:.6}
-.days{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
-.days a{color:var(--ink2);font-family:var(--mono);font-size:12px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
-.days a:hover{color:var(--ink);border-color:var(--gold2)}
-.faq{margin:30px 0}
-.faq details{border-bottom:1px solid rgba(236,230,211,.1);padding:12px 0}
-.faq summary{cursor:pointer;font-size:19px;font-weight:500}
-.faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
-section p{color:var(--ink2)}
-.tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
-</style>
-</head><body><div class="wrap"><div class="top"><a href="/">${brand}</a></div><h1>${h1}</h1><p class="lede">${lede}</p>${body}</div></body></html>`;
+  const altUrl = SITE + (lang === 'ru' ? '/en/natal-chart/' : '/natalnaya-karta/');
+  return shell(lang, { title: `${h1} — ${brand}`, desc: lede, selfUrl, altUrl, altLabel: lang === 'ru' ? 'In English' : 'По-русски', eyebrow: lang === 'ru' ? 'По дате' : 'By date',
+    inner: `<h1>${h1}</h1><p class="lede">${lede}</p>${body}` });
 }
 await writePage(lang_url('ru'), hub('ru'));
 await writePage(lang_url('en'), hub('en'));

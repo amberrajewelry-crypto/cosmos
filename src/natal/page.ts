@@ -152,7 +152,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
 export interface Crumb { name: string; url: string; }
 export interface Shell {
   title: string; desc: string; selfUrl: string; altUrl: string; altLabel: string; inner: string;
-  crumbs?: Crumb[]; datePublished?: string; dateModified?: string;
+  crumbs?: Crumb[]; datePublished?: string; dateModified?: string; eyebrow?: string;
 }
 export function shell(lang: Lang, s: Shell): string {
   const jsonLd: Record<string, unknown> = {
@@ -163,11 +163,14 @@ export function shell(lang: Lang, s: Shell): string {
   if (s.datePublished) { jsonLd.datePublished = s.datePublished; jsonLd.dateModified = s.dateModified ?? s.datePublished; }
   // BreadcrumbList: Главная → раздел → страница (протокол эксперимента, этап 5.3).
   const crumbs = s.crumbs ?? [{ name: BRAND[lang], url: '/' }, { name: s.title, url: s.selfUrl }];
+  // Eyebrow над h1: путь без текущей страницы (≥3 уровней) или явная метка раздела; сама h1 не дублируется.
+  const trail = crumbs.length > 2 ? crumbs.slice(0, -1) : [crumbs[0]];
+  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'COSMOS' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
   const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url.startsWith('http') ? c.url : SITE + c.url })) };
   const altLinks = s.altUrl ? `<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
 <link rel="alternate" hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${s.altUrl}">` : '';
-  const altNav = s.altUrl ? `<a href="${s.altUrl}">${s.altLabel}</a>` : `<a href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${s.altLabel}</a>`;
+  const altNav = s.altUrl ? `<a class="alt" href="${s.altUrl}">${s.altLabel}</a>` : `<a class="alt" href="/">${lang === 'ru' ? 'На главную' : 'Home'}</a>`;
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -192,15 +195,26 @@ ${altLinks}
 @font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Unbounded';font-style:normal;font-weight:200 900;font-display:swap;src:url(/fonts/Unboundedwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
 :root{--ink:#ece6d3;--ink2:rgba(236,230,211,.68);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--display:'Unbounded','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.6;font-size:18px;-webkit-font-smoothing:antialiased}
+body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;hyphens:auto;font-variant-numeric:tabular-nums}
+p,li{text-wrap:pretty}
+h1,h2,h3,summary{hyphens:manual}
+::selection{background:rgba(201,168,92,.35);color:var(--ink)}
+main a{color:var(--gold);text-underline-offset:.18em;text-decoration-thickness:1px}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .wrap{max-width:760px;margin:0 auto;padding:36px 22px 80px}
-.top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08)}
-.top a{color:var(--gold);text-decoration:none;padding:6px 10px;border-radius:999px}
-h1{font-family:var(--display);font-weight:300;font-size:clamp(26px,3.6vw,40px);line-height:1.12;letter-spacing:-.02em;text-wrap:balance;text-align:center;color:var(--ink);margin:40px 0 12px}
-h1 em,h1 b{font-style:italic;font-weight:400;color:var(--gold)}
-h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;color:var(--gold);margin:30px 0 8px}
-.lede{font-size:22px;line-height:1.4;margin:14px 0 24px;color:var(--ink2)}
+.top{display:flex;align-items:center;gap:2px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:6px 8px 6px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.top .brand{font-family:var(--display);font-weight:400;font-size:12px;letter-spacing:.3em;color:var(--gold);margin-right:10px;text-decoration:none}
+.top a{color:var(--ink2);text-decoration:none;padding:7px 12px;border-radius:999px;transition:color .5s var(--ease),background .5s var(--ease)}
+.top a:hover{color:var(--ink);background:rgba(236,230,211,.06)}
+.top .alt{margin-left:auto;color:var(--gold)}
+@media(max-width:560px){.top .more{display:none}}
+.crumbs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:44px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.crumbs a{color:inherit;text-decoration:none}.crumbs span{opacity:.55}.crumbs .cur{opacity:1;color:var(--ink2)}
+h1{font-family:var(--display);font-weight:300;font-size:clamp(28px,4vw,46px);line-height:1.08;letter-spacing:-.028em;text-wrap:balance;text-align:center;color:var(--ink);margin:14px 0 14px}
+h1 em,h1 b{font-style:normal;font-weight:200;color:var(--gold)}
+h2{font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-.015em;line-height:1.2;text-align:center;color:var(--gold);margin:36px 0 10px;text-wrap:balance}
+h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:24px 0 6px}
+.lede{font-size:21px;font-weight:300;line-height:1.45;margin:14px auto 26px;max-width:62ch;color:var(--ink2)}
 .chart{width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
@@ -228,7 +242,7 @@ section p{color:var(--ink2)}
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><a href="/">${BRAND[lang]}</a>${altNav}</header><main>${s.inner}</main>
+  <header class="top"><a class="brand" href="/">COSMOS</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
 </div>
 </body>
 </html>`;
@@ -298,7 +312,7 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
   <div class="days">${dayLinks}</div>
   <a class="cta" href="/">${t.cta}</a>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Знаки' : 'Signs' });
 }
 
 // --- Хаб Змееносца — 13-й знак (§4.8-крючок под живой suggest-кластер «змееносец…»). ---
@@ -409,7 +423,7 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
   ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Знаки' : 'Signs' });
 }
 
 
@@ -478,7 +492,7 @@ export function neboPage(iso: string, lang: Lang): string {
   <section><h2>${t.hub}</h2><div class="days">${links} <a href="${dayPage}">${lang === 'ru' ? 'все родившиеся' : 'everyone born'} ${lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]}` : `${MONTHS_EN[m - 1]} ${d}`}</a></div></section>
   <a class="cta" href="/?birth=${iso}">${t.cta}</a>
   <p class="privacy">${t.privacy}</p>`;
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Небо по дням' : 'Sky by day' });
 }
 
 // Sitemap: индекс по годам + по 365/366 URL на год (оба языка) — тоже по запросу.
