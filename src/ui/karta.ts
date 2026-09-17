@@ -41,8 +41,50 @@ const build = (): void => {
     year: Number($('solYear').value) || undefined, outer: $('outer').value === '1',
   });
   document.documentElement.classList.add('has-chart');
+  $('copyTable').hidden = false; $('printChart').hidden = false;
+  remember();
   box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
+
+// «Сейчас / сегодня» у дат транзита, неба, дирекции
+document.querySelectorAll<HTMLButtonElement>('.now').forEach((b) => b.addEventListener('click', () => {
+  const now = new Date();
+  if (b.dataset.now === 'transits') { $('atDate').value = now.toISOString().slice(0, 10); $('atTime').value = now.toISOString().slice(11, 16); }
+  else $(b.dataset.now === 'sky' ? 'skyDate' : 'dirDate').value = now.toISOString().slice(0, 10);
+}));
+
+// Недавние карты: до 5 в localStorage, чип = дата + место
+type Recent = { q: string; label: string };
+const RK = 'cosmos.recent';
+const readRecent = (): Recent[] => { try { return JSON.parse(localStorage.getItem(RK) ?? '[]'); } catch { return []; } };
+const renderRecent = (): void => {
+  const list = readRecent(); const el = $('recent'); el.hidden = list.length === 0;
+  el.innerHTML = list.length ? '<span>Недавние</span>' + list.map((r, i) => `<button type="button" data-i="${i}">${r.label}</button>`).join('') + '<button type="button" class="x" data-clear title="Очистить">×</button>' : '';
+};
+const remember = (): void => {
+  const q = bf.link(bf.moment()).split('?')[1] ?? ''; if (!q) return;
+  const place = $('birthPlace').value.trim();
+  const label = `${birth.value.split('-').reverse().join('.')}${$('birthTime').value ? ' ' + $('birthTime').value : ''}${place ? ' · ' + place.split(',')[0] : ''}`;
+  const list = [{ q, label }, ...readRecent().filter((r) => r.q !== q)].slice(0, 5);
+  try { localStorage.setItem(RK, JSON.stringify(list)); } catch { /* private mode */ }
+  renderRecent();
+};
+$('recent').addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest('button'); if (!b) return;
+  if (b.hasAttribute('data-clear')) { try { localStorage.removeItem(RK); } catch { /* noop */ } renderRecent(); return; }
+  const r = readRecent()[Number(b.dataset.i)]; if (!r) return;
+  bf.applyQuery(new URLSearchParams(r.q)); birth.dispatchEvent(new Event('input')); build();
+});
+renderRecent();
+
+// Таблица активной вкладки → буфер обмена (TSV), печать → системный диалог (PDF)
+$('copyTable').addEventListener('click', async () => {
+  const rows = [...box.querySelectorAll('#natalView tr')].map((tr) => [...tr.children].map((c) => (c.textContent ?? '').trim()).join('\t'));
+  const st = $('status');
+  if (!rows.length) { st.textContent = 'таблицы во вкладке нет'; return; }
+  try { await navigator.clipboard.writeText(rows.join('\n')); st.textContent = `скопировано ${rows.length - 1} строк`; } catch { st.textContent = 'буфер недоступен'; }
+});
+$('printChart').addEventListener('click', () => window.print());
 (document.getElementById('openNatal') as HTMLButtonElement).addEventListener('click', build);
 birth.addEventListener('input', () => document.documentElement.classList.toggle('has-birth', !!birth.value));
 const qs = new URLSearchParams(location.search);

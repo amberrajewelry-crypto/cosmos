@@ -89,6 +89,18 @@
       .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin: 40px 0 0; }
       .klinks a { font-family: var(--mono); font-size: 11px; color: var(--ink-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(236,230,211,.1); transition: color .5s var(--ease), border-color .5s var(--ease), transform .5s var(--ease); }
       .klinks a:hover { color: var(--ink); border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
+      .wnow { display: flex; gap: 8px; } .wnow input { flex: 1; }
+      .kform .now { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.14); border-radius: 999px; padding: 0 12px; cursor: pointer; white-space: nowrap; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .kform .now:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
+      .act-r { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+      .act-r button { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-2); background: transparent; border: 1px solid rgba(236,230,211,.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .act-r button:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
+      .recent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(236,230,211,.08); }
+      .recent span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-right: 4px; }
+      .recent button { font-family: var(--serif); font-size: 13px; color: var(--ink); background: rgba(236,230,211,.04); border: 1px solid rgba(236,230,211,.1); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: border-color .5s var(--ease), transform .5s var(--ease); }
+      .recent button:hover { border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
+      .recent button.x { padding: 6px 9px; color: var(--ink-2); font-family: var(--mono); font-size: 11px; }
+      @media print { body { background: #fff; color: #111; } #nav, .hero-fig, .modes, .shell:not(#natal), .kfaq, .klinks, .natal-share, .natal-tabs, .eyebrow-k { display: none !important; } .kp { padding: 0; max-width: none; } .kp h1 { color: #111; } #natal { box-shadow: none; border: none; } #natal .core { background: none; box-shadow: none; } .nt th { color: #333; } .nt td, .nt th { border-color: #ddd; } .rv { opacity: 1 !important; transform: none !important; } }
       /* Entry reveals: transform + opacity only, staggered by --i */
       .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
       .rv.in { opacity: 1; transform: none; }
@@ -125,12 +137,13 @@
           <input type="hidden" id="birthLat" /><input type="hidden" id="birthLon" /><input type="hidden" id="birthTz" />
           <span class="natal-hint" id="placeHint">координаты и часовой пояс подставятся автоматически; без времени Асцендент и MC не считаются</span>
         </div></details>
-        <div class="sub" data-for="transits"><h3>Данные транзита</h3><div class="row"><label>Дата транзита <input type="date" id="atDate" /></label><label>Время (UTC) <input type="time" id="atTime" /></label></div></div>
-        <div class="sub" data-for="sky"><h3>Карта неба</h3><div class="row"><label>Дата <input type="date" id="skyDate" /></label></div></div>
+        <div class="sub" data-for="transits"><h3>Данные транзита</h3><div class="row"><label>Дата транзита <input type="date" id="atDate" /></label><label>Время (UTC) <span class="wnow"><input type="time" id="atTime" /><button type="button" class="now" data-now="transits">сейчас</button></span></label></div></div>
+        <div class="sub" data-for="sky"><h3>Карта неба</h3><div class="row"><label>Дата <span class="wnow"><input type="date" id="skyDate" /><button type="button" class="now" data-now="sky">сегодня</button></span></label></div></div>
         <div class="sub" data-for="solar"><h3>Данные соляра</h3><div class="row"><label>Год соляра <input type="number" id="solYear" min="1900" max="2100" /></label></div><p class="natal-hint">Место встречи соляра не нужно: момент возвращения Солнца один для всей Земли.</p></div>
         <div class="sub" data-for="synastry"><h3>Данные партнёра</h3><div class="row"><label>Дата рождения партнёра <input type="date" id="synDate" /></label><label>Время (UTC, необязательно) <input type="time" id="synTime" /></label></div></div>
-        <div class="sub" data-for="directions"><h3>Данные дирекции</h3><div class="row"><label>Целевая дата <input type="date" id="dirDate" /></label></div><p class="natal-hint">Покажем не символический сдвиг «1° = год», а реальные положения тел на целевую дату и обороты планет.</p></div>
-        <div class="act"><button id="openNatal" type="button">Построить карту<span class="ic" aria-hidden="true">→</span></button><button id="birthHere" type="button">я здесь</button><span id="status"></span></div>
+        <div class="sub" data-for="directions"><h3>Данные дирекции</h3><div class="row"><label>Целевая дата <span class="wnow"><input type="date" id="dirDate" /><button type="button" class="now" data-now="directions">сегодня</button></span></label></div><p class="natal-hint">Покажем не символический сдвиг «1° = год», а реальные положения тел на целевую дату и обороты планет.</p></div>
+        <div class="act"><button id="openNatal" type="button">Построить карту<span class="ic" aria-hidden="true">→</span></button><button id="birthHere" type="button">я здесь</button><span id="status"></span><span class="act-r"><button id="copyTable" type="button" hidden>Скопировать таблицу</button><button id="printChart" type="button" hidden>Печать / PDF</button></span></div>
+        <div id="recent" class="recent" hidden></div>
       </form>
       </div></div>
       <div id="natal" class="shell" hidden aria-label="Карта рождения"></div>
