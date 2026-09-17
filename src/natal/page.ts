@@ -215,7 +215,7 @@ h1 em,h1 b{font-style:normal;font-weight:200;color:var(--gold)}
 h2{font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-.015em;line-height:1.2;text-align:center;color:var(--gold);margin:36px 0 10px;text-wrap:balance}
 h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:24px 0 6px}
 .lede{font-size:21px;font-weight:300;line-height:1.45;margin:14px auto 26px;max-width:62ch;color:var(--ink2)}
-.chart{width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
+.chart{color:var(--ink);width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
 .facts h2{font-size:20px;margin:0 0 10px}
