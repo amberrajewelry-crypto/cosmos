@@ -23,6 +23,7 @@ const setMode = (m: string): void => {
   document.querySelectorAll('.kform .sub').forEach((d) => d.classList.toggle('on', (d as HTMLElement).dataset.for === m));
   document.getElementById('modeTitle')!.innerHTML = MODES[m].title;
   document.getElementById('modeLede')!.textContent = MODES[m].lede;
+  $('dyn').classList.toggle('on', m === 'transits' || m === 'sky' || m === 'directions');
   if (!box.hidden && birth.value) build();
 };
 document.querySelectorAll('#modes button').forEach((b) => b.addEventListener('click', () => setMode((b as HTMLElement).dataset.mode!)));
@@ -48,7 +49,7 @@ const applyAt = (m: string, at: string): void => {
   else if (m === 'solar') $('solYear').value = d; else if (m === 'synastry') { $('synDate').value = d; if (t) $('synTime').value = t; }
 };
 
-const build = (): void => {
+const build = (scroll = true): void => {
   const err = $('birthErr');
   if (!birth.value) { err.hidden = false; birth.setAttribute('aria-invalid', 'true'); birth.focus(); return; }
   err.hidden = true; birth.removeAttribute('aria-invalid');
@@ -62,7 +63,7 @@ const build = (): void => {
   $('copyTable').hidden = false; $('printChart').hidden = false;
   remember();
   history.replaceState(null, '', stateUrl());
-  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (scroll) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 // «Сейчас / сегодня» у дат транзита, неба, дирекции
@@ -128,3 +129,35 @@ if ('IntersectionObserver' in window) {
   }), { rootMargin: '0px 0px -8% 0px' });
   rv.forEach((el) => io.observe(el));
 } else rv.forEach((el) => el.classList.add('in'));
+
+// Тема: тёмная по умолчанию, светлая по кнопке, выбор запоминается
+const TK = 'cosmos.theme';
+const setTheme = (light: boolean): void => {
+  document.documentElement.classList.toggle('light', light);
+  $('theme').setAttribute('aria-pressed', String(light));
+  try { localStorage.setItem(TK, light ? 'light' : 'dark'); } catch { /* noop */ }
+};
+$('theme').addEventListener('click', () => setTheme(!document.documentElement.classList.contains('light')));
+try { if (localStorage.getItem(TK) === 'light') setTheme(true); } catch { /* noop */ }
+
+// Динамика: ползунок ±50 лет от выбранной даты, карта перестраивается на лету (rAF-троттлинг)
+const dateField = (): HTMLInputElement => $(mode === 'transits' ? 'atDate' : mode === 'sky' ? 'skyDate' : 'dirDate');
+let dynBase = '';
+const fmtRu = (d: Date) => d.toISOString().slice(0, 10).split('-').reverse().join('.');
+const shifted = (days: number): Date => { const d = new Date(`${dynBase}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d; };
+let raf = 0;
+const applyDyn = (): void => {
+  const d = shifted(Number($('dynRange').value));
+  dateField().value = d.toISOString().slice(0, 10);
+  $('dynOut').value = fmtRu(d);
+  if (!birth.value) return;
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(() => build(false));
+};
+$('dynOn').addEventListener('change', () => {
+  const on = $('dynOn').checked; $('dynRow').hidden = !on;
+  if (on) { dynBase = dateField().value || new Date().toISOString().slice(0, 10); $('dynRange').value = '0'; $('dynOut').value = fmtRu(shifted(0)); if (birth.value && box.hidden) build(); }
+});
+$('dynRange').addEventListener('input', applyDyn);
+document.querySelectorAll<HTMLButtonElement>('.now[data-step]').forEach((b) => b.addEventListener('click', () => {
+  $('dynRange').value = String(Math.max(-18262, Math.min(18262, Number($('dynRange').value) + Number(b.dataset.step)))); applyDyn();
+}));
