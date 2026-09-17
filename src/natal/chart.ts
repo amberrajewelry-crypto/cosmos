@@ -20,16 +20,23 @@ function polar(r: number, lonDeg: number, offset = 0): [number, number] {
 }
 
 export interface ChartBody { glyph: string; lon: number; key: string; retro?: boolean; }
-export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; sky?: Array<Array<[number, number]>>; }
+export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; sky?: Array<Array<[number, number]>>; skyLabels?: Array<[string, number]>; }
+const MONO = "'Geist Mono',Menlo,monospace";
 
 // §4.7: линии реальных зодиакальных созвездий в кольце (широта ±30° → R_IN…R_OUT). Скрыты до поворота (§4.8).
-export function skyLines(sky: Array<Array<[number, number]>>, off: number): string {
+export function skyLines(sky: Array<Array<[number, number]>>, off: number, labels: Array<[string, number]> = []): string {
   const r = (lat: number) => R_IN + ((Math.max(-30, Math.min(30, lat)) + 30) / 60) * (R_OUT - R_IN);
   const d = sky.map((pl) => pl.map(([lon, lat], i) => { const [x, y] = polar(r(lat), lon, off); return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`; }).join(' ')).join(' ');
-  return `<g id="realSky" style="opacity:0; transition: opacity 1.6s ease"><path d="${d}" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/></g>`;
+  // Имена созвездий снаружи кольца, по касательной — читаются как гравировка по ободу.
+  const txt = labels.map(([name, lon]) => {
+    const [x, y] = polar(R_OUT + 9, lon, off);
+    const rot = (90 - (180 + lon - off) + 720) % 360; const flip = rot > 90 && rot < 270;
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="6.2" letter-spacing=".12em" fill="#c9a85c" font-family="${MONO}" opacity=".9" transform="rotate(${(flip ? rot + 180 : rot).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${name.toUpperCase()}</text>`;
+  }).join('');
+  return `<g id="realSky" style="opacity:0; transition: opacity 1.6s ease"><path d="${d}" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/>${txt}</g>`;
 }
 
-export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky }: ChartInput): string {
+export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky, skyLabels }: ChartInput): string {
   const off = asc ?? 0;
   // Градуированные тики по краю (§4.5) — фиксированный слой.
   let ticks = '';
@@ -62,18 +69,18 @@ export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky }: ChartInp
     const r = R_PL - lvl * 17;
     const [px, py] = polar(r, b.lon, off), [t1x, t1y] = polar(R_IN, b.lon, off), [t2x, t2y] = polar(R_IN - 5, b.lon, off);
     const deg = Math.floor(b.lon % 30);
-    planets += `<line x1="${t1x.toFixed(1)}" y1="${t1y.toFixed(1)}" x2="${t2x.toFixed(1)}" y2="${t2y.toFixed(1)}" stroke="#c9a85c" stroke-width="1.3" opacity=".9"/>
+    planets += `<g class="pl" style="animation-delay:${(0.15 + sorted.indexOf(b) * 0.06).toFixed(2)}s"><line x1="${t1x.toFixed(1)}" y1="${t1y.toFixed(1)}" x2="${t2x.toFixed(1)}" y2="${t2y.toFixed(1)}" stroke="#c9a85c" stroke-width="1.3" opacity=".9"/>
       <line x1="${t2x.toFixed(1)}" y1="${t2y.toFixed(1)}" x2="${px.toFixed(1)}" y2="${py.toFixed(1)}" stroke="#c9a85c" stroke-width=".35" opacity=".3"/>`;
     if (b.key === 'sun') planets += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="8.5" fill="#c9a85c"/><text x="${px.toFixed(1)}" y="${(py + 4.2).toFixed(1)}" text-anchor="middle" font-size="12" fill="#120f2a" font-family="Georgia,serif">☉\uFE0E</text>`;
     else planets += `<text x="${px.toFixed(1)}" y="${(py + 5.5).toFixed(1)}" text-anchor="middle" font-size="16" fill="currentColor" font-family="Georgia,serif" opacity=".96">${b.glyph}\uFE0E</text>`;
-    planets += `<text x="${px.toFixed(1)}" y="${(py + 14).toFixed(1)}" text-anchor="middle" font-size="6.5" fill="#c9a85c" font-family="SF Mono,Menlo,monospace" opacity=".9">${deg}°${b.retro ? '℞' : ''}</text>`;
+    planets += `<text x="${px.toFixed(1)}" y="${(py + 14).toFixed(1)}" text-anchor="middle" font-size="6.5" fill="#c9a85c" font-family="${MONO}" opacity=".9">${deg}°${b.retro ? '℞' : ''}</text></g>`;
   }
   // Геометрия: хорды между телами, чей угол в пределах ±3° от 60/90/120/180 (те же, что в таблице «Углы»).
   for (let i = 0; i < sorted.length; i++) for (let j = i + 1; j < sorted.length; j++) {
     let d = Math.abs(sorted[i].lon - sorted[j].lon); if (d > 180) d = 360 - d;
     const hit = ASPECTS.find(([a]) => Math.abs(d - a) <= ORB); if (!hit) continue;
     const [x1, y1] = polar(R_ASP, sorted[i].lon, off), [x2, y2] = polar(R_ASP, sorted[j].lon, off);
-    aspects += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${hit[1]}" stroke-width="${hit[0] === 180 || hit[0] === 120 ? 1 : .7}" opacity=".75"><title>${sorted[i].glyph}–${sorted[j].glyph} ${d.toFixed(1)}°</title></line>`;
+    aspects += `<line class="asp" style="animation-delay:${(0.5 + aspects.length / 4000).toFixed(2)}s" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${hit[1]}" stroke-width="${hit[0] === 180 || hit[0] === 120 ? 1 : .7}" opacity=".75"><title>${sorted[i].glyph}–${sorted[j].glyph} ${d.toFixed(1)}°</title></line>`;
   }
   // Оси ASC–DSC (горизонт) и MC–IC (меридиан) — только если известны время и место.
   let axes = '';
@@ -81,16 +88,16 @@ export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky }: ChartInp
     const [mx, my] = polar(R_OUT, mc, off), [ix, iy] = polar(R_OUT, mc + 180, off);
     axes = `<line x1="${CX - R_OUT}" y1="${CY}" x2="${CX + R_OUT}" y2="${CY}" stroke="currentColor" stroke-width="1.2" opacity="0.8"/>
     <line x1="${mx.toFixed(1)}" y1="${my.toFixed(1)}" x2="${ix.toFixed(1)}" y2="${iy.toFixed(1)}" stroke="currentColor" stroke-width="1.2" opacity="0.8"/>
-    <text x="${CX - R_OUT + 4}" y="${CY - 5}" font-size="10" fill="currentColor" font-family="SF Mono,monospace">ASC ${asc.toFixed(0)}°</text>
-    <text x="${(mx + 6).toFixed(1)}" y="${(my + 4).toFixed(1)}" font-size="10" fill="currentColor" font-family="SF Mono,monospace">MC</text>`;
+    <text x="${CX - R_OUT + 4}" y="${CY - 5}" font-size="10" fill="currentColor" font-family="${MONO}">ASC ${asc.toFixed(0)}°</text>
+    <text x="${(mx + 6).toFixed(1)}" y="${(my + 4).toFixed(1)}" font-size="10" fill="currentColor" font-family="${MONO}">MC</text>`;
   }
 
-  return `<svg viewBox="0 0 400 400" width="100%" height="100%" role="img" aria-label="Натальная карта">
+  return `<svg viewBox="-14 -14 428 428" width="100%" height="100%" role="img" aria-label="Натальная карта">
     <circle cx="${CX}" cy="${CY}" r="${R_OUT}" fill="none" stroke="#c9a85c" stroke-width="1.5" opacity="0.8"/>
     <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="none" stroke="#c9a85c" stroke-width="0.8" opacity="0.5"/>
     ${ticks}
     ${axes}
-    ${sky ? skyLines(sky, off) : ''}
+    ${sky ? skyLines(sky, off, skyLabels) : ''}
     <g id="signRing" style="transition: transform 1.6s cubic-bezier(.4,0,.2,1); transform-box: view-box; transform-origin: 200px 200px; transform: rotate(${rotationDeg}deg);">${sectors}</g>
     <circle cx="${CX}" cy="${CY}" r="${R_ASP}" fill="none" stroke="#c9a85c" stroke-width="0.5" opacity="0.3"/>
     ${aspects}

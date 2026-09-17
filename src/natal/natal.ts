@@ -6,7 +6,7 @@ import { birthLightStar } from '../compute/birthlight';
 import { toValue } from '../registry/registry';
 import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
-import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
+import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
 import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
@@ -64,7 +64,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     const pick = nearestLightStar(cat, age);
     if (pick) { star = toValue(birthLightStar(when, new Date(), [pick.name, Math.round(pick.ly * 10) / 10])); (overlay.querySelector('#natalStarLine') as HTMLElement).innerHTML = starLine(star); }
     const svg = overlay.querySelector('#natalSvg') as HTMLElement;
-    if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()) });
+    if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()), skyLabels: zodiacLabels(cat, when.getUTCFullYear()) });
     if (rotated) (overlay.querySelector('#realSky') as SVGGElement | null)?.style.setProperty('opacity', '1');
   }).catch(() => { /* без каталога остаётся встроенный список */ });
 
