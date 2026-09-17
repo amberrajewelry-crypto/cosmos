@@ -118,7 +118,7 @@
         #natalView .nt td:first-child { position: sticky; left: 0; background: #0f0c2c; }
       }
       /* Entry reveals: transform + opacity only, staggered by --i */
-      .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
+      html.js .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
       .rv.in { opacity: 1; transform: none; }
       @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } .eyebrow-k::before { animation: none; } }
     </style>
@@ -135,11 +135,11 @@
     <main class="kp">
       <section class="hero">
         <div>
-          <p class="eyebrow-k rv" style="--i:0">COSMOS · Астропроцессор</p>
-          <h1 id="modeTitle" class="rv" style="--i:1">Настоящая натальная карта <em>онлайн</em></h1>
-          <p class="lede rv" style="--i:2" id="modeLede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
+          <p class="eyebrow-k">COSMOS · Астропроцессор</p>
+          <h1 id="modeTitle">Настоящая натальная карта <em>онлайн</em></h1>
+          <p class="lede" id="modeLede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
         </div>
-        <figure class="hero-fig rv" style="--i:2"><div class="core"><img src="/img/karta-hero.webp" width="1536" height="1152" alt="Эклиптика и линии созвездий Змееносца, Скорпиона и Стрельца на тёмном небе" fetchpriority="high" /></div><figcaption>Эклиптика · созвездия по МАС</figcaption></figure>
+        <figure class="hero-fig"><div class="core"><img src="/img/karta-hero.webp" width="1536" height="1152" alt="Эклиптика и линии созвездий Змееносца, Скорпиона и Стрельца на тёмном небе" fetchpriority="high" /></div><figcaption>Эклиптика · созвездия по МАС</figcaption></figure>
       </section>
       <nav class="modes rv" style="--i:3" id="modes" aria-label="Виды карт" role="tablist">
         <button role="tab" data-mode="natal" aria-selected="true" class="on">Натал</button><button role="tab" data-mode="transits" aria-selected="false">Транзиты к наталу</button><button role="tab" data-mode="sky" aria-selected="false">Карта неба</button><button role="tab" data-mode="solar" aria-selected="false">Соляр</button><button role="tab" data-mode="synastry" aria-selected="false">Синастрия</button><button role="tab" data-mode="directions" aria-selected="false">Дирекции</button>
@@ -174,6 +174,7 @@
       </div></section>
       <p class="klinks rv" style="--i:1"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки по датам</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/precessiya/">Прецессия</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a><a href="/politika/">Политика</a></p>
     </main>
+    <script>document.documentElement.classList.add('js')</script>
     <script type="module" src="/src/ui/karta.ts"></script>
   </body>
 </html>
