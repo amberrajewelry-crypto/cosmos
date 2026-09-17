@@ -8,7 +8,7 @@
     <link rel="canonical" href="https://cosmos-alpha-three.vercel.app/karta/" />
     <meta property="og:title" content="Астропроцессор — настоящая натальная карта" />
     <meta property="og:description" content="Положения планет, созвездия, углы, транзиты, соляр, синастрия — только вычислимое." />
-    <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/og.png" />
+    <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/img/karta-og.jpg" />
     <link rel="icon" href="/favicon.svg" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Unboundedwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
@@ -101,6 +101,22 @@
       .recent button:hover { border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
       .recent button.x { padding: 6px 9px; color: var(--ink-2); font-family: var(--mono); font-size: 11px; }
       @media print { body { background: #fff; color: #111; } #nav, .hero-fig, .modes, .shell:not(#natal), .kfaq, .klinks, .natal-share, .natal-tabs, .eyebrow-k { display: none !important; } .kp { padding: 0; max-width: none; } .kp h1 { color: #111; } #natal { box-shadow: none; border: none; } #natal .core { background: none; box-shadow: none; } .nt th { color: #333; } .nt td, .nt th { border-color: #ddd; } .rv { opacity: 1 !important; transform: none !important; } }
+      .ferr { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: none; color: #e0a0a0; }
+      .kform input[aria-invalid="true"] { border-color: rgba(224,160,160,.6); }
+      #burger { display: none; }
+      @media (max-width: 760px) {
+        #nav { width: calc(100% - 28px); justify-content: space-between; }
+        #burger { display: grid; place-items: center; place-content: center; gap: 5px; width: 40px; height: 40px; border-radius: 50%; background: rgba(236,230,211,.06); border: 1px solid rgba(236,230,211,.12); cursor: pointer; }
+        #burger i { display: block; width: 16px; height: 1px; background: var(--ink); transition: transform .5s var(--ease); transform-origin: center; }
+        html.menu-open #burger i:first-child { transform: translateY(3px) rotate(45deg); } html.menu-open #burger i:last-child { transform: translateY(-3px) rotate(-45deg); }
+        #nav .links { display: flex; flex-direction: column; justify-content: center; gap: 6px; position: fixed; inset: 0; z-index: -1; padding: 0 28px; background: rgba(6,5,18,.9); backdrop-filter: blur(24px); opacity: 0; pointer-events: none; transition: opacity .6s var(--ease); }
+        html.menu-open #nav .links { opacity: 1; pointer-events: auto; }
+        #nav .links a { font-family: var(--serif); font-weight: 300; font-size: 34px; letter-spacing: -.02em; text-align: left; padding: 8px 0; color: var(--ink); opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+        html.menu-open #nav .links a { opacity: 1; transform: none; }
+        html.menu-open #nav .links a:nth-child(2) { transition-delay: 60ms } html.menu-open #nav .links a:nth-child(3) { transition-delay: 120ms } html.menu-open #nav .links a:nth-child(4) { transition-delay: 180ms } html.menu-open #nav .links a:nth-child(5) { transition-delay: 240ms } html.menu-open #nav .links a:nth-child(6) { transition-delay: 300ms } html.menu-open #nav .links a:nth-child(7) { transition-delay: 360ms }
+        html.menu-open { overflow: hidden; }
+        #natalView .nt td:first-child { position: sticky; left: 0; background: #0f0c2c; }
+      }
       /* Entry reveals: transform + opacity only, staggered by --i */
       .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
       .rv.in { opacity: 1; transform: none; }
@@ -108,10 +124,13 @@
     </style>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Астропроцессор — настоящая натальная карта","url":"https://cosmos-alpha-three.vercel.app/karta/","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"description":"Натальная карта по эфемеридам: положения планет, созвездия МАС, углы, транзиты, возврат Солнца, сравнение двух дат."}</script>
   </head>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"COSMOS","item":"https://cosmos-alpha-three.vercel.app/"},{"@type":"ListItem","position":2,"name":"Астропроцессор","item":"https://cosmos-alpha-three.vercel.app/karta/"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Чем это отличается от других астропроцессоров?","acceptedAnswer":{"@type":"Answer","text":"Те же таблицы — положения, углы, транзиты, соляр, синастрия — но без толкований. Каждое число вычислено по эфемеридам VSOP87 и помечено тегом ТОЧНО / ОЦЕНКА / ГЕОМЕТРИЯ; рядом со знаком всегда стоит настоящее созвездие по границам МАС."}},{"@type":"Question","name":"Что если я не знаю время рождения?","acceptedAnswer":{"@type":"Answer","text":"Введите только дату: Солнце и планеты определяются точно, Луна — с погрешностью до 6,5°. Асцендент и MC без времени не показываем."}},{"@type":"Question","name":"Где расшифровка?","acceptedAnswer":{"@type":"Answer","text":"Её нет. Характер и судьбу из положения планет вывести нельзя — это проверяли (Карлсон, Nature, 1985; Силверман, 1971). Есть факты: где были тела, какие углы между ними, какая звезда светит вам светом года рождения."}},{"@type":"Question","name":"Можно ли поделиться картой?","acceptedAnswer":{"@type":"Answer","text":"Да: «Скопировать ссылку» даёт адрес с датой, временем и координатами; «Поделиться карточкой» — картинку 1080×1350."}}]}</script>
   <body>
     <nav id="nav" aria-label="Навигация">
       <a class="brand" href="/">COSMOS</a>
-      <div id="menu" class="links"><a href="/natalnaya-karta/">По дате</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a></div>
+      <div id="menu" class="links"><a href="/natalnaya-karta/">По дате</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a></div>
+      <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
     </nav>
     <main class="kp">
       <section class="hero">
@@ -122,13 +141,13 @@
         </div>
         <figure class="hero-fig rv" style="--i:2"><div class="core"><img src="/img/karta-hero.webp" width="1536" height="1152" alt="Эклиптика и линии созвездий Змееносца, Скорпиона и Стрельца на тёмном небе" fetchpriority="high" /></div><figcaption>Эклиптика · созвездия по МАС</figcaption></figure>
       </section>
-      <nav class="modes rv" style="--i:3" id="modes" aria-label="Виды карт">
-        <button data-mode="natal" class="on">Натал</button><button data-mode="transits">Транзиты к наталу</button><button data-mode="sky">Карта неба</button><button data-mode="solar">Соляр</button><button data-mode="synastry">Синастрия</button><button data-mode="directions">Дирекции</button>
+      <nav class="modes rv" style="--i:3" id="modes" aria-label="Виды карт" role="tablist">
+        <button role="tab" data-mode="natal" aria-selected="true" class="on">Натал</button><button role="tab" data-mode="transits" aria-selected="false">Транзиты к наталу</button><button role="tab" data-mode="sky" aria-selected="false">Карта неба</button><button role="tab" data-mode="solar" aria-selected="false">Соляр</button><button role="tab" data-mode="synastry" aria-selected="false">Синастрия</button><button role="tab" data-mode="directions" aria-selected="false">Дирекции</button>
       </nav>
       <div class="shell rv" style="--i:4"><div class="core">
-      <form class="kform" onsubmit="return false">
+      <form class="kform" id="kform" novalidate>
         <div class="row row4">
-          <label>Дата рождения <input type="date" id="birth" required /></label>
+          <label>Дата рождения <input type="date" id="birth" required aria-describedby="birthErr" /><span class="ferr" id="birthErr" hidden>Введите дату рождения</span></label>
           <label>Время (местное) <input type="time" id="birthTime" /></label>
           <label>Город рождения <span class="place-box"><input type="text" id="birthPlace" placeholder="начните вводить, напр. Москва" autocomplete="off" aria-autocomplete="list" aria-controls="placeList" /><ul id="placeList" role="listbox" hidden></ul></span></label>
           <label>Настройка карты <select id="outer"><option value="1">Планеты до Нептуна</option><option value="0">Классические семь</option></select></label>
@@ -142,7 +161,7 @@
         <div class="sub" data-for="solar"><h3>Данные соляра</h3><div class="row"><label>Год соляра <input type="number" id="solYear" min="1900" max="2100" /></label></div><p class="natal-hint">Место встречи соляра не нужно: момент возвращения Солнца один для всей Земли.</p></div>
         <div class="sub" data-for="synastry"><h3>Данные партнёра</h3><div class="row"><label>Дата рождения партнёра <input type="date" id="synDate" /></label><label>Время (UTC, необязательно) <input type="time" id="synTime" /></label></div></div>
         <div class="sub" data-for="directions"><h3>Данные дирекции</h3><div class="row"><label>Целевая дата <span class="wnow"><input type="date" id="dirDate" /><button type="button" class="now" data-now="directions">сегодня</button></span></label></div><p class="natal-hint">Покажем не символический сдвиг «1° = год», а реальные положения тел на целевую дату и обороты планет.</p></div>
-        <div class="act"><button id="openNatal" type="button">Построить карту<span class="ic" aria-hidden="true">→</span></button><button id="birthHere" type="button">я здесь</button><span id="status"></span><span class="act-r"><button id="copyTable" type="button" hidden>Скопировать таблицу</button><button id="printChart" type="button" hidden>Печать / PDF</button></span></div>
+        <div class="act"><button id="openNatal" type="submit">Построить карту<span class="ic" aria-hidden="true">→</span></button><button id="birthHere" type="button">я здесь</button><span id="status" role="status" aria-live="polite"></span><span class="act-r"><button id="copyTable" type="button" hidden>Скопировать таблицу</button><button id="printChart" type="button" hidden>Печать / PDF</button></span></div>
         <div id="recent" class="recent" hidden></div>
       </form>
       </div></div>

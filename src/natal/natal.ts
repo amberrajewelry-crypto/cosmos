@@ -8,7 +8,7 @@ import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
-import { planetsTable, anglesTable, transitsTable, solarTable, synastryTable, returnsTable } from './views';
+import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
 export interface Place { lat: number; lon: number; }
 
@@ -75,7 +75,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
   const at = opts.at ?? new Date();
   const render = (kind: string): void => {
     view.innerHTML = kind === 'planets' ? planetsTable(when, opts.outer)
-      : kind === 'angles' ? anglesTable(when)
+      : kind === 'angles' ? anglesTable(when) + aspectGrid(when)
       : kind === 'transits' ? transitsTable(when, at)
       : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)
       : kind === 'directions' ? `<p class="nt-cap"><span class="tag tag-inline">[МИФ]</span> «Дирекции» — символический сдвиг карты на 1° за год; на небе так ничего не движется. Ниже — что реально изменилось к ${at.toISOString().slice(0, 10)}: положения тел против рождения и обороты планет.</p>` + transitsTable(when, at) + returnsTable(when, at)

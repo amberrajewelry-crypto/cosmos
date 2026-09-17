@@ -19,7 +19,7 @@ const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
 let mode = 'natal';
 const setMode = (m: string): void => {
   mode = m;
-  document.querySelectorAll('#modes button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.mode === m));
+  document.querySelectorAll('#modes button').forEach((b) => { const on = (b as HTMLElement).dataset.mode === m; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
   document.querySelectorAll('.kform .sub').forEach((d) => d.classList.toggle('on', (d as HTMLElement).dataset.for === m));
   document.getElementById('modeTitle')!.innerHTML = MODES[m].title;
   document.getElementById('modeLede')!.textContent = MODES[m].lede;
@@ -32,17 +32,36 @@ const today = new Date().toISOString().slice(0, 10);
 $('atDate').value = today; $('atTime').value = new Date().toISOString().slice(11, 16); $('skyDate').value = today;
 $('solYear').value = String(new Date().getUTCFullYear()); $('dirDate').value = today;
 
+// Состояние страницы в URL: режим + данные — ссылка воспроизводит ровно эту карту
+const stateUrl = (): string => {
+  const q = new URLSearchParams(bf.link(bf.moment()).split('?')[1] ?? '');
+  q.set('mode', mode);
+  const extra: Record<string, string> = { transits: `${$('atDate').value}T${$('atTime').value}`, sky: $('skyDate').value, directions: $('dirDate').value, solar: $('solYear').value, synastry: `${$('synDate').value}${$('synTime').value ? 'T' + $('synTime').value : ''}` };
+  if (extra[mode]) q.set('at', extra[mode]);
+  if ($('outer').value !== '1') q.set('outer', '0');
+  return `${location.origin}/karta/?${q}`;
+};
+const applyAt = (m: string, at: string): void => {
+  const [d, t] = at.split('T');
+  if (m === 'transits') { $('atDate').value = d; if (t) $('atTime').value = t; }
+  else if (m === 'sky') $('skyDate').value = d; else if (m === 'directions') $('dirDate').value = d;
+  else if (m === 'solar') $('solYear').value = d; else if (m === 'synastry') { $('synDate').value = d; if (t) $('synTime').value = t; }
+};
+
 const build = (): void => {
-  if (!birth.value) { birth.focus(); return; }
+  const err = $('birthErr');
+  if (!birth.value) { err.hidden = false; birth.setAttribute('aria-invalid', 'true'); birth.focus(); return; }
+  err.hidden = true; birth.removeAttribute('aria-invalid');
   const m = bf.moment();
   const at = mode === 'transits' ? dateAt($('atDate').value, $('atTime').value) : mode === 'sky' ? dateAt($('skyDate').value, '12:00') : mode === 'directions' ? dateAt($('dirDate').value, '12:00') : undefined;
-  openNatal(box, m.when, m.place, bf.link(m), {
+  openNatal(box, m.when, m.place, stateUrl(), {
     view: MODES[mode].view, at, second: dateAt($('synDate').value, $('synTime').value),
     year: Number($('solYear').value) || undefined, outer: $('outer').value === '1',
   });
   document.documentElement.classList.add('has-chart');
   $('copyTable').hidden = false; $('printChart').hidden = false;
   remember();
+  history.replaceState(null, '', stateUrl());
   box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
@@ -85,10 +104,20 @@ $('copyTable').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(rows.join('\n')); st.textContent = `скопировано ${rows.length - 1} строк`; } catch { st.textContent = 'буфер недоступен'; }
 });
 $('printChart').addEventListener('click', () => window.print());
-(document.getElementById('openNatal') as HTMLButtonElement).addEventListener('click', build);
+(document.getElementById('kform') as HTMLFormElement).addEventListener('submit', (e) => { e.preventDefault(); build(); });
+birth.addEventListener('input', () => { $('birthErr').hidden = true; birth.removeAttribute('aria-invalid'); });
+$('outer').addEventListener('change', () => { if (!box.hidden && birth.value) build(); });
+
+// Мобильное меню: бургер → полноэкранный список, Escape закрывает
+const burger = document.getElementById('burger') as HTMLButtonElement;
+const setMenu = (on: boolean): void => { document.documentElement.classList.toggle('menu-open', on); burger.setAttribute('aria-expanded', String(on)); };
+burger.addEventListener('click', () => setMenu(!document.documentElement.classList.contains('menu-open')));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 birth.addEventListener('input', () => document.documentElement.classList.toggle('has-birth', !!birth.value));
 const qs = new URLSearchParams(location.search);
 if (MODES[qs.get('mode') ?? '']) setMode(qs.get('mode')!);
+if (qs.get('at')) applyAt(mode, qs.get('at')!);
+if (qs.get('outer') === '0') $('outer').value = '0';
 if (bf.applyQuery(qs)) { birth.dispatchEvent(new Event('input')); build(); }
 
 // Staggered entry reveals: IntersectionObserver, transform/opacity only (CSS .rv/.in)

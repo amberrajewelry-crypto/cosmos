@@ -59,6 +59,23 @@ export function anglesTable(when: Date): string {
     tbl(['Пара', 'Угол', 'Как это зовёт астрология'], out);
 }
 
+// Матрица углов (как aspect grid у астропроцессоров): треугольник пар, подсветка «именованных» углов ±3°.
+export function aspectGrid(when: Date): string {
+  const r = rows(when).slice(0, 7);
+  const head = ['', ...r.slice(0, -1).map((x) => `${x.glyph}︎`)];
+  const body = r.slice(1).map((x, i) => {
+    const cells = r.slice(0, -1).map((y, j) => {
+      if (j > i) return '<td class="ag-empty"></td>';
+      let d = Math.abs(x.lon - y.lon); if (d > 180) d = 360 - d;
+      const near = NAMED.find(([a]) => Math.abs(d - a) <= 3);
+      return `<td class="${near ? 'ag-near' : ''}" title="${x.name} — ${y.name}${near ? ' · ' + near[1] : ''}">${d.toFixed(0)}°</td>`;
+    });
+    return `<tr><td>${x.glyph}︎ ${x.name}</td>${cells.join('')}</tr>`;
+  });
+  return `<p class="nt-cap">Та же геометрия матрицей: строка × столбец = угол между телами; золотом — угол в пределах 3° от 0/60/90/120/180.</p>
+    <table class="nt ag"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body.join('')}</tbody></table>`;
+}
+
 // «Транзиты»: где те же тела сейчас относительно положения в день рождения. Плюс сколько оборотов прошло.
 export function transitsTable(birth: Date, now = new Date()): string {
   const a = rows(birth), b = rows(now);
