@@ -115,7 +115,7 @@ export interface BodyPoints {
   /** Пара форм A→B для непрерывного зума и их масштабы вокруг центра фигуры. */
   setPair: (a: { pos: Float32Array; col: Float32Array }, b: { pos: Float32Array; col: Float32Array }) => void; setScales: (a: number, b: number) => void;
   /** Яркость спрайтов: портретная камера дальше — точки плотнее, гасим накопление. */ setGain: (g: number) => void;
-  /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
+  /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array, shade?: Float32Array) => void;
 }
 
 export function createBodyParticles(count = 9000): BodyPoints {
@@ -161,9 +161,15 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setTime: (t) => { mat.uniforms.uTime.value = t; },
     setReveal: (r) => { mat.uniforms.uReveal.value = r; },
     body: bodyPos, bodyColor: bodyCol,
-    replaceBody: (b) => {
+    replaceBody: (b, shade) => {
       const n = Math.min(b.length, bodyPos.length);
       bodyPos.set(b.subarray(0, n));
+      if (shade) {
+        // Per-point light: lit facets bright, shadowed ones dim -> the relief reads at uniform density.
+        for (let k = 0; k < n / 3; k++) { const g = 0.05 + 1.7 * Math.pow(shade[k] ?? 1, 1.5); bodyCol[k * 3] *= g; bodyCol[k * 3 + 1] *= g; bodyCol[k * 3 + 2] *= g; }
+        const c = geom.getAttribute('color') as THREE.BufferAttribute;
+        (c.array as Float32Array).set(bodyCol); c.needsUpdate = true; (colorB.array as Float32Array).set(bodyCol); colorB.needsUpdate = true;
+      }
       const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
       (posAttr.array as Float32Array).set(bodyPos); posAttr.needsUpdate = true;
       (target.array as Float32Array).set(bodyPos); target.needsUpdate = true;

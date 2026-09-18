@@ -55,7 +55,7 @@ stage.scene.add(createStarfield());
 
 // Тело = человек из точек, раскрашенных по происхождению вещества (§4.1/§4.3).
 const body = new THREE.Group();
-const bodyPts = createBodyParticles();
+const bodyPts = createBodyParticles(14000);
 body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
@@ -64,13 +64,13 @@ const decays = createDecays(bodyPts.body), neutrinos = createNeutrinos(), fieldL
 body.add(decays.obj, neutrinos.obj, fieldLines.obj);
 const levelLines = createLevelLines(); body.add(levelLines.obj);
 const innerLegend = document.getElementById('innerLegend') as HTMLElement;
-// Анатомическая фигура (§4.1): 9000 точек внутри меша, 54 КБ; до загрузки — капсульная.
+// Лицо из искр (§4.1): 14000 точек поверхности головы + тень/свет на точку, 112 КБ; до загрузки — капсульная.
 fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
   const n = new DataView(buf).getUint32(0, true);
-  const q = new Int16Array(buf, 4, n * 3);
-  const f = new Float32Array(n * 3);
-  for (let i = 0; i < f.length; i++) f[i] = q[i] / 10000;
-  bodyPts.replaceBody(f); decays.rebind(f);
+  const q = new Int16Array(buf, 4, n * 4); // x, y, z, shade (x1e-4)
+  const f = new Float32Array(n * 3), sh = new Float32Array(n);
+  for (let i = 0; i < n; i++) { f[i * 3] = q[i * 4] / 10000; f[i * 3 + 1] = q[i * 4 + 1] / 10000; f[i * 3 + 2] = q[i * 4 + 2] / 10000; sh[i] = q[i * 4 + 3] / 10000; }
+  bodyPts.replaceBody(f, sh); decays.rebind(f); scale.refresh(); // shapes cached from the capsule body must be rebuilt
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 // Живые данные форм: планеты на сейчас — сразу; звёзды и тела над горизонтом — после геолокации; Kp — из NOAA.
