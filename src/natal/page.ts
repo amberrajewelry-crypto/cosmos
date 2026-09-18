@@ -1,4 +1,5 @@
 import { natalSVG } from './chart';
+import { zodiacLines, zodiacLabels, type StarCatalog } from '../data/stars';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
 import { natalBodies } from '../compute/natalbodies';
@@ -11,6 +12,10 @@ import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-
 // полдень UTC, никаких координат/времени рождения. Долгота Солнца по календарной дате почти не
 // зависит от года рождения (дрейф <1.5° за десятилетия) — одна страница честно накрывает всех.
 export type Lang = 'ru' | 'en';
+// Каталог звёзд для SSG: генератор задаёт его один раз, страницы дат получают реальные созвездия в кольце.
+let starCat: StarCatalog | null = null;
+export function setStarCatalog(cat: StarCatalog): void { starCat = cat; }
+const skyFor = (year: number) => starCat ? { sky: zodiacLines(starCat, year), skyLabels: zodiacLabels(starCat, year), skyVisible: true } : {};
 const REF_YEAR = 2024; // високосный → дата 29.02 валидна; выбор года не влияет на созвездие
 
 const SITE = 'https://cosmos-alpha-three.vercel.app';
@@ -32,7 +37,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
   const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
   const dateStr = lang === 'ru' ? `${day} ${MONTHS_RU[month - 1]}` : `${MONTHS_EN[month - 1]} ${day}`;
-  const svg = natalSVG({ sunLon, rotationDeg: 0 });
+  const svg = natalSVG({ sunLon, rotationDeg: 0, ...skyFor(REF_YEAR) });
   const altUrl = SITE + urlFor(lang === 'ru' ? 'en' : 'ru', month, day);
   const selfUrl = SITE + urlFor(lang, month, day);
 
@@ -208,14 +213,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;m
 .top a:hover{color:var(--ink);background:rgba(236,230,211,.06)}
 .top .alt{margin-left:auto;color:var(--gold)}
 @media(max-width:560px){.top .more{display:none}}
-.crumbs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:44px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.crumbs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:44px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 .crumbs a{color:inherit;text-decoration:none}.crumbs span{opacity:.55}.crumbs .cur{opacity:1;color:var(--ink2)}
 h1{font-family:var(--display);font-weight: 500;font-size:clamp(28px,4vw,46px);line-height:1.08;letter-spacing:-.028em;text-wrap:balance;text-align:center;color:var(--ink);margin:14px 0 14px}
 h1 em,h1 b{font-style:normal;font-weight: 300;color:var(--gold)}
 h2{font-family:var(--display);font-weight: 500;font-size:22px;letter-spacing:-.015em;line-height:1.2;text-align:center;color:var(--gold);margin:36px 0 10px;text-wrap:balance}
 h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:24px 0 6px}
 .lede{font-size:21px;font-weight:300;line-height:1.45;margin:14px auto 26px;max-width:62ch;color:var(--ink2)}
-.chart{color:var(--ink);width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
+.chart{color:var(--ink);width:min(86vw,460px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
 .facts h2{font-size:20px;margin:0 0 10px}
@@ -237,7 +242,7 @@ h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em
 .faq summary{cursor:pointer;font-size:19px;font-weight:500}
 .faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
 section p{color:var(--ink2)}
-.tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -452,7 +457,7 @@ export function neboPage(iso: string, lang: Lang): string {
   const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
   const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
   const dateStr = lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]} ${y}` : `${MONTHS_EN[m - 1]} ${d}, ${y}`;
-  const svg = natalSVG({ sunLon, rotationDeg: 0, bodies: bodies.map((b) => ({ glyph: b.glyph, lon: b.lon, key: b.key })) });
+  const svg = natalSVG({ sunLon, rotationDeg: 0, bodies: bodies.map((b) => ({ glyph: b.glyph, lon: b.lon, key: b.key })), ...skyFor(y) });
   const selfUrl = SITE + neboUrl(lang, iso), altUrl = SITE + neboUrl(lang === 'ru' ? 'en' : 'ru', iso);
   const t = lang === 'ru' ? {
     title: `Небо ${dateStr}: где реально были Солнце, Луна и планеты`,

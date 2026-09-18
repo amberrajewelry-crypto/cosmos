@@ -1,5 +1,6 @@
 import { createServer } from 'vite';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,7 +10,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://cosmos-alpha-three.vercel.app';
 
 const vite = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl, shell } = await vite.ssrLoadModule('/src/natal/page.ts');
+const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl, shell, setStarCatalog } = await vite.ssrLoadModule('/src/natal/page.ts');
+setStarCatalog(JSON.parse(readFileSync('public/stars.json', 'utf8')));
 const { sunSignAndConstellation, SIGNS_RU, SIGNS_EN } = await vite.ssrLoadModule('/src/compute/sign.ts');
 
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];

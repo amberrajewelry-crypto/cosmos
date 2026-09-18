@@ -20,11 +20,11 @@ function polar(r: number, lonDeg: number, offset = 0): [number, number] {
 }
 
 export interface ChartBody { glyph: string; lon: number; key: string; retro?: boolean; }
-export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; sky?: Array<Array<[number, number]>>; skyLabels?: Array<[string, number]>; }
+export interface ChartInput { sunLon: number; rotationDeg: number; asc?: number; mc?: number; bodies?: ChartBody[]; sky?: Array<Array<[number, number]>>; skyLabels?: Array<[string, number]>; skyVisible?: boolean; }
 const MONO = "'Geist Mono',Menlo,monospace";
 
 // §4.7: линии реальных зодиакальных созвездий в кольце (широта ±30° → R_IN…R_OUT). Скрыты до поворота (§4.8).
-export function skyLines(sky: Array<Array<[number, number]>>, off: number, labels: Array<[string, number]> = []): string {
+export function skyLines(sky: Array<Array<[number, number]>>, off: number, labels: Array<[string, number]> = [], visible = false): string {
   const r = (lat: number) => R_IN + ((Math.max(-30, Math.min(30, lat)) + 30) / 60) * (R_OUT - R_IN);
   const d = sky.map((pl) => pl.map(([lon, lat], i) => { const [x, y] = polar(r(lat), lon, off); return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`; }).join(' ')).join(' ');
   // Имена созвездий снаружи кольца, по касательной — читаются как гравировка по ободу.
@@ -33,10 +33,10 @@ export function skyLines(sky: Array<Array<[number, number]>>, off: number, label
     const rot = (90 - (180 + lon - off) + 720) % 360; const flip = rot > 90 && rot < 270;
     return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="6.2" letter-spacing=".12em" fill="#c9a85c" font-family="${MONO}" opacity=".9" transform="rotate(${(flip ? rot + 180 : rot).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${name.toUpperCase()}</text>`;
   }).join('');
-  return `<g id="realSky" style="opacity:0; transition: opacity 1.6s ease"><path d="${d}" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/>${txt}</g>`;
+  return `<g id="realSky" style="opacity:${visible ? 1 : 0}; transition: opacity 1.6s ease"><path d="${d}" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/>${txt}</g>`;
 }
 
-export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky, skyLabels }: ChartInput): string {
+export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky, skyLabels, skyVisible }: ChartInput): string {
   const off = asc ?? 0;
   // Градуированные тики по краю (§4.5) — фиксированный слой.
   let ticks = '';
@@ -97,7 +97,7 @@ export function natalSVG({ sunLon, rotationDeg, asc, mc, bodies, sky, skyLabels 
     <circle cx="${CX}" cy="${CY}" r="${R_IN}" fill="none" stroke="#c9a85c" stroke-width="0.8" opacity="0.5"/>
     ${ticks}
     ${axes}
-    ${sky ? skyLines(sky, off, skyLabels) : ''}
+    ${sky ? skyLines(sky, off, skyLabels, skyVisible) : ''}
     <g id="signRing" style="transition: transform 1.6s cubic-bezier(.4,0,.2,1); transform-box: view-box; transform-origin: 200px 200px; transform: rotate(${rotationDeg}deg);">${sectors}</g>
     <circle cx="${CX}" cy="${CY}" r="${R_ASP}" fill="none" stroke="#c9a85c" stroke-width="0.5" opacity="0.3"/>
     ${aspects}
