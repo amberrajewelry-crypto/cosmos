@@ -162,27 +162,27 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0e0b2a'); g.addColorStop(1, '#070515');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // звёздная пыль
-  for (let i = 0; i < 260; i++) { ctx.fillStyle = `rgba(17,17,17,${0.15 + Math.random() * 0.5})`; ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5); }
+  for (let i = 0; i < 260; i++) { ctx.fillStyle = `rgba(236,230,211,${0.15 + Math.random() * 0.5})`; ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5); }
   const img = await svgImage(svg);
   ctx.drawImage(img, (W - 620) / 2, 70, 620, 620);
-  ctx.textAlign = 'center'; ctx.fillStyle = '#111'; ctx.font = '500 22px "Geist Mono", Menlo, monospace';
+  ctx.textAlign = 'center'; ctx.fillStyle = '#c9a85c'; ctx.font = '500 22px "Geist Mono", Menlo, monospace';
   ctx.fillText('C O S M O S', W / 2, 46);
-  ctx.fillStyle = '#111'; ctx.font = '300 40px Manrope, Geist, system-ui, sans-serif';
+  ctx.fillStyle = '#ece6d3'; ctx.font = '300 40px Manrope, Geist, system-ui, sans-serif';
   ctx.fillText(when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), W / 2, 748);
-  ctx.fillStyle = 'rgba(17,17,17,.68)'; ctx.font = '300 20px Geist, system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(236,230,211,.68)'; ctx.font = '300 20px Geist, system-ui, sans-serif';
   ctx.fillText('небо в этот день — как было на самом деле', W / 2, 782);
   ctx.textAlign = 'left';
   let y = 840;
   for (const f of facts) {
-    ctx.fillStyle = 'rgba(17,17,17,.04)'; ctx.beginPath(); ctx.roundRect(60, y - 34, W - 120, 132, 20); ctx.fill();
-    ctx.strokeStyle = 'rgba(17,17,17,.08)'; ctx.stroke();
-    ctx.fillStyle = '#111'; ctx.font = '500 15px "Geist Mono", Menlo, monospace'; ctx.fillText(`[${f.tag}]`, 84, y);
-    ctx.fillStyle = '#111'; ctx.font = '400 24px Manrope, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
-    ctx.fillStyle = 'rgba(17,17,17,.85)'; ctx.font = '300 22px Geist, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(236,230,211,.04)'; ctx.beginPath(); ctx.roundRect(60, y - 34, W - 120, 132, 20); ctx.fill();
+    ctx.strokeStyle = 'rgba(236,230,211,.08)'; ctx.stroke();
+    ctx.fillStyle = '#c9a85c'; ctx.font = '500 15px "Geist Mono", Menlo, monospace'; ctx.fillText(`[${f.tag}]`, 84, y);
+    ctx.fillStyle = '#ece6d3'; ctx.font = '400 24px Manrope, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
+    ctx.fillStyle = 'rgba(236,230,211,.85)'; ctx.font = '300 22px Geist, system-ui, sans-serif';
     wrap(ctx, f.text, 84, y + 40, W - 168, 30, 2);
     y += 158;
   }
-  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(17,17,17,.5)'; ctx.font = '300 18px "Geist Mono", Menlo, monospace';
+  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(236,230,211,.5)'; ctx.font = '300 18px "Geist Mono", Menlo, monospace';
   ctx.fillText('cosmos-alpha-three.vercel.app · эфемериды VSOP87/ELP · каждое число проверяемо', W / 2, H - 40);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/png'));
 }

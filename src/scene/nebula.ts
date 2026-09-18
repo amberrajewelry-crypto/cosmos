@@ -15,7 +15,7 @@ void main(){
   float t = uT * .015;
   float n1 = fbm(p*1.6 + vec2(t, -t*.6));
   float n2 = fbm(p*3.2 - vec2(t*.8, t*.4) + n1);
-  vec3 indigo = vec3(0.), violet = vec3(.07), dust = vec3(.14); // monochrome: page inverts canvas to engraving on white
+  vec3 indigo = vec3(.055,.045,.16), violet = vec3(.16,.09,.30), dust = vec3(.36,.29,.16);
   vec3 col = indigo;
   col = mix(col, violet, smoothstep(.35,.85,n1) * .8);
   col = mix(col, dust, smoothstep(.62,.92,n2) * .35);

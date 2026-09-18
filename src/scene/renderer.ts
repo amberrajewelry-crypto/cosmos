@@ -20,7 +20,7 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000); // canvas is inverted by CSS → pure white page bg
+  scene.background = new THREE.Color(0x0a0820); // под туманностью-шейдером; не чёрный (§4.5)
 
   // near = 0.1 < минимальной дистанции зума 0.5 — объект не уходит за near-clip (fix MED-6)
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1e6);

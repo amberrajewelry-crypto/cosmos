@@ -34,11 +34,11 @@ import type { Value } from '../types';
   for (let d = 0; d < 360; d += 2) {
     const a = (d * Math.PI) / 180, big = d % 30 === 0, mid = d % 10 === 0;
     const r1 = 190, r0 = big ? 176 : mid ? 182 : 186;
-    t += `<line x1="${(200 + r0 * Math.cos(a)).toFixed(1)}" y1="${(200 + r0 * Math.sin(a)).toFixed(1)}" x2="${(200 + r1 * Math.cos(a)).toFixed(1)}" y2="${(200 + r1 * Math.sin(a)).toFixed(1)}" stroke="#111" stroke-width="${big ? .8 : .35}" opacity="${big ? .9 : .5}"/>`;
+    t += `<line x1="${(200 + r0 * Math.cos(a)).toFixed(1)}" y1="${(200 + r0 * Math.sin(a)).toFixed(1)}" x2="${(200 + r1 * Math.cos(a)).toFixed(1)}" y2="${(200 + r1 * Math.sin(a)).toFixed(1)}" stroke="#c9a85c" stroke-width="${big ? .8 : .35}" opacity="${big ? .9 : .5}"/>`;
   }
   let g = '';
-  G.forEach((ch, i) => { const a = ((i * 30 + 15 - 90) * Math.PI) / 180; g += `<text x="${(200 + 167 * Math.cos(a)).toFixed(1)}" y="${(204 + 167 * Math.sin(a)).toFixed(1)}" text-anchor="middle" font-size="9" fill="#111" opacity=".55" font-family="Georgia,serif">${ch}\uFE0E</text>`; });
-  svg.innerHTML = `<g><circle cx="200" cy="200" r="192" fill="none" stroke="#111" stroke-width=".6" opacity=".7"/><circle cx="200" cy="200" r="174" fill="none" stroke="#111" stroke-width=".35" opacity=".45"/><circle cx="200" cy="200" r="158" fill="none" stroke="#111" stroke-width=".25" opacity=".3" stroke-dasharray="1 3"/>${t}${g}</g>`;
+  G.forEach((ch, i) => { const a = ((i * 30 + 15 - 90) * Math.PI) / 180; g += `<text x="${(200 + 167 * Math.cos(a)).toFixed(1)}" y="${(204 + 167 * Math.sin(a)).toFixed(1)}" text-anchor="middle" font-size="9" fill="#c9a85c" opacity=".55" font-family="Georgia,serif">${ch}\uFE0E</text>`; });
+  svg.innerHTML = `<g><circle cx="200" cy="200" r="192" fill="none" stroke="#c9a85c" stroke-width=".6" opacity=".7"/><circle cx="200" cy="200" r="174" fill="none" stroke="#c9a85c" stroke-width=".35" opacity=".45"/><circle cx="200" cy="200" r="158" fill="none" stroke="#c9a85c" stroke-width=".25" opacity=".3" stroke-dasharray="1 3"/>${t}${g}</g>`;
 })();
 
 // --- Сцена ---
