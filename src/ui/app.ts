@@ -144,7 +144,7 @@ function loop(now = performance.now()) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     if (drag.x == null) { drag.rot += drag.v; drag.v *= 0.93; } // инерция после отпускания: докручивается и гаснет
-    body.rotation.y = Math.sin(t * 0.3) * 0.18 + drag.rot;
+    body.rotation.y = t * 0.25 + drag.rot; // continuous turn like every other figure (~50 s per revolution)
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
@@ -175,6 +175,17 @@ const byId = (id: string) => bodyValues.find((v) => v.id === id);
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.documentElement.classList.add('staged');
   document.querySelectorAll<HTMLElement>('.stage[data-t]').forEach((el) => setTimeout(() => el.classList.add('on'), Number(el.dataset.t)));
+  // H1: words surface one by one, hold, dissolve, repeat (CSS keyframes per <span class="w">)
+  const h1 = document.querySelector<HTMLElement>('#hero h1');
+  if (h1 && !reduceMotion) {
+    let i = 0;
+    const wrap = (n: Node) => {
+      if (n.nodeType === 3) { const f = document.createDocumentFragment(); (n.textContent ?? '').split(/(\s+)/).forEach((w) => { if (!w.trim()) { f.append(w); return; } const sp = document.createElement('span'); sp.className = 'w'; sp.style.setProperty('--i', String(i++)); sp.textContent = w; f.append(sp); }); n.parentNode?.replaceChild(f, n); }
+      else Array.from(n.childNodes).forEach(wrap);
+    };
+    Array.from(h1.childNodes).forEach(wrap);
+    h1.classList.add('cycle');
+  }
 }
 
 const panel = document.getElementById('panel') as HTMLElement;
