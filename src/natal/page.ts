@@ -170,7 +170,7 @@ export function shell(lang: Lang, s: Shell): string {
   const crumbs = s.crumbs ?? [{ name: BRAND[lang], url: '/' }, { name: s.title, url: s.selfUrl }];
   // Eyebrow над h1: путь без текущей страницы (≥3 уровней) или явная метка раздела; сама h1 не дублируется.
   const trail = crumbs.length > 2 ? crumbs.slice(0, -1) : [crumbs[0]];
-  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'АСТРОАНАЛИЗ' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
+  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'Астроанализ' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
   const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url.startsWith('http') ? c.url : SITE + c.url })) };
   const altLinks = s.altUrl ? `<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
@@ -207,8 +207,8 @@ h1,h2,h3,summary{hyphens:manual}
 main a{color:var(--gold);text-underline-offset:.18em;text-decoration-thickness:1px}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .wrap{max-width:760px;margin:0 auto;padding:36px 22px 80px}
-.top{display:flex;align-items:center;gap:2px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:6px 8px 6px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.top .brand{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.28em;color:var(--gold);margin-right:10px;text-decoration:none}
+.top{display:flex;align-items:center;gap:2px;font-family:var(--serif);font-size:13px;letter-spacing:0;white-space:nowrap;padding:6px 8px 6px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.top .brand{font-family:var(--display);font-weight:600;font-size:13.5px;letter-spacing:.02em;color:var(--gold);margin-right:10px;text-decoration:none}
 .top a{color:var(--ink2);text-decoration:none;padding:7px 12px;border-radius:999px;transition:color .5s var(--ease),background .5s var(--ease)}
 .top a:hover{color:var(--ink);background:rgba(236,230,211,.06)}
 .top .alt{margin-left:auto;color:var(--gold)}
@@ -247,7 +247,7 @@ section p{color:var(--ink2)}
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><a class="brand" href="/">АСТРОАНАЛИЗ</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
+  <header class="top"><a class="brand" href="/">Астроанализ</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
 </div>
 </body>
 </html>`;
