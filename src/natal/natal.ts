@@ -8,6 +8,7 @@ import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
+import { readingHtml } from './interp';
 import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
 export interface Place { lat: number; lon: number; }
@@ -35,7 +36,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
       <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
       <nav class="natal-tabs" aria-label="Виды карты">
-        <button data-view="planets">Положения</button><button data-view="angles">Углы</button><button data-view="transits">Сейчас</button><button data-view="solar">Возврат Солнца</button><button data-view="synastry">Две даты</button><button data-view="returns">Возвраты</button>
+        <button data-view="reading">Разбор</button><button data-view="planets">Положения</button><button data-view="angles">Углы</button><button data-view="transits">Сейчас</button><button data-view="solar">Возврат Солнца</button><button data-view="synastry">Две даты</button><button data-view="returns">Возвраты</button>
       </nav>
       <div class="natal-view" id="natalView" hidden></div>
       <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
@@ -46,7 +47,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       <p class="natal-cap natal-star" id="natalStarLine">${starLine(star)}</p>
       <section class="dossier" aria-label="Досье по реальным данным">
         <h3>Досье по реальным данным</h3>
-        <p class="dossier-lead">Не толкования — факты о твоём дне, которые можно проверить. Каждый с тегом и источником.</p>
+        <p class="dossier-lead">Факты о твоём дне, которые можно проверить, — с тегом и источником. Разбор характера и пути — во вкладке «Разбор» выше.</p>
         <ol>${facts.map((d) => `<li><span class="tag tag-inline tag-${d.tag}">[${d.tag}]</span><b>${d.title}</b><p>${d.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" target="_blank" rel="noopener">$1</a>')}</p><small>${d.source}</small></li>`).join('')}</ol>
         <p class="dossier-more">Дальше: <a href="/natalnaya-karta/${String(when.getUTCMonth() + 1).padStart(2, '0')}-${String(when.getUTCDate()).padStart(2, '0')}/">страница этой даты</a> (созвездие, окно, метеоры) · <a href="/nebo/${when.toISOString().slice(0, 10)}/">небо в день рождения</a> (Луна, планеты, APOD).</p>
       </section>
@@ -74,7 +75,8 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
   let solYear = opts.year ?? new Date().getUTCFullYear(), synDate = opts.second ? opts.second.toISOString().slice(0, 10) : '';
   const at = opts.at ?? new Date();
   const render = (kind: string): void => {
-    view.innerHTML = kind === 'planets' ? planetsTable(when, opts.outer)
+    view.innerHTML = kind === 'reading' ? readingHtml(when, angles?.asc)
+      : kind === 'planets' ? planetsTable(when, opts.outer)
       : kind === 'angles' ? anglesTable(when) + aspectGrid(when)
       : kind === 'transits' ? transitsTable(when, at)
       : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)

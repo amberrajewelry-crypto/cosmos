@@ -1,4 +1,5 @@
 import { natalSVG } from './chart';
+import { SUN_IN_SIGN, SIGNS } from './interp/signs';
 import { zodiacLines, zodiacLabels, type StarCatalog } from '../data/stars';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
@@ -141,6 +142,13 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <p class="why">${t.why}</p>
+  ${lang === 'ru' ? `<div class="facts razbor"><h2>Солнце в ${SIGNS[signIndex].loc}: что говорит традиция</h2>
+    <p><span class="tag">[ТРАДИЦИЯ]</span> ${SUN_IN_SIGN[signIndex].who}</p>
+    <p><b>Путь.</b> ${SUN_IN_SIGN[signIndex].path}</p>
+    <p><b>Наставление.</b> ${SUN_IN_SIGN[signIndex].advice}</p>
+    <p><span class="tag">[НАУКА]</span> ${SIGNS[signIndex].science}</p>
+    <p class="note">Источник: Птолемей «Тетрабиблос» III; Алан Лео «How to Judge a Nativity» (1903). Знак — тропический (сезон рождения); созвездие Солнца в этот день — ${matches ? 'то же' : 'другое, см. выше'}. Полный разбор с Луной, домами и аспектами — <a href="/karta/">в карте</a>: введи дату и время.</p>
+  </div>` : ''}
   ${skyHtml}
   ${isOphiuchus ? `<p class="why"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold)">${lang === 'ru' ? 'Твоё созвездие — Змееносец, настоящий 13-й знак зодиака →' : 'Your constellation is Ophiuchus — the real 13th zodiac sign →'}</a></p>` : ''}
   ${faqHtml}${faqLd}
@@ -491,7 +499,7 @@ export function neboPage(iso: string, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <section class="dossier"><h2>${lang === 'ru' ? 'Досье дня по реальным данным' : 'The day’s dossier, from real data'}</h2>
-    <p class="note">${lang === 'ru' ? 'Не толкования — проверяемые факты. У каждого тег и источник.' : 'No interpretations — checkable facts, each with a tag and a source.'}</p>
+    <p class="note">${lang === 'ru' ? 'Проверяемые факты с тегом и источником; разбор характера и пути по классике — в карте.' : 'Checkable facts with a tag and a source; the classical reading is in the chart.'}</p>
     <ol>${dossier(when, new Date(), undefined, 70, { mode: 'date', lang }).map((x) => `<li><b>${x.title}</b> <span class="tag">[${lang === 'ru' ? x.tag : x.tag === 'ТОЧНО' ? 'EXACT' : 'ESTIMATE'}]</span><p>${x.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" rel="noopener">$1</a>')}</p><small>${x.source}</small></li>`).join('')}</ol>
   </section>
   <section><h2>${t.hub}</h2><div class="days">${links} <a href="${dayPage}">${lang === 'ru' ? 'все родившиеся' : 'everyone born'} ${lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]}` : `${MONTHS_EN[m - 1]} ${d}`}</a></div></section>
