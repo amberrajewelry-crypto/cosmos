@@ -8,10 +8,10 @@ export interface Row { key: string; glyph: string; name: string; lon: number; si
 const LIST: Array<[Body, string, string, string]> = [
   [Body.Sun, 'sun', '☉', 'Солнце'], [Body.Moon, 'moon', '☽', 'Луна'], [Body.Mercury, 'mercury', '☿', 'Меркурий'],
   [Body.Venus, 'venus', '♀', 'Венера'], [Body.Mars, 'mars', '♂', 'Марс'], [Body.Jupiter, 'jupiter', '♃', 'Юпитер'],
-  [Body.Saturn, 'saturn', '♄', 'Сатурн'], [Body.Uranus, 'uranus', '♅', 'Уран'], [Body.Neptune, 'neptune', '♆', 'Нептун'],
+  [Body.Saturn, 'saturn', '♄', 'Сатурн'], [Body.Uranus, 'uranus', '♅', 'Уран'], [Body.Neptune, 'neptune', '♆', 'Нептун'], [Body.Pluto, 'pluto', '♇', 'Плутон'],
 ];
 // Сидерические периоды (сут) — для оценки возвратов планет на долготу рождения.
-const PERIOD_D: Record<string, number> = { mercury: 87.969, venus: 224.701, mars: 686.98, jupiter: 4332.59, saturn: 10759.22, uranus: 30688.5, neptune: 60182 };
+const PERIOD_D: Record<string, number> = { mercury: 87.969, venus: 224.701, mars: 686.98, jupiter: 4332.59, saturn: 10759.22, uranus: 30688.5, neptune: 60182, pluto: 90560 };
 
 const norm = (x: number) => ((x % 360) + 360) % 360;
 const lonOf = (b: Body, t: Date) => b === Body.Sun ? SunPosition(t).elon : norm(Ecliptic(GeoVector(b, t, true)).elon);

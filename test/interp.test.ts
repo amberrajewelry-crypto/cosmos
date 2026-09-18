@@ -25,7 +25,8 @@ describe('разбор по классике', () => {
     const r2 = reading(when, 205.3);
     expect(r2.blocks[0].title).toBe('Асцендент в Весах');
     expect(r2.blocks.filter((b) => b.title.includes('доме'))).toHaveLength(7);
-    expect(r2.synthesis.length).toBeGreaterThanOrEqual(4);
+    expect(r2.outer).toHaveLength(3);
+    expect(r2.message.length).toBeGreaterThanOrEqual(6); expect(r2.extras.some((b) => b.title.startsWith("Северный узел"))).toBe(true); expect(r2.extras.some((b) => b.title.startsWith("Точка Фортуны"))).toBe(true);
     expect(readingHtml(when, 205.3)).toContain('[ТРАДИЦИЯ]');
   });
 });

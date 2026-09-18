@@ -8,7 +8,7 @@ import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
-import { readingHtml } from './interp';
+import { readingHtml, transitHtml, synastryHtml, solarHtml } from './interp';
 import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
 export interface Place { lat: number; lon: number; }
@@ -78,11 +78,11 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     view.innerHTML = kind === 'reading' ? readingHtml(when, angles?.asc)
       : kind === 'planets' ? planetsTable(when, opts.outer)
       : kind === 'angles' ? anglesTable(when) + aspectGrid(when)
-      : kind === 'transits' ? transitsTable(when, at)
+      : kind === 'transits' ? transitHtml(when, at, angles?.asc) + transitsTable(when, at)
       : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)
       : kind === 'directions' ? `<p class="nt-cap"><span class="tag tag-inline">[МИФ]</span> «Дирекции» — символический сдвиг карты на 1° за год; на небе так ничего не движется. Ниже — что реально изменилось к ${at.toISOString().slice(0, 10)}: положения тел против рождения и обороты планет.</p>` + transitsTable(when, at) + returnsTable(when, at)
-      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarTable(when, solYear)
-      : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
+      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarHtml(when, solYear) + solarTable(when, solYear)
+      : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryHtml(when, new Date(synDate + 'T12:00:00Z')) + synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
       : returnsTable(when);
     view.hidden = false;
     tabs.forEach((b) => b.classList.toggle('on', b.dataset.view === kind));
@@ -90,7 +90,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     view.querySelector('#synDate')?.addEventListener('change', (e) => { synDate = (e.target as HTMLInputElement).value; render('synastry'); });
   };
   tabs.forEach((b) => b.addEventListener('click', () => { if (b.classList.contains('on')) { view.hidden = true; b.classList.remove('on'); } else render(b.dataset.view!); }));
-  if (opts.view) render(opts.view);
+  render(opts.view ?? 'reading');
 
   const rotateBtn = overlay.querySelector('#natalRotate') as HTMLButtonElement;
   const cap = overlay.querySelector('#natalCap') as HTMLElement;
