@@ -92,7 +92,10 @@
       #hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 2.9vw, 40px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; }
       #hero h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
       @media (max-width: 760px) { #hero .about { display: none; } }
-      #hero .about { font-family: var(--serif); font-weight: 300; font-size: 13px; line-height: 1.5; color: var(--ink-2); opacity: .85; margin: 10px auto 0; max-width: 1100px; text-wrap: pretty; } #hero .about a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,92,.35); }
+      #hero .about { font-family: var(--serif); font-weight: 300; font-size: 13px; line-height: 1.5; color: var(--ink-2); opacity: .85; margin: 10px auto 0; max-width: 1100px; text-wrap: pretty; } #hero .about a, #hero .about .lnk { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,92,.35); } .lnk { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+      .wish-chips { display: flex; flex-wrap: wrap; gap: 6px; } .wrong-form .wish-chips label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.12); cursor: pointer; transition: border-color .4s var(--ease), color .4s var(--ease); } .wrong-form .wish-chips label:has(:checked) { color: var(--ink); border-color: var(--gold); } .wish-chips input { position: absolute; opacity: 0; width: 0; height: 0; }
+      #wishDlg .wrong-shown { font-family: var(--serif); font-size: 14px; line-height: 1.5; } dialog#wishDlg { max-width: min(92vw, 640px); width: min(92vw, 640px); }
+      .wish-done { text-align: center; font-size: 14px; color: var(--ink-2); padding: 10px 0; }
       #hero .open { font-family: var(--serif); font-weight: 300; font-size: 15px; line-height: 1.45; margin: 0 auto 6px; color: var(--ink-2); max-width: 520px; }
       .hero-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; }
       #hero .open b { font-family: var(--mono); font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: .02em; }
@@ -211,9 +214,9 @@
       .swap .scale-lbl, .swap .scale-fact { filter: blur(3px); opacity: .35; }
       /* 8. двойной бортик без лишнего DOM: внешнее кольцо + внутренний блик */
       .card { box-shadow: 0 0 0 5px rgba(var(--ink-rgb),.02), 0 0 0 6px rgba(var(--ink-rgb),.05), inset 0 1px 0 rgba(255,255,255,.07); }
-      #wrongDlg { padding: 6px; border-radius: 28px; background: rgba(var(--ink-rgb),.04); border: 1px solid rgba(var(--ink-rgb),.08); }
+      #wrongDlg, #wishDlg { padding: 6px; border-radius: 28px; background: rgba(var(--ink-rgb),.04); border: 1px solid rgba(var(--ink-rgb),.08); }
       .wrong-form { border-radius: 22px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
-      #wrongDlg[open] { animation: dlg .32s var(--ease); } @keyframes dlg { from { opacity: 0; transform: scale(.96); } }
+      #wrongDlg[open], #wishDlg[open] { animation: dlg .32s var(--ease); } @keyframes dlg { from { opacity: 0; transform: scale(.96); } }
       /* 7. панель-drawer: свайп вправо закрывает (JS ведёт transform без transition во время жеста) */
       #panel.dragging { transition: none; }
       @media (min-width: 761px) {
@@ -277,8 +280,8 @@
       .micro button { font: inherit; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.1); padding: 3px 8px; border-radius: 999px; cursor: pointer; }
       .micro button:hover { color: var(--ink); border-color: var(--gold-2); }
       .micro-sep { margin-left: 8px; }
-      #wrongDlg { background: transparent; border: 0; padding: 0; max-width: min(92vw, 460px); }
-      #wrongDlg::backdrop { background: rgba(6,4,20,.7); backdrop-filter: blur(10px); }
+      #wrongDlg, #wishDlg { background: transparent; border: 0; padding: 0; max-width: min(92vw, 460px); }
+      #wrongDlg::backdrop, #wishDlg::backdrop { background: rgba(6,4,20,.7); backdrop-filter: blur(10px); }
       .wrong-form { position: relative; display: grid; gap: 14px; padding: 28px 26px 22px; border-radius: 22px; background: linear-gradient(180deg, rgba(20,16,52,.96), rgba(12,10,32,.96)); border: 1px solid rgba(var(--ink-rgb),.1); color: var(--ink); font-family: var(--serif); }
       .wrong-form h2 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 0; text-align: center; }
       .wrong-shown { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin: 0; text-align: center; }
@@ -414,6 +417,7 @@
         <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">По </span>дате</a>
         <button id="openPanel" type="button">Параметры</button>
         <button id="openHonesty" type="button">Погрешности</button>
+        <button id="openWishM" type="button">Что подключить?</button>
         <details id="read"><summary>Читать</summary><div class="rd"><a href="/retrogradnyj-merkurij/">Ретроградный Меркурий</a><a href="/znaki-zodiaka-po-datam/">Знаки зодиака по датам</a><a href="/ekliptika/">Эклиптика</a><a href="/precessiya/">Прецессия</a><a href="/zodiakalnye-sozvezdiya/">Зодиакальные созвездия</a><a href="/nebo-v-den-rozhdeniya/">Небо в день рождения</a><a href="/kakoe-sozvezdie-v-den-rozhdeniya/">Какое созвездие в день рождения</a><a href="/polozhenie-planet-v-den-rozhdeniya/">Положение планет в день рождения</a><a href="/zodiak-smestilsya/">Зодиак сместился</a><a href="/novolunie-oktyabr-2026/">Новолуние октябрь 2026</a><a href="/polnolunie-oktyabr-2026/">Полнолуние октябрь 2026</a><a href="/magnitnye-buri-oktyabr-2026/">Магнитные бури октябрь 2026</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a><a href="/direkcii/">Дирекции</a><a class="rd-meta" href="/o-proekte/">О проекте</a><a class="rd-meta" href="/kontakty/">Контакты</a><a class="rd-meta" href="/politika/">Политика</a></div></details>
       </div>
     </nav>
@@ -428,7 +432,7 @@
           <button id="openNatal" type="button">Карта рождения</button>
         </div>
       </div>
-      <p class="about stage" data-t="2700">Те же расчёты, что у астропроцессоров, — по настоящему небу, с погрешностью, без толкований. <a href="/o-proekte/">Что подключено и как работает</a></p>
+      <p class="about stage" data-t="2700">Те же расчёты, что у астропроцессоров, — по настоящему небу, с погрешностью, без толкований. <a href="/o-proekte/">Что подключено</a> · <button type="button" class="lnk" id="openWish">Что ещё подключить?</button></p>
       <span id="status"></span>
       <details class="natal-more" id="natalMore">
         <summary>время и место рождения → асцендент и MC</summary>
@@ -456,6 +460,25 @@
         <label class="wrong-attach"><input type="checkbox" name="attach" /> приложить мои координаты и время — они нужны, чтобы повторить расчёт</label>
         <button type="submit" class="cta">Отправить</button>
         <span class="natal-hint">Уходит только то, что в этой форме. Одно подтверждённое расхождение важнее ста отзывов о дизайне.</span>
+      </form>
+    </dialog>
+    <dialog id="wishDlg" aria-label="Что ещё подключить">
+      <form method="dialog" class="wrong-form" id="wishForm">
+        <button type="button" class="natal-close" aria-label="Закрыть">✕</button>
+        <h2>Что ещё подключить?</h2>
+        <p class="wrong-shown">Сейчас подключены эфемериды, границы созвездий, каталог звёзд, Kp GFZ Potsdam и геолокация. Что ещё ты хотел бы видеть о себе — по данным, не по гороскопу?</p>
+        <div class="wish-chips">
+          <label><input type="checkbox" name="w" value="погода в момент рождения" />погода при рождении</label>
+          <label><input type="checkbox" name="w" value="солнечные пятна в день рождения" />солнечные пятна в тот день</label>
+          <label><input type="checkbox" name="w" value="МКС и спутники над головой сейчас" />что над головой сейчас</label>
+          <label><input type="checkbox" name="w" value="ближайшая звезда и её возраст" />ближайшая к тебе звезда</label>
+          <label><input type="checkbox" name="w" value="вдохи и удары сердца с рождения" />вдохи и удары сердца</label>
+          <label><input type="checkbox" name="w" value="вес на других планетах" />вес на других планетах</label>
+          <label><input type="checkbox" name="w" value="затмения за жизнь" />затмения за жизнь</label>
+        </div>
+        <label>Своё<input name="own" maxlength="200" placeholder="что ещё измерить" /></label>
+        <button type="submit" class="cta">Отправить</button>
+        <span class="natal-hint">Уходит только выбор и текст, без даты рождения. Что наберёт голоса — подключим и покажем в журнале изменений.</span>
       </form>
     </dialog>
     <div id="ask" hidden aria-label="Спросить"></div>

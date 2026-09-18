@@ -239,6 +239,22 @@ function openWrong(v: Value): void {
   };
 }
 wrongDlg.querySelector('.natal-close')?.addEventListener('click', () => wrongDlg.close());
+// «Что ещё подключить?» — пожелания по данным о себе; уходит как note без даты рождения.
+const wishDlg = document.getElementById('wishDlg') as HTMLDialogElement;
+const wishForm = document.getElementById('wishForm') as HTMLFormElement;
+const openWish = (): void => { wishDlg.showModal(); track('wish_open'); };
+document.getElementById('openWish')?.addEventListener('click', openWish);
+document.getElementById('openWishM')?.addEventListener('click', openWish);
+wishDlg.querySelector('.natal-close')?.addEventListener('click', () => wishDlg.close());
+wishForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const f = new FormData(wishForm);
+  const picked = f.getAll('w').map(String), own = String(f.get('own') ?? '').trim();
+  if (!picked.length && !own) { wishDlg.close(); return; }
+  await sendFeedback({ kind: 'note', text: `подключить: ${[...picked, own].filter(Boolean).join('; ')}` });
+  wishForm.innerHTML = '<p class="wish-done">Записано. Спасибо — что наберёт голоса, подключим.</p>';
+  setTimeout(() => wishDlg.close(), 1400);
+};
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
 fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); } render(); });
