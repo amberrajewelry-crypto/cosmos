@@ -29,6 +29,7 @@ tot = sum(a for a,_ in polys); acc=[]; run=0.0
 for a,_ in polys: run+=a; acc.append(run)
 # Shadow test: a point whose ray towards the light hits the mesh (mouth bag, eye sockets, under the chin) is mostly dropped.
 bvh = BVHTree.FromPolygons(V, [vs for _, vs in polys])
+FILL = Vector((0.75, -0.5, 0.1)).normalized()
 AO_RAYS = 16; AO_DIST = 0.12  # head is ~0.26 wide in this file
 pts=[]
 CUT = lo.z + 0.3 * (hi.z - lo.z)  # drop the collar flare at the neck base
@@ -43,6 +44,7 @@ while len(pts) < N:
     # Hidden from the camera (mouth bag, inner eyelids) -> drop, it only doubles the density on screen.
     if bvh.ray_cast(q + n * 1e-3, Vector((0, -1, 0)), 5.0)[0] is not None: continue
     lit = 0.0 if bvh.ray_cast(q + n * 1e-3, L, 5.0)[0] is not None else max(0.0, n.dot(L))
+    lit = max(lit, 0.4 * max(0.0, n.dot(FILL)))  # soft fill from the other side: the shadowed cheek keeps its silhouette
     # Ambient occlusion: cavities (eyes, nostrils, lip line, ears) go dark so the features read.
     hits = 0
     for _ in range(AO_RAYS):
