@@ -213,7 +213,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;m
 .top a:hover{color:var(--ink);background:rgba(236,230,211,.06)}
 .top .alt{margin-left:auto;color:var(--gold)}
 @media(max-width:560px){.top .more{display:none}}
-.crumbs{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;margin:44px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.crumbs{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;margin:44px 0 0;font-family:var(--serif);font-size:12.5px;letter-spacing:.02em;text-transform:none;color:var(--gold)}
 .crumbs a{color:inherit;text-decoration:none}.crumbs span{opacity:.55}.crumbs .cur{opacity:1;color:var(--ink2)}
 h1{font-family:var(--display);font-weight: 500;font-size:clamp(28px,4vw,46px);line-height:1.08;letter-spacing:-.028em;text-wrap:pretty;text-align:left;color:var(--ink);margin:14px 0 14px}
 h1 em,h1 b{font-style:normal;font-weight: 300;color:var(--gold)}
@@ -234,7 +234,7 @@ h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em
 .cta:active{transform:scale(.98)}
 .privacy{font-family:var(--mono);font-size:11px;opacity:.6}
 .days{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
-.days a{color:var(--ink2);font-family:var(--mono);font-size:12px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
+.days a{color:var(--ink2);font-family:var(--serif);font-size:13px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
 .days a:hover{color:var(--ink);border-color:var(--gold2)}
 .faq{margin:30px 0}
 .dates{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:26px 0 8px;font-size:14px}.dates a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(214,180,106,.35)}
@@ -242,7 +242,7 @@ h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em
 .faq summary{cursor:pointer;font-size:19px;font-weight:500}
 .faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
 section p{color:var(--ink2)}
-.tag{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.tag{font-family:var(--serif);font-size:12px;font-weight:500;letter-spacing:.02em;text-transform:none;color:var(--gold)}
 </style>
 </head>
 <body>
