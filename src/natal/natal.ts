@@ -167,7 +167,7 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
   ctx.drawImage(img, (W - 620) / 2, 70, 620, 620);
   ctx.textAlign = 'center'; ctx.fillStyle = '#c9a85c'; ctx.font = '500 22px "Geist Mono", Menlo, monospace';
   ctx.fillText('C O S M O S', W / 2, 46);
-  ctx.fillStyle = '#ece6d3'; ctx.font = '300 40px Unbounded, Geist, system-ui, sans-serif';
+  ctx.fillStyle = '#ece6d3'; ctx.font = '300 40px Manrope, Geist, system-ui, sans-serif';
   ctx.fillText(when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), W / 2, 748);
   ctx.fillStyle = 'rgba(236,230,211,.68)'; ctx.font = '300 20px Geist, system-ui, sans-serif';
   ctx.fillText('небо в этот день — как было на самом деле', W / 2, 782);
@@ -177,7 +177,7 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
     ctx.fillStyle = 'rgba(236,230,211,.04)'; ctx.beginPath(); ctx.roundRect(60, y - 34, W - 120, 132, 20); ctx.fill();
     ctx.strokeStyle = 'rgba(236,230,211,.08)'; ctx.stroke();
     ctx.fillStyle = '#c9a85c'; ctx.font = '500 15px "Geist Mono", Menlo, monospace'; ctx.fillText(`[${f.tag}]`, 84, y);
-    ctx.fillStyle = '#ece6d3'; ctx.font = '400 24px Unbounded, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
+    ctx.fillStyle = '#ece6d3'; ctx.font = '400 24px Manrope, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
     ctx.fillStyle = 'rgba(236,230,211,.85)'; ctx.font = '300 22px Geist, system-ui, sans-serif';
     wrap(ctx, f.text, 84, y + 40, W - 168, 30, 2);
     y += 158;

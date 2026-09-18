@@ -10,7 +10,7 @@
     <meta property="og:description" content="Положения планет, созвездия, углы, транзиты, соляр, синастрия — только вычислимое." />
     <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/img/karta-og.jpg" />
     <link rel="icon" href="/favicon.svg" />
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Unboundedwght.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Manropewght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/GeistMonowght.woff2" />
     <!--STYLE-->
@@ -20,22 +20,22 @@
       .kp, .kform, .kfaq { font-family: var(--serif); }
       #nav { position: sticky; top: 14px; margin: 14px auto 0; left: auto; transform: none; width: fit-content; }
       .kp { max-width: 1120px; margin: 0 auto; padding: 40px 22px 96px; }
-      /* Editorial split hero: copy left, image right; stacks below 900px */
-      .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; margin: 24px 0 40px; }
-      @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 28px; } }
+      /* Single column: copy, then the wide illustration below (no side-by-side text) */
+      .hero { display: grid; grid-template-columns: 1fr; gap: 28px; margin: 24px 0 40px; }
+      .hero > div { max-width: 72ch; }
       .eyebrow-k { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(201,168,92,.28); background: rgba(201,168,92,.06); margin: 0 0 18px; }
       .eyebrow-k::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 2.6s var(--ease) infinite; }
       @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
-      .kp h1 { font-family: var(--display); font-weight: 300; font-size: clamp(30px, 4.2vw, 50px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
-      .kp h1 em { font-style: normal; font-weight: 200; color: var(--gold); }
+      .kp h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.2vw, 50px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
+      .kp h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
       .kp p, .kp li { text-wrap: pretty; } .kp { font-variant-numeric: tabular-nums; } ::selection { background: rgba(201,168,92,.35); }
       .kp .lede { text-align: left; color: var(--ink-2); font-size: 17px; line-height: 1.55; max-width: 56ch; margin: 0 0 22px; }
       .hero-fig { position: relative; padding: 6px; border-radius: 30px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.09); box-shadow: 0 30px 60px -30px rgba(3,2,14,.9); }
-      .hero-fig .core { position: relative; overflow: hidden; border-radius: 24px; aspect-ratio: 4 / 3; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+      .hero-fig .core { position: relative; overflow: hidden; border-radius: 24px; aspect-ratio: 21 / 8; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
       .hero-fig img { display: block; width: 100%; height: 100%; object-fit: cover; }
       .hero-fig .core::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,32,0) 55%, rgba(10,8,32,.75) 100%); }
       .hero-fig figcaption { position: absolute; left: 22px; bottom: 20px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(var(--ink-rgb),.7); }
-      @media (max-width: 900px) { .hero-fig .core { aspect-ratio: 16 / 9; } }
+      @media (max-width: 900px) { .hero-fig .core { aspect-ratio: 16 / 8; } }
       /* Mode switch: island of pills */
       .modes { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; width: fit-content; max-width: 100%; margin: 0 0 14px; border-radius: 999px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
       .modes button { font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 9px 16px; cursor: pointer; transition: color .5s var(--ease), background .5s var(--ease), transform .5s var(--ease); }
@@ -79,7 +79,7 @@
       /* FAQ: asymmetric two-column at desktop */
       .kfaq { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(var(--ink-rgb),.08); }
       @media (max-width: 900px) { .kfaq { grid-template-columns: 1fr; gap: 16px; margin-top: 56px; } }
-      .kfaq h2 { font-family: var(--display); font-weight: 300; font-size: 24px; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
+      .kfaq h2 { font-family: var(--display); font-weight: 500; font-size: 24px; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
       .kfaq h2 small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-top: 10px; }
       .kfaq details { border-bottom: 1px solid rgba(var(--ink-rgb),.08); padding: 16px 0; }
       .kfaq summary { position: relative; cursor: pointer; list-style: none; padding-right: 40px; font-size: 17px; font-weight: 500; }
