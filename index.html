@@ -5,20 +5,20 @@
     <meta name="google-site-verification" content="ztTUH-FdQTz3pXKwF1uVtTQlxecr0iKAu-ld_YKmhhY" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>" />
-    <title>Настоящая натальная карта по звёздам — Космос внутри тебя</title>
+    <title>Настоящая натальная карта по звёздам — Астроанализ</title>
     <meta name="description" content="Твой настоящий, сидерический знак зодиака по реальному положению звёзд — не по гороскопу 2000-летней давности. Живая карта космоса внутри тебя: физика, которую можно проверить." />
     <link rel="canonical" href="https://cosmos-alpha-three.vercel.app/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Настоящая натальная карта по звёздам — Космос внутри тебя" />
-    <meta property="og:description" content="Твой настоящий знак по реальному небу, а не по гороскопу. Космос не вокруг тебя, а внутри тебя." />
+    <meta property="og:title" content="Настоящая натальная карта по звёздам — Астроанализ" />
+    <meta property="og:description" content="Твой настоящий знак по реальному небу, а не по гороскопу. Что вверху, то и внутри тебя." />
     <meta property="og:url" content="https://cosmos-alpha-three.vercel.app/" />
     <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Настоящая натальная карта по звёздам — Космос внутри тебя" />
+    <meta name="twitter:title" content="Настоящая натальная карта по звёздам — Астроанализ" />
     <meta name="twitter:description" content="Твой настоящий знак по реальному небу, а не по гороскопу." />
     <meta name="twitter:image" content="https://cosmos-alpha-three.vercel.app/og.png" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","name":"Космос внутри тебя","url":"https://cosmos-alpha-three.vercel.app/","description":"Настоящая, сидерическая натальная карта по реальному положению звёзд."}
+      {"@context":"https://schema.org","@type":"WebSite","name":"Астроанализ","url":"https://cosmos-alpha-three.vercel.app/","description":"Настоящая, сидерическая натальная карта по реальному положению звёзд."}
     </script>
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Unboundedwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
@@ -91,6 +91,8 @@
       .eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
       #hero h1 { font-family: var(--display); font-weight: 300; font-size: clamp(26px, 2.9vw, 40px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; }
       #hero h1 em { font-style: normal; font-weight: 200; color: var(--gold); }
+      @media (max-width: 760px) { #hero .about { display: none; } }
+      #hero .about { font-family: var(--mono); font-size: 11px; line-height: 1.5; letter-spacing: .01em; color: var(--ink-2); opacity: .8; margin: 10px auto 0; max-width: 900px; text-wrap: pretty; }
       #hero .open { font-family: var(--serif); font-weight: 300; font-size: 15px; line-height: 1.45; margin: 0 auto 6px; color: var(--ink-2); max-width: 520px; }
       .hero-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; }
       #hero .open b { font-family: var(--mono); font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: .02em; }
@@ -145,12 +147,12 @@
       @media (min-width: 761px) {
         /* Титры одной полосой снизу по центру: [заголовок · строка] / [CTA · дата], без столбика */
         #hero { left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%); max-width: 94vw; padding: 0; margin: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        #hero h1 { font-size: 20px; margin: 0; display: inline; white-space: nowrap; } #hero h1 br { display: none; } #hero h1 em { margin-left: .28em; }
+        #hero h1 { font-size: 20px; margin: 0; display: inline; white-space: nowrap; } #hero h1 em { margin-left: .28em; }
         #hero .open { display: inline; margin: 0 0 0 14px; font-size: 13px; max-width: none; white-space: nowrap; }
         #hero > * { text-wrap: nowrap; }
         .hero-row { margin-top: 0; }
         .hero-line { display: flex; align-items: baseline; justify-content: center; }
-        @media (max-height: 800px) { #hero .open { display: none; } #hero { bottom: 10px; gap: 5px; } }
+        @media (max-height: 800px) { #hero .open, #hero .about { display: none; } #hero { bottom: 10px; gap: 5px; } }
         .cta { padding: 9px 9px 9px 18px; } .cta i { width: 30px; height: 30px; }
         .natal-more summary { margin: 0; }
         #scale { left: auto; right: 40px; bottom: 56px; transform: none; width: 340px; text-align: right; }
@@ -400,12 +402,12 @@
     </script>
   </head>
   <body>
-    <div id="stage"><canvas id="scene" role="img" aria-label="Сцена: тело человека из точек"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+    <div id="stage"><canvas id="scene" role="img" aria-label="Сцена: лицо из искр"></canvas><svg id="ring" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
     <div id="scale" class="stage" data-t="3000" aria-label="Масштаб"></div>
     <p id="hint" class="hint" role="status" hidden></p>
     <p id="innerLegend" class="inner-legend"><span><i class="sw sw-decay"></i>распады K-40 (показан 1 из 70)</span></p>
     <nav id="nav" aria-label="Навигация">
-      <a class="brand" href="/">COSMOS</a>
+      <a class="brand" href="/">АСТРОАНАЛИЗ</a>
       <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
       <div id="menu" class="links">
         <a href="/karta/">Астропроцессор</a>
@@ -417,7 +419,7 @@
     </nav>
     <main id="main">
     <div id="hero">
-      <div class="hero-line"><h1 class="stage" data-t="1400">Космос не вокруг тебя,<br /><em>а внутри тебя.</em></h1>
+      <div class="hero-line"><h1 class="stage" data-t="1400">Что вверху, <em>то и внутри тебя.</em></h1>
       <p class="open stage" data-t="1900" id="open1">Прямо сейчас сквозь тебя летят <b id="openPhotons">—</b> фотонов, родившихся через 380 000 лет после Большого взрыва.</p></div>
       <div class="hero-row stage" data-t="2400">
         <button id="reveal" class="cta">Что происходит с тобой сейчас <i>→</i></button>
@@ -426,6 +428,7 @@
           <button id="openNatal" type="button">Карта рождения</button>
         </div>
       </div>
+      <p class="about stage" data-t="2700">Подключено: эфемериды VSOP87/ELP, границы созвездий МАС 1930, каталог звёзд SIMBAD/Hipparcos, индекс Kp GFZ Potsdam, геолокация браузера. Как работает: дата, время и город → реальное небо в ту минуту → карта и числа, всё считается в браузере. Отличие: те же расчёты, что у астропроцессоров, но по настоящему небу и с погрешностью — без гороскопов из воздуха.</p>
       <span id="status"></span>
       <details class="natal-more" id="natalMore">
         <summary>время и место рождения → асцендент и MC</summary>

@@ -14,7 +14,7 @@ export type Lang = 'ru' | 'en';
 const REF_YEAR = 2024; // високосный → дата 29.02 валидна; выбор года не влияет на созвездие
 
 const SITE = 'https://cosmos-alpha-three.vercel.app';
-const BRAND = { ru: 'Космос внутри тебя', en: 'The Cosmos Inside You' };
+const BRAND = { ru: 'Астроанализ', en: 'Astroanalysis' };
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -165,7 +165,7 @@ export function shell(lang: Lang, s: Shell): string {
   const crumbs = s.crumbs ?? [{ name: BRAND[lang], url: '/' }, { name: s.title, url: s.selfUrl }];
   // Eyebrow над h1: путь без текущей страницы (≥3 уровней) или явная метка раздела; сама h1 не дублируется.
   const trail = crumbs.length > 2 ? crumbs.slice(0, -1) : [crumbs[0]];
-  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'COSMOS' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
+  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'АСТРОАНАЛИЗ' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
   const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url.startsWith('http') ? c.url : SITE + c.url })) };
   const altLinks = s.altUrl ? `<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
@@ -219,9 +219,9 @@ h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
 .facts h2{font-size:20px;margin:0 0 10px}
-.dossier ol{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:d}.dossier li{position:relative;padding:12px 14px 12px 40px;border-radius:16px;background:rgba(236,230,211,.035);border:1px solid rgba(236,230,211,.07)}.dossier li::before{counter-increment:d;content:counter(d,decimal-leading-zero);position:absolute;left:14px;top:13px;font-family:var(--mono);font-size:10px;color:var(--gold)}.dossier li b{display:block;font-size:14px;margin:0 0 4px}.dossier li .tag{position:absolute;right:12px;top:12px}.dossier li p{margin:0;font-size:14px;line-height:1.45}.dossier li small{display:block;margin-top:5px;font-family:var(--mono);font-size:10px;opacity:.7}
-.facts ul{margin:0;padding:0}
-.facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:8px 0;color:var(--ink)}
+.dossier ol{list-style:none;margin:0;padding:0;font-size:15px;line-height:1.7}.dossier li{display:inline}.dossier li+li::before{content:' · ';color:var(--gold)}.dossier li b{font-weight:500}.dossier li .tag{display:none}.dossier li p{display:inline;margin:0}.dossier li small{display:inline;margin-left:.4em;font-family:var(--mono);font-size:11px;opacity:.7}
+.facts ul{margin:0;padding:0;font-family:var(--mono);font-size:14px;line-height:1.8;color:var(--ink)}
+.facts li{list-style:none;display:inline}.facts li+li::before{content:' · ';color:var(--gold)}
 .facts li b{color:var(--gold);font-weight:400}
 .note{font-family:var(--mono);font-size:11px;opacity:.55;margin:8px 0 0}
 .cta{display:inline-flex;align-items:center;gap:12px;margin:22px 0 10px;font-size:18px;font-weight:500;color:#120f2a;background:var(--gold);padding:8px 8px 8px 22px;border-radius:999px;text-decoration:none;transition:transform .6s var(--ease)}
@@ -242,7 +242,7 @@ section p{color:var(--ink2)}
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><a class="brand" href="/">COSMOS</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
+  <header class="top"><a class="brand" href="/">АСТРОАНАЛИЗ</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
 </div>
 </body>
 </html>`;

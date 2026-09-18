@@ -120,7 +120,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     const svg = overlay.querySelector('#natalSvg svg') as SVGSVGElement;
     const blob = await shareCard(svg, when, facts.slice(0, 3));
     const file = new File([blob], `cosmos-${iso}.png`, { type: 'image/png' });
-    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'COSMOS' }); return; } catch { /* отмена — падаем в скачивание */ } }
+    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'АСТРОАНАЛИЗ' }); return; } catch { /* отмена — падаем в скачивание */ } }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);

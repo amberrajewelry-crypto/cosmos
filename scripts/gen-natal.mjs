@@ -59,7 +59,7 @@ for (const lang of ['ru', 'en']) {
 // Хаб-страницы для внутренней перелинковки (краулу нужен вход ко всем датам).
 function hub(lang) {
   const months = lang === 'ru' ? MONTHS_RU : MONTHS_EN;
-  const brand = lang === 'ru' ? 'Космос внутри тебя' : 'The Cosmos Inside You';
+  const brand = lang === 'ru' ? 'Астроанализ' : 'Astroanalysis';
   const h1 = lang === 'ru' ? 'Настоящая натальная карта по дате рождения' : 'Real natal chart by birth date';
   const lede = lang === 'ru'
     ? 'Выбери свою дату — покажем твой настоящий знак по реальному положению звёзд. Настоящая, сидерическая натальная карта.'

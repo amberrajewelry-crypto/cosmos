@@ -77,7 +77,7 @@
       .natal-tabs { justify-content: flex-start; }
       #natalView { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
       /* FAQ: asymmetric two-column at desktop */
-      .kfaq { display: grid; grid-template-columns: .8fr 1.6fr; gap: 32px; margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(var(--ink-rgb),.08); }
+      .kfaq { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(var(--ink-rgb),.08); }
       @media (max-width: 900px) { .kfaq { grid-template-columns: 1fr; gap: 16px; margin-top: 56px; } }
       .kfaq h2 { font-family: var(--display); font-weight: 300; font-size: 24px; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
       .kfaq h2 small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-top: 10px; }
@@ -148,11 +148,11 @@
     </style>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Астропроцессор — настоящая натальная карта","url":"https://cosmos-alpha-three.vercel.app/karta/","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"description":"Натальная карта по эфемеридам: положения планет, созвездия МАС, углы, транзиты, возврат Солнца, сравнение двух дат."}</script>
   </head>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"COSMOS","item":"https://cosmos-alpha-three.vercel.app/"},{"@type":"ListItem","position":2,"name":"Астропроцессор","item":"https://cosmos-alpha-three.vercel.app/karta/"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"АСТРОАНАЛИЗ","item":"https://cosmos-alpha-three.vercel.app/"},{"@type":"ListItem","position":2,"name":"Астропроцессор","item":"https://cosmos-alpha-three.vercel.app/karta/"}]}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Чем это отличается от других астропроцессоров?","acceptedAnswer":{"@type":"Answer","text":"Те же таблицы — положения, углы, транзиты, соляр, синастрия — но без толкований. Каждое число вычислено по эфемеридам VSOP87 и помечено тегом ТОЧНО / ОЦЕНКА / ГЕОМЕТРИЯ; рядом со знаком всегда стоит настоящее созвездие по границам МАС."}},{"@type":"Question","name":"Что если я не знаю время рождения?","acceptedAnswer":{"@type":"Answer","text":"Введите только дату: Солнце и планеты определяются точно, Луна — с погрешностью до 6,5°. Асцендент и MC без времени не показываем."}},{"@type":"Question","name":"Где расшифровка?","acceptedAnswer":{"@type":"Answer","text":"Её нет. Характер и судьбу из положения планет вывести нельзя — это проверяли (Карлсон, Nature, 1985; Силверман, 1971). Есть факты: где были тела, какие углы между ними, какая звезда светит вам светом года рождения."}},{"@type":"Question","name":"Можно ли поделиться картой?","acceptedAnswer":{"@type":"Answer","text":"Да: «Скопировать ссылку» даёт адрес с датой, временем и координатами; «Поделиться карточкой» — картинку 1080×1350."}}]}</script>
   <body>
     <nav id="nav" aria-label="Навигация">
-      <a class="brand" href="/">COSMOS</a>
+      <a class="brand" href="/">АСТРОАНАЛИЗ</a>
       <div id="menu" class="links"><a href="/natalnaya-karta/">По дате</a><a href="/kosmogramma/">Космограмма</a><a href="/sinastriya/">Синастрия</a><a href="/tranzity/">Транзиты</a><a href="/solyar/">Соляр</a><a href="/direkcii/">Дирекции</a><a href="/o-proekte/">О проекте</a></div>
       <button id="theme" type="button" aria-label="Светлая тема" aria-pressed="false" title="Тема"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
       <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
@@ -160,9 +160,9 @@
     <main class="kp">
       <section class="hero">
         <div>
-          <p class="eyebrow-k">COSMOS · Астропроцессор</p>
+          <p class="eyebrow-k">Астроанализ · Астропроцессор</p>
           <h1 id="modeTitle">Настоящая натальная карта <em>онлайн</em></h1>
-          <p class="lede" id="modeLede">Введите дату, время и город рождения. Расчёт покажет положения планет и настоящие созвездия рядом со знаками гороскопа, углы между телами, транзиты, момент возвращения Солнца и сравнение двух дат. Всё считается в браузере по эфемеридам; данные не отправляются на сервер.</p>
+          <p class="lede" id="modeLede">Дата, время и город рождения → положение Солнца, Луны и планет на реальном небе в ту минуту. Подключены эфемериды VSOP87/ELP, границы созвездий МАС 1930 и каталог звёзд; всё считается в браузере, ничего не отправляется. Те же расчёты, что в любом астропроцессоре, но по настоящему небу, с указанием погрешности и без толкований из воздуха.</p>
         </div>
         <figure class="hero-fig"><div class="core"><img src="/img/karta-hero.webp" width="1536" height="1152" alt="Эклиптика и линии созвездий Змееносца, Скорпиона и Стрельца на тёмном небе" fetchpriority="high" /></div><figcaption>Эклиптика · созвездия по МАС</figcaption></figure>
       </section>
