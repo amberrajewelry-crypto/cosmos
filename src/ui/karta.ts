@@ -27,6 +27,8 @@ const setMode = (m: string): void => {
   if (!box.hidden && birth.value) build();
 };
 document.querySelectorAll('#modes button').forEach((b) => b.addEventListener('click', () => setMode((b as HTMLElement).dataset.mode!)));
+// Tool list rows: switch mode and scroll to the form
+document.querySelectorAll<HTMLElement>('.ktools li[data-mode]').forEach((li) => { const go = () => { setMode(li.dataset.mode!); document.getElementById('kform')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; li.addEventListener('click', go); li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
 
 const dateAt = (d: string, t: string): Date | undefined => d ? new Date(`${d}T${t || '12:00'}:00Z`) : undefined;
 const today = new Date().toISOString().slice(0, 10);
