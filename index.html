@@ -103,11 +103,11 @@
       html.staged .stage { opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease), filter 1.1s var(--ease); }
       html.staged .stage.on { opacity: 1; transform: none; filter: none; }
       /* Разбор: блоки характер/путь/наставление */
-      .rz-wrap h3 { font-family: var(--display); font-weight: 500; font-size: 16px; margin: 22px 0 8px; color: var(--gold); }
+      .rz-wrap h3 { font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: -.015em; margin: 26px 0 8px; color: var(--gold); white-space: nowrap; }
       .rz-syn { padding: 14px 16px; border-radius: 16px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.08); margin: 0 0 8px; }
       .rz-syn h3 { margin: 0 0 6px; } .rz-syn p { margin: 4px 0; font-size: 14px; line-height: 1.5; }
       .rz { padding: 12px 0; border-top: 1px solid rgba(var(--ink-rgb),.08); }
-      .rz h4 { font-family: var(--display); font-weight: 500; font-size: 14.5px; margin: 0 0 6px; }
+      .rz h4 { font-family: var(--display); font-weight: 500; font-size: 16px; letter-spacing: -.01em; margin: 0 0 6px; }
       .rz p { margin: 4px 0; font-size: 13.5px; line-height: 1.5; } .rz p b { font-weight: 600; }
       .rz-trad { font-size: 14.5px; line-height: 1.55; } .rz-fact, .rz-sci { color: var(--ink-2); font-size: 12.5px; } .rz-src { font-family: var(--mono); font-size: 11px; opacity: .55; }
       .rz-syn p { font-family: var(--display); font-weight: 300; font-size: 15px; line-height: 1.5; } .rz-syn p.rz-fact { font-family: var(--serif); font-size: 12px; }
@@ -205,7 +205,7 @@
       #status:empty { display: none; }
       /* Досье по реальным данным (карта рождения) */
       .dossier { max-width: 520px; margin: 26px auto 10px; text-align: left; }
-      .dossier h3 { font-family: var(--display); font-weight: 500; font-size: 15px; letter-spacing: -.01em; text-align: center; margin: 0 0 6px; }
+      .dossier h3 { font-family: var(--display); font-weight: 500; font-size: 18px; letter-spacing: -.01em; text-align: center; margin: 0 0 6px; }
       .dossier-lead { font-family: var(--serif); font-size: 12.5px; color: var(--ink-2); text-align: center; margin: 0 0 14px; }
       .dossier ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: d; }
       .dossier li { position: relative; padding: 12px 14px 12px 40px; border-radius: 16px; background: rgba(var(--ink-rgb),.035); border: 1px solid rgba(var(--ink-rgb),.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
@@ -315,8 +315,8 @@
       /* Оверлеи: карта рождения, погрешности, спросить */
       #natal, #honesty, #ask { position: fixed; inset: 0; display: flex; align-items: safe center; justify-content: center; background: rgba(6,5,18,.78); backdrop-filter: blur(22px); overflow-y: auto; }
       #natal { z-index: 4; } #honesty { z-index: 4; } #ask { z-index: 5; }
-      .natal-box { position: relative; width: min(92vw, 560px); padding: 10px; }
-      .natal-title { margin: 6px 44px 4px 0; font: 400 15px/1.3 var(--serif); letter-spacing: 0; color: var(--ink-2); text-align: center; }
+      .natal-box { position: relative; width: min(92vw, 720px); padding: 10px; }
+      .natal-title { margin: 6px 44px 4px 0; font: 500 17px/1.3 var(--display); letter-spacing: -.01em; letter-spacing: 0; color: var(--ink-2); text-align: center; }
       .natal-svg { color: var(--ink); width: min(74vw, 460px); aspect-ratio: 1; margin: 0 auto; filter: drop-shadow(0 0 40px rgba(201,168,92,.12)); }
       .natal-close, .honesty-close, .ask-close { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border-radius: 50%; background: rgba(var(--ink-rgb),.06); border: 1px solid rgba(var(--ink-rgb),.1); color: var(--ink); font-size: 16px; display: grid; place-items: center; transition: background .5s var(--ease); }
       .natal-close:hover, .honesty-close:hover, .ask-close:hover { background: rgba(var(--ink-rgb),.12); }
