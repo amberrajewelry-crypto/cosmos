@@ -8,7 +8,7 @@ import { PLANETS, MERCURY_IN_SIGN, VENUS_IN_SIGN, MARS_IN_SIGN, JUPITER_IN_SIGN,
 import { HOUSES, PLANET_IN_HOUSE, houseOf } from './houses';
 import { ASPECTS, PAIRS } from './aspects';
 import { OUTER_GEN, OUTER_IN_HOUSE, NORTH_NODE_IN_SIGN, NORTH_NODE_IN_HOUSE, FORTUNE_IN_HOUSE, dignity, ELEMENT_TEXT, CROSS_TEXT, MOON_PHASE, RETRO, RULER_OF_SIGN } from './extras';
-import { transitReading, synastryReading, SOLAR_MOON } from './time';
+import { transitReading, synastryReading, SOLAR_MOON, type TimeHit } from './time';
 
 export interface Block { title: string; fact: string; d?: Delineation; science?: string; source: string; }
 
@@ -135,16 +135,19 @@ export function readingHtml(when: Date, asc?: number): string {
 </div>`;
 }
 
+const KIND_RU = { c: 'соединение', h: 'гармония', t: 'напряжение' } as const;
+const hitHtml = (d: TimeHit): string => `<article class="rz rz-${d.kind}"><h4>${esc(d.head)} <small>${KIND_RU[d.kind]}</small></h4><p class="rz-trad">${esc(d.text)}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> ${esc(d.point)}</p></article>`;
 export function transitHtml(birth: Date, now: Date, asc?: number): string {
   const t = transitReading(rows(birth), rows(now), asc);
-  return `<div class="rz-wrap"><h3>Что включено сейчас (${now.toISOString().slice(0, 10)})</h3>${t.length ? t.map((d) => `<article class="rz"><p class="rz-trad">${esc(d.who)}</p></article>`).join('') : '<p class="nt-cap">Точных транзитов (орбис 3°) к твоим планетам сейчас нет — спокойный период.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III; Лео «The Progressed Horoscope». <span class="tag tag-inline">[НАУКА]</span> Положения — эфемериды; влияние транзитов на события статистикой не подтверждено.</p></div>`;
+  const dateRu = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `<div class="rz-wrap"><h3>Что включено сейчас · ${dateRu}</h3>${t.length ? t.map(hitHtml).join('') : '<p class="nt-cap">Точных транзитов (орбис 3°) к твоим планетам сейчас нет — спокойный период.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III; Лео «The Progressed Horoscope». <span class="tag tag-inline">[НАУКА]</span> Положения — эфемериды; влияние транзитов на события статистикой не подтверждено.</p></div>`;
 }
 export function synastryHtml(a: Date, b: Date): string {
   const s = synastryReading(rows(a), rows(b));
-  return `<div class="rz-wrap"><h3>Что между вами</h3>${s.length ? s.map((t) => `<article class="rz"><p class="rz-trad">${esc(t)}</p></article>`).join('') : '<p class="nt-cap">Точных аспектов между картами нет — связь строится волей, не небом.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Птолемей IV.5 «О дружбе и вражде»; Лео HJN.</p></div>`;
+  return `<div class="rz-wrap"><h3>Что между вами</h3>${s.length ? s.map(hitHtml).join('') : '<p class="nt-cap">Точных аспектов между картами нет — связь строится волей, не небом.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Птолемей IV.5 «О дружбе и вражде»; Лео HJN.</p></div>`;
 }
 export function solarHtml(birth: Date, year: number): string {
   const { at } = solarReturn(birth, year); if (!at) return '';
   const m = rows(at).find((x) => x.key === 'moon')!, ms = signIdx(m.lon);
-  return `<div class="rz-wrap"><h3>Тема года ${year}–${year + 1}</h3><article class="rz"><p class="rz-trad">Луна соляра в ${SIGNS[ms].loc}: ${SOLAR_MOON[ms]}. ${MOON_IN_SIGN[ms].advice}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Возвращение Солнца ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC; Луна ${deg(m.lon)} ${SIGNS[ms].ru}.</p><p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III «Революции»</p></article></div>`;
+  return `<div class="rz-wrap"><h3>Тема года ${year}–${year + 1}</h3><article class="rz"><h4>☽ Луна соляра в ${SIGNS[ms].loc}</h4><p class="rz-trad">${SOLAR_MOON[ms][0].toUpperCase()}${SOLAR_MOON[ms].slice(1)}. ${MOON_IN_SIGN[ms].advice}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Возвращение Солнца ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC; Луна ${deg(m.lon)} ${SIGNS[ms].ru}.</p><p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III «Революции»</p></article></div>`;
 }
