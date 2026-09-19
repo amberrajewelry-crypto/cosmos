@@ -93,7 +93,7 @@
       #hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 2.9vw, 40px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; }
       #hero h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
       @media (max-width: 760px) { #hero .about { display: none; } }
-      #hero .about { font-family: var(--serif); font-weight: 300; font-size: 13px; line-height: 1.5; color: var(--ink-2); opacity: .85; margin: 10px auto 0; max-width: 1100px; text-wrap: pretty; } #hero .about a, #hero .about .lnk { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,92,.35); } .lnk { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+      #hero .about { font-family: var(--serif); font-weight: 300; font-size: 14px; line-height: 1.5; color: var(--ink-2); opacity: .85; margin: 10px auto 0; max-width: none; white-space: nowrap; } #hero .about a, #hero .about .lnk { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,92,.35); } .lnk { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
       .wish-chips { display: flex; flex-wrap: wrap; gap: 6px; } .wrong-form .wish-chips label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.12); cursor: pointer; transition: border-color .4s var(--ease), color .4s var(--ease); } .wrong-form .wish-chips label:has(:checked) { color: var(--ink); border-color: var(--gold); } .wish-chips input { position: absolute; opacity: 0; width: 0; height: 0; }
       #wishDlg .wrong-shown { font-family: var(--serif); font-size: 14px; line-height: 1.5; } dialog#wishDlg { max-width: min(92vw, 640px); width: min(92vw, 640px); }
       .wish-done { text-align: center; font-size: 14px; color: var(--ink-2); padding: 10px 0; }
@@ -162,8 +162,8 @@
       @media (min-width: 761px) {
         /* Титры одной полосой снизу по центру: [заголовок · строка] / [CTA · дата], без столбика */
         #hero { left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%); max-width: 94vw; padding: 0; margin: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        #hero h1 { font-size: 20px; margin: 0; display: inline; white-space: nowrap; } #hero h1 em { margin-left: .28em; }
-        #hero .open { display: inline; margin: 0 0 0 14px; font-size: 13px; max-width: none; white-space: nowrap; }
+        #hero h1 { font-size: 27px; margin: 0; display: inline; white-space: nowrap; } #hero h1 em { margin-left: .28em; }
+        #hero .open { display: inline; margin: 0 0 0 16px; font-size: 15px; max-width: none; white-space: nowrap; } #hero .open b { font-size: 15px; }
         #hero > * { text-wrap: nowrap; }
         .hero-row { margin-top: 0; }
         .hero-line { display: flex; align-items: baseline; justify-content: center; }
