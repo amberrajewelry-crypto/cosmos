@@ -160,6 +160,9 @@
       /* Голос лица: реплика слева от фигуры, печатается после каждого расчёта. */
       #oracle { position: fixed; left: 40px; top: 50%; transform: translateY(-50%) translateX(-6px); z-index: 2; margin: 0; max-width: 290px; padding-left: 14px; border-left: 1px solid var(--gold-2); font-family: var(--serif); font-weight: 300; font-size: 16px; line-height: 1.45; color: var(--gold); opacity: 0; pointer-events: none; transition: opacity .7s var(--ease), transform .7s var(--ease); }
       #oracle.on { opacity: .92; transform: translateY(-50%) translateX(0); }
+      #oracleVoice { position: fixed; left: 40px; top: calc(50% + 62px); z-index: 2; background: none; border: 0; border-bottom: 1px solid var(--gold-2); padding: 0 0 2px; font-family: var(--serif); font-weight: 300; font-size: 13px; color: var(--ink-2); opacity: .55; cursor: pointer; transition: opacity .4s var(--ease); }
+      #oracleVoice:hover, #oracleVoice[aria-pressed="true"] { opacity: .95; color: var(--gold); }
+      @media (max-width: 760px) { #oracleVoice { position: absolute; left: 50%; transform: translateX(-50%); top: auto; bottom: -14px; font-size: 12px; } }
       @media (max-width: 1100px) { #oracle { max-width: 230px; font-size: 15px; left: 24px; } }
       @media (max-width: 760px) { #oracle { position: absolute; left: 50%; right: auto; top: auto; bottom: 8px; max-width: 86vw; text-align: center; padding: 0; border-left: 0; font-size: 14px; transform: translate(-50%, 6px); } #oracle.on { transform: translate(-50%, 0); } }
       .sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }

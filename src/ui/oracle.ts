@@ -75,6 +75,48 @@ export function natalLines(realConstellation: string, asc?: number): string[] {
   return out;
 }
 
+// --- Голос: встроенный синтез речи браузера (Web Speech API). По умолчанию выключен:
+// внезапная речь на сайте — худшее, что можно сделать с посетителем. Состояние живёт в браузере. ---
+
+const VOICE_KEY = 'oracle-voice';
+const canSpeak = (): boolean => typeof speechSynthesis !== 'undefined';
+let voiceOn = false;
+try { voiceOn = localStorage.getItem(VOICE_KEY) === '1'; } catch { /* приватный режим — просто молчим */ }
+
+// Русский голос, если он есть в системе; иначе браузер возьмёт свой по locale.
+function ruVoice(): SpeechSynthesisVoice | undefined {
+  return speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith('ru'));
+}
+
+function speak(line: string): void {
+  if (!voiceOn || !canSpeak()) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(line);
+  u.lang = 'ru-RU'; u.rate = 0.92; u.pitch = 0.85; u.volume = 0.9; // ровнее и ниже обычного — это голос фигуры, не навигатора
+  const v = ruVoice(); if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+
+function setVoice(on: boolean, btn: HTMLButtonElement): void {
+  voiceOn = on;
+  try { localStorage.setItem(VOICE_KEY, on ? '1' : '0'); } catch { /* ignore */ }
+  btn.textContent = on ? 'голос включён' : 'озвучить';
+  btn.setAttribute('aria-pressed', String(on));
+  if (!on && canSpeak()) speechSynthesis.cancel();
+}
+
+function voiceButton(stage: HTMLElement): void {
+  if (!canSpeak() || document.getElementById('oracleVoice')) return;
+  const btn = document.createElement('button');
+  btn.id = 'oracleVoice'; btn.type = 'button';
+  stage.appendChild(btn);
+  setVoice(voiceOn, btn);
+  btn.addEventListener('click', () => {
+    setVoice(!voiceOn, btn);
+    if (voiceOn) speak(document.getElementById('oracle')?.textContent || 'Я здесь.'); // включил — сразу слышно, что это работает
+  });
+}
+
 // --- Сцена: очередь и печать ---
 
 const queue: string[] = [];
@@ -92,6 +134,7 @@ function host(): HTMLElement | null {
     el.setAttribute('aria-live', 'polite');
     stage.appendChild(el);
   }
+  voiceButton(stage);
   return el;
 }
 
@@ -120,6 +163,7 @@ async function pump(): Promise<void> {
     while (hidden()) await wait(400);
     const line = queue.shift() as string, g = gen;
     el.classList.add('on');
+    speak(line);
     await type(el, line, g);
     if (g !== gen) continue; // перебили — не держим паузу на устаревшей реплике
     await wait(HOLD_MS + line.length * 14);
@@ -134,6 +178,7 @@ async function pump(): Promise<void> {
 /** Сказать вместо всего, что ещё не сказано: для частых событий (зум), где важна только последняя. */
 export function sayOnly(...lines: Array<string | null | undefined>): void {
   queue.length = 0; gen++;
+  if (canSpeak()) speechSynthesis.cancel();
   say(...lines);
 }
 
