@@ -156,3 +156,71 @@ export function dateDeepHtml(year: number, month: number, day: number, cat: Star
   const linksHtml = links ? `<section><h2>Тот же декан: ${range}</h2><div class="days">${links}</div></section>` : '';
   return decanHtml + starsHtml + dayHtml + linksHtml;
 }
+
+const SIGN_LOC = ['Овне', 'Тельце', 'Близнецах', 'Раке', 'Льве', 'Деве', 'Весах', 'Скорпионе', 'Стрельце', 'Козероге', 'Водолее', 'Рыбах'];
+const DIGNITY_LABEL: Record<string, string> = { home: 'в обители', exalt: 'в экзальтации', detr: 'в изгнании', fall: 'в падении' };
+const DIGNITY_MEANING: Record<string, string> = {
+  home: 'дома — действует свободно и в полную силу',
+  exalt: 'почётный гость — лучшие свои качества показывает ярко',
+  detr: 'в чужом доме — работает через силу, но учится гибкости',
+  fall: 'ослаблен — его темы требуют сознательной работы',
+};
+
+// Days of the reference year grouped by decan of a sign, December-first for Capricorn.
+function decanDays(year: number, sign: number, decan: number) {
+  const same = yearLons(year).filter((x) => Math.floor(norm(x.lon) / 10) === sign * 3 + decan);
+  if (same.some((x) => x.m === 1) && same.some((x) => x.m === 12)) same.sort((x, y) => (y.m === 12 ? 1 : 0) - (x.m === 12 ? 1 : 0));
+  return same;
+}
+
+export interface SignPortrait { who: string; path: string; advice: string; }
+export function signDeepHtml(sign: number, year: number, cat: StarCatalog | null, urlFor: (m: number, d: number) => string,
+  meta: { element: string; cross: string; ruler: string; key: string; science: string },
+  sun: SignPortrait, moon: SignPortrait, asc: SignPortrait,
+  dignity: Record<string, { home: number[]; exalt: number; detr: number[]; fall: number }>): string {
+  const gen = SIGN_GEN[sign], loc = SIGN_LOC[sign];
+  const portrait = `<div class="facts razbor"><h2>Портрет ${gen} по классике</h2>
+    <p><span class="tag">[ТРАДИЦИЯ]</span> Стихия — <b>${meta.element}</b>, крест — <b>${meta.cross}</b>, управитель — <b>${meta.ruler}</b>. Ключ знака: ${meta.key}.</p>
+    <p><b>Солнце в ${loc}.</b> ${sun.who} <b>Путь.</b> ${sun.path}</p>
+    <p><b>Наставление.</b> ${sun.advice}</p>
+    <p><b>Луна в ${loc}.</b> ${moon.who}</p>
+    <p><b>Асцендент в ${loc}.</b> ${asc.who}</p>
+    <p><span class="tag">[НАУКА]</span> ${meta.science}</p>
+    <p class="note">Источник: Птолемей «Тетрабиблос» III; Лилли «Христианская астрология» (1647); Лео «How to Judge a Nativity» (1903).</p></div>`;
+
+  const dign: string[] = [];
+  for (const [key, d] of Object.entries(dignity)) {
+    const kind = d.home.includes(sign) ? 'home' : d.exalt === sign ? 'exalt' : d.detr.includes(sign) ? 'detr' : d.fall === sign ? 'fall' : '';
+    if (kind) dign.push(`<b>${PLANET_RU[key]}</b> ${DIGNITY_LABEL[kind]}: ${DIGNITY_MEANING[kind]}`);
+  }
+  const dignHtml = dign.length ? `<div class="facts"><h2>Какие планеты сильны и слабы в ${loc}</h2>
+    <p><span class="tag">[ТРАДИЦИЯ]</span> ${dign.join('. ')}.</p>
+    <p>Эти достоинства Птолемея объясняют, почему два человека с одним знаком Солнца так различаются: всё решают планеты, которые в этом знаке стоят, и их сила.</p>
+    <p class="note">Источник: Птолемей «Тетрабиблос» I.17–19 (обители и экзальтации).</p></div>` : '';
+
+  const decans = [0, 1, 2].map((dc) => {
+    const days = decanDays(year, sign, dc); const r = decanRuler(sign, dc);
+    const a = days[0], b = days[days.length - 1];
+    const span = a && b ? `<a href="${urlFor(a.m, a.d)}">${a.d} ${MONTHS_GEN[a.m - 1]}</a> — <a href="${urlFor(b.m, b.d)}">${b.d} ${MONTHS_GEN[b.m - 1]}</a>` : '';
+    return `<p><b>${dc + 1}-й декан (${dc * 10}–${dc * 10 + 10}°), лицо ${PLANET_GEN[r]}</b>${span ? `, ${span}` : ''}. ${DECAN_TONE[r]}</p>`;
+  }).join('');
+  const terms = TERMS[sign].map(([r, to], i) => `${i ? TERMS[sign][i - 1][1] : 0}–${to}° — ${PLANET_RU[r]}`).join(', ');
+  const decanHtml = `<div class="facts razbor"><h2>Три декана ${gen}: какой ваш</h2>
+    <p><span class="tag">[ТОЧНО]</span> Знак делится на три части по 10°. Солнце проходит каждую примерно за десять дней — даты ниже посчитаны для ${year} года, в другие годы граница сдвигается максимум на сутки.</p>
+    ${decans}
+    <p><span class="tag">[ТРАДИЦИЯ]</span> Ещё тоньше — египетские термы: ${terms}.</p>
+    <p class="note">Источник: халдейский порядок лиц; Птолемей «Тетрабиблос» I.20–21.</p></div>`;
+
+  let starsHtml = '';
+  if (cat) {
+    const inSign = cat.stars.filter((s) => s[5] && /[А-я]/.test(s[5]) && s[3] < 2.6).map((s) => {
+      const [slon, slat] = toEcliptic(s[1], s[2], year);
+      return { name: s[5], V: s[3], lon: norm(slon), lat: slat };
+    }).filter((s) => Math.floor(s.lon / 30) === sign).sort((a, b) => a.lon - b.lon);
+    if (inSign.length) starsHtml = `<div class="facts"><h2>Яркие звёзды на градусах ${gen}</h2>
+    <p><span class="tag">[ТОЧНО]</span> ${inSign.map((s) => `<b>${s.name}</b> — ${(s.lon - sign * 30).toFixed(0)}° ${gen}${STAR_NATURE[s.name] ? `, по Птолемею природы ${STAR_NATURE[s.name]}` : ''}`).join('; ')}.</p>
+    <p>Если у вас Солнце, Луна или Асцендент в пределах градуса от такой звезды, традиция считала её одной из главных нот карты. Проверить свои градусы можно в <a href="/karta/">астропроцессоре</a>.</p>
+    <p class="note">Каталог HIPPARCOS, блеск ≤ 2.6<sup>m</sup>, долготы на ${year} г. с учётом прецессии.</p></div>`;
+  }
+  return portrait + dignHtml + decanHtml + starsHtml;
+}

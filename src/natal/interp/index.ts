@@ -8,7 +8,7 @@ import { PLANETS, MERCURY_IN_SIGN, VENUS_IN_SIGN, MARS_IN_SIGN, JUPITER_IN_SIGN,
 import { HOUSES, PLANET_IN_HOUSE, houseOf } from './houses';
 import { ASPECTS, PAIRS } from './aspects';
 import { OUTER_GEN, OUTER_IN_HOUSE, NORTH_NODE_IN_SIGN, NORTH_NODE_IN_HOUSE, FORTUNE_IN_HOUSE, dignity, ELEMENT_TEXT, CROSS_TEXT, MOON_PHASE, RETRO, RULER_OF_SIGN } from './extras';
-import { transitReading, synastryReading, SOLAR_MOON, type TimeHit } from './time';
+import { transitReading, synastryReading, directionReading, SOLAR_MOON, type TimeHit } from './time';
 
 export interface Block { title: string; fact: string; d?: Delineation; science?: string; source: string; }
 
@@ -150,4 +150,13 @@ export function solarHtml(birth: Date, year: number): string {
   const { at } = solarReturn(birth, year); if (!at) return '';
   const m = rows(at).find((x) => x.key === 'moon')!, ms = signIdx(m.lon);
   return `<div class="rz-wrap"><h3>Тема года ${year}–${year + 1}</h3><article class="rz"><h4>☽ Луна соляра в ${SIGNS[ms].loc}</h4><p class="rz-trad">${SOLAR_MOON[ms][0].toUpperCase()}${SOLAR_MOON[ms].slice(1)}. ${MOON_IN_SIGN[ms].advice}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Возвращение Солнца ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC; Луна ${deg(m.lon)} ${SIGNS[ms].ru}.</p><p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III «Революции»</p></article></div>`;
+}
+
+// Symbolic directions to a target date: arc = years of life, 1° per year.
+export function directionsHtml(birth: Date, at: Date, asc?: number): string {
+  const age = (at.getTime() - birth.getTime()) / (365.2422 * 864e5);
+  if (age <= 0) return '';
+  const d = directionReading(rows(birth), age, asc);
+  const dateRu = at.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `<div class="rz-wrap"><h3>Дирекции на ${dateRu} · дуга ${age.toFixed(2)}°</h3>${d.length ? d.map(hitHtml).join('') : '<p class="nt-cap">Точных дирекций (орбис 1° ≈ год) к твоим точкам сейчас нет — ровный период без поворотных тем.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Символические дирекции «градус за год»: Лилли CA III; Лео «The Progressed Horoscope». <span class="tag tag-inline">[НАУКА]</span> Сдвиг символический — на небе так ничего не движется; ниже таблица того, что реально изменилось.</p></div>`;
 }

@@ -1,12 +1,13 @@
 import { natalSVG } from './chart';
-import { SUN_IN_SIGN, SIGNS } from './interp/signs';
+import { SUN_IN_SIGN, MOON_IN_SIGN, ASC_IN_SIGN, SIGNS } from './interp/signs';
+import { DIGNITY } from './interp/extras';
 import { zodiacLines, zodiacLabels, type StarCatalog } from '../data/stars';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
 import { natalBodies } from '../compute/natalbodies';
 import { dossier } from './dossier';
 import { dateFacts } from './datefacts';
-import { dateDeepHtml } from './datedeep';
+import { dateDeepHtml, signDeepHtml } from './datedeep';
 import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
@@ -328,6 +329,7 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
     <h2>${t.decodeH}</h2>
     <p class="why">${t.decode}</p>
   </div>
+  ${lang === 'ru' ? signDeepHtml(signIndex, REF_YEAR, starCat, (m, d) => urlFor('ru', m, d), SIGNS[signIndex], SUN_IN_SIGN[signIndex], MOON_IN_SIGN[signIndex], ASC_IN_SIGN[signIndex], DIGNITY) : ''}
   <h2>${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
   <a class="cta" href="/">${t.cta}</a>`;

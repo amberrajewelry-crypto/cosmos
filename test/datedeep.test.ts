@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { decanRuler, termOf, dateDeepHtml } from '../src/natal/datedeep';
+import { decanRuler, termOf, dateDeepHtml, signDeepHtml } from '../src/natal/datedeep';
+import { SIGNS, SUN_IN_SIGN, MOON_IN_SIGN, ASC_IN_SIGN } from '../src/natal/interp/signs';
+import { DIGNITY } from '../src/natal/interp/extras';
 
 const cat = JSON.parse(readFileSync('public/stars.json', 'utf8'));
 const url = (m: number, d: number) => `/natalnaya-karta/${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}/`;
@@ -26,5 +28,32 @@ describe('datedeep', () => {
   it('adds 250+ words per date', () => {
     const words = dateDeepHtml(2026, 5, 14, cat, url).replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
     expect(words).toBeGreaterThan(250);
+  });
+  const sp = (i: number) => signDeepHtml(i, 2026, cat, url, SIGNS[i], SUN_IN_SIGN[i], MOON_IN_SIGN[i], ASC_IN_SIGN[i], DIGNITY);
+  it('Leo page: Sun at home, Saturn in exile; Regulus already on Virgo 0° (since 2011)', () => {
+    const h = sp(4);
+    expect(h).toContain('<b>Солнце</b> в обители');
+    expect(h).toContain('<b>Сатурн</b> в изгнании');
+    expect(h).not.toContain('Регул');
+    expect(sp(5)).toMatch(/<b>Регул<\/b> — 0° Девы/);
+  });
+  it('Capricorn decan I starts in December; every sign page adds 350+ words', () => {
+    expect(sp(9)).toMatch(/1-й декан \(0–10°\), лицо Юпитера<\/b>, <a [^>]+>2[0-3] декабря/);
+    for (let i = 0; i < 12; i++) expect(sp(i).replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length).toBeGreaterThan(350);
+  });
+});
+
+import { directionReading } from '../src/natal/interp/time';
+describe('symbolic directions', () => {
+  it('directed Sun conjuncts natal Venus when age equals the arc between them', () => {
+    const natal = [
+      { key: 'sun', glyph: '☉', name: 'Солнце', lon: 10 },
+      { key: 'venus', glyph: '♀', name: 'Венера', lon: 40 },
+    ];
+    const hits = directionReading(natal, 30.2, undefined);
+    expect(hits[0].head).toContain('Солнце дирекции');
+    expect(hits[0].kind).toBe('c');
+    expect(hits[0].text).toContain('Венере');
+    expect(directionReading(natal, 25, undefined).length).toBe(0);
   });
 });

@@ -123,7 +123,7 @@ export function synastryTable(a: Date, b: Date): string {
     let d = Math.abs(x.lon - rb[i].lon); if (d > 180) d = 360 - d;
     return [`${x.glyph}︎ ${x.name}`, `${x.lon.toFixed(1)}° · ${x.constellation}`, `${rb[i].lon.toFixed(1)}° · ${rb[i].constellation}`, `${d.toFixed(1)}°`];
   });
-  return `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Между датами ${days.toFixed(0)} суток (${(days / 365.25).toFixed(2)} года), ${(days / 29.5306).toFixed(1)} лунных месяцев. Луна: ${(ia.phase_fraction * 100).toFixed(0)} % и ${(ib.phase_fraction * 100).toFixed(0)} % освещённости. Углы — геометрия, совместимость из них не следует.</p>` +
+  return `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Между датами ${days.toFixed(0)} суток (${(days / 365.25).toFixed(2)} года), ${(days / 29.5306).toFixed(1)} лунных месяцев. Луна: ${(ia.phase_fraction * 100).toFixed(0)} % и ${(ib.phase_fraction * 100).toFixed(0)} % освещённости. Углы — точная геометрия; их смысл для пары — в разборе выше.</p>` +
     tbl(['', 'Первая дата', 'Вторая дата', 'Угол'], body);
 }
 

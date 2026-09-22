@@ -9,7 +9,7 @@ import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
-import { readingHtml, transitHtml, synastryHtml, solarHtml } from './interp';
+import { readingHtml, transitHtml, synastryHtml, solarHtml, directionsHtml } from './interp';
 import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
 export interface Place { lat: number; lon: number; }
@@ -40,7 +40,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
         <button data-view="reading">Разбор</button><button data-view="planets">Положения</button><button data-view="angles">Углы</button><button data-view="transits">Сейчас</button><button data-view="solar">Возврат Солнца</button><button data-view="synastry">Две даты</button><button data-view="returns">Возвраты</button>
       </nav>
       <div class="natal-view" id="natalView" hidden></div>
-      <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
+      <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Астрология рисует твой знак по этому кругу.</p>
       <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия</button>
       ${angles
         ? `<p class="natal-cap natal-star"><span class="tag tag-inline">[ОЦЕНКА]</span> Асцендент ${angles.asc.toFixed(1)}°, MC ${angles.mc.toFixed(1)}° — геометрия эклиптики для твоего времени и места. <span class="natal-src">точность зависит от точности времени: 4 минуты = 1°</span></p>`
@@ -83,7 +83,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       : kind === 'angles' ? anglesTable(when) + aspectGrid(when)
       : kind === 'transits' ? transitHtml(when, at, angles?.asc) + transitsTable(when, at)
       : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)
-      : kind === 'directions' ? `<p class="nt-cap"><span class="tag tag-inline">[МИФ]</span> «Дирекции» — символический сдвиг карты на 1° за год; на небе так ничего не движется. Ниже — что реально изменилось к ${at.toISOString().slice(0, 10)}: положения тел против рождения и обороты планет.</p>` + transitsTable(when, at) + returnsTable(when, at)
+      : kind === 'directions' ? directionsHtml(when, at, angles?.asc) + transitsTable(when, at) + returnsTable(when, at)
       : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarHtml(when, solYear) + solarTable(when, solYear)
       : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryHtml(when, new Date(synDate + 'T12:00:00Z')) + synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
       : returnsTable(when);
