@@ -24,6 +24,7 @@ import { initDrawer } from './drawer';
 import { sendFeedback, track, trackZoom } from '../live/feedback';
 import { wrongNumberMailto } from './panel';
 import { contentValues, levelName, type Ctx } from '../registry/content';
+import * as oracle from './oracle';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -77,6 +78,7 @@ fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
 const liveShapes: LiveShapes = { planets: helioPlanets(new Date()) };
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
   trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
+  oracle.sayOnly(oracle.levelLine(lvl)); // зум частый: последняя реплика вытесняет предыдущую
   flux.points.visible = decays.obj.visible = neutrinos.obj.visible = fieldLines.obj.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
@@ -268,7 +270,7 @@ wishForm.onsubmit = async (e) => {
 };
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
-fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); } render(); });
+fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); oracle.say(oracle.kpLine(c.value)); } render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;
@@ -304,6 +306,7 @@ btn.addEventListener('click', () => {
       liveShapes.bodies = bodies.filter((b) => b.alt > 0);
       Promise.all([import('../data/stars'), import('../compute/liveshapes')]).then(([st, ls]) => st.loadStars().then((cat) => { liveShapes.stars = ls.starsAltAz(cat, lat, lon, now); scale.refresh(); })).catch(() => scale.refresh());
       render();
+      oracle.say(...oracle.skyLines(sky));
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;
     },

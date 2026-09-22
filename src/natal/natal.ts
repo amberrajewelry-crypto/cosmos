@@ -4,6 +4,7 @@ import { constellationVsSign } from '../compute/sign';
 import { precessionOffsetDeg } from '../compute/precession';
 import { birthLightStar } from '../compute/birthlight';
 import { toValue } from '../registry/registry';
+import { say, natalLines } from '../ui/oracle';
 import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
 import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
@@ -58,6 +59,8 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       </div>
     </div>`;
   overlay.hidden = false;
+  // Разбор посчитан — лицо скажет вывод, когда карту закроют (оракул ждёт закрытия оверлея).
+  say(...natalLines(real, angles?.asc));
 
   // Каталог звёзд (54 КБ) — после первого рендера: точная «звезда рождения» и линии созвездий под поворот.
   loadStars().then((cat) => {

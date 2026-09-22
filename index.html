@@ -157,6 +157,11 @@
       .inner-legend { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 2; margin: 0; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; max-width: 92vw; font-family: var(--serif); font-size: 12.5px; letter-spacing: 0; color: var(--ink-2); transition: opacity .5s var(--ease); }
       html.off-body .inner-legend { opacity: 0; pointer-events: none; }
       .inner-legend span { display: inline-flex; align-items: center; gap: 6px; }
+      /* Голос лица: реплика слева от фигуры, печатается после каждого расчёта. */
+      #oracle { position: fixed; left: 40px; top: 50%; transform: translateY(-50%) translateX(-6px); z-index: 2; margin: 0; max-width: 290px; padding-left: 14px; border-left: 1px solid var(--gold-2); font-family: var(--serif); font-weight: 300; font-size: 16px; line-height: 1.45; color: var(--gold); opacity: 0; pointer-events: none; transition: opacity .7s var(--ease), transform .7s var(--ease); }
+      #oracle.on { opacity: .92; transform: translateY(-50%) translateX(0); }
+      @media (max-width: 1100px) { #oracle { max-width: 230px; font-size: 15px; left: 24px; } }
+      @media (max-width: 760px) { #oracle { position: absolute; left: 50%; right: auto; top: auto; bottom: 8px; max-width: 86vw; text-align: center; padding: 0; border-left: 0; font-size: 14px; transform: translate(-50%, 6px); } #oracle.on { transform: translate(-50%, 0); } }
       .sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
       .sw-decay { background: #ffedb8; box-shadow: 0 0 8px #ffedb8; } .sw-nu { background: #9ee6ff; } .sw-mag { background: #8cf2d9; }
       /* Кино-раскладка (десктоп): сцена — весь экран и центр пустой; текст в нижнем левом углу как титры,
