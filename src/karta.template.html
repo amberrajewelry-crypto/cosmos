@@ -10,6 +10,7 @@
     <meta property="og:description" content="Положения планет, созвездия, углы, транзиты, соляр, синастрия — только вычислимое." />
     <meta property="og:image" content="https://cosmos-alpha-three.vercel.app/img/karta-og.jpg" />
     <link rel="icon" href="/favicon.svg" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/cormorant-var-cyrillic.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Manropewght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/GeistMonowght.woff2" />
@@ -26,8 +27,8 @@
       .eyebrow-k { display: inline-flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: none; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(201,168,92,.28); background: rgba(201,168,92,.06); margin: 0 0 18px; }
       .eyebrow-k::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 2.6s var(--ease) infinite; }
       @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
-      .kp h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.9vw, 54px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
-      .kp h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
+      .kp h1 { font-family: var(--head); font-weight: 500; font-size: clamp(36px, 4.6vw, 64px); line-height: 1.02; letter-spacing: -.012em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
+      .kp h1 em { font-family: var(--head); font-style: italic; font-weight: 500; color: var(--gold); }
       .kp p, .kp li { text-wrap: pretty; } .kp { font-variant-numeric: tabular-nums; } ::selection { background: rgba(201,168,92,.35); }
       .kp .lede { text-align: left; color: var(--ink-2); font-size: 18px; line-height: 1.6; max-width: 66ch; margin: 0 0 22px; }
       .hero-fig { position: relative; margin: 40px 0 0; padding: 6px; border-radius: 30px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.09); box-shadow: 0 30px 60px -30px rgba(3,2,14,.9); }
@@ -77,9 +78,18 @@
       .natal-tabs { justify-content: flex-start; }
       #natalView { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
       /* FAQ: asymmetric two-column at desktop */
+      .kguide { margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(var(--ink-rgb),.08); max-width: 68ch; }
+      .kguide h2 { font-family: var(--head); font-weight: 500; font-size: 40px; letter-spacing: -.012em; line-height: 1.08; margin: 0 0 18px; text-wrap: balance; }
+      .kguide h2 small { display: block; font-family: var(--serif); font-size: 15px; font-weight: 400; color: var(--gold); margin-top: 10px; }
+      .kguide h3 { font-family: var(--head); font-weight: 500; font-size: 27px; letter-spacing: -.005em; margin: 34px 0 8px; }
+      .kguide p { font-size: 18px; line-height: 1.75; color: var(--ink-2); margin: 0 0 14px; }
+      .kguide p b { color: var(--ink); font-weight: 500; }
+      .kguide ol { margin: 6px 0 14px; padding-left: 1.3em; font-size: 18px; line-height: 1.75; color: var(--ink-2); }
+      .kguide li { margin: 0 0 8px; } .kguide li::marker { color: var(--gold); font-family: var(--mono); font-size: 14px; }
+      @media (max-width: 640px) { .kguide h2 { font-size: 32px; } .kguide p, .kguide ol { font-size: 17px; } }
       .kfaq { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 72px; padding-top: 40px; border-top: 1px solid rgba(var(--ink-rgb),.08); }
       @media (max-width: 900px) { .kfaq { grid-template-columns: 1fr; gap: 16px; margin-top: 56px; } .kp h1, .kfaq h2 { white-space: normal; } }
-      .kfaq h2 { font-family: var(--display); font-weight: 500; font-size: 34px; white-space: nowrap; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
+      .kfaq h2 { font-family: var(--head); font-weight: 500; font-size: 40px; white-space: nowrap; letter-spacing: -.02em; color: var(--ink); margin: 0; text-align: left; }
       .kfaq h2 small { display: block; font-family: var(--serif); font-size: 15px; font-weight: 300; letter-spacing: 0; text-transform: none; color: var(--gold); margin-top: 10px; }
       .kfaq details { border-bottom: 1px solid rgba(var(--ink-rgb),.08); padding: 16px 0; }
       .kfaq summary { position: relative; cursor: pointer; list-style: none; padding-right: 40px; font-family: var(--display); font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
@@ -89,7 +99,7 @@
       .kfaq p { color: var(--ink-2); font-size: 16px; line-height: 1.6; margin: 10px 0 0; max-width: none; }
       .trust { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; padding: 0; font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em; color: var(--ink-2); opacity: .8; }
       .trust span { display: inline-flex; align-items: center; gap: 8px; } .trust span::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
-      .ktools { margin-top: 64px; } .ktools h2 { font-family: var(--display); font-weight: 500; font-size: 34px; white-space: nowrap; letter-spacing: -.02em; margin: 0 0 18px; }
+      .ktools { margin-top: 64px; } .ktools h2 { font-family: var(--head); font-weight: 500; font-size: 40px; white-space: nowrap; letter-spacing: -.02em; margin: 0 0 18px; }
       .ktools h2 small { display: block; font-family: var(--serif); font-size: 15px; font-weight: 300; letter-spacing: 0; color: var(--gold); margin-top: 10px; }
       .ktools ol { list-style: none; margin: 0; padding: 0; }
       .ktools li { display: grid; grid-template-columns: 48px 1fr; gap: 0 18px; align-items: baseline; padding: 16px 0; border-top: 1px solid rgba(var(--ink-rgb),.1); }
@@ -100,7 +110,7 @@
       .ktools li > span:last-child { grid-column: 2; font-family: var(--serif); font-weight: 400; font-size: 15.5px; color: var(--ink-2); margin-top: 4px; }
       .kcta { margin: 44px 0 0; } .kcta a { display: inline-flex; align-items: center; gap: 14px; font-family: var(--serif); font-size: 17px; font-weight: 500; color: #120f2a; background: var(--gold); border-radius: 999px; padding: 10px 10px 10px 24px; text-decoration: none; transition: transform .4s var(--ease); }
       .kcta a .ic { width: 36px; height: 36px; border-radius: 50%; background: rgba(10,8,32,.14); display: grid; place-items: center; font-family: var(--mono); font-size: 14px; } .kcta a:hover .ic { transform: translate(2px,-1px); } .kcta a:active { transform: scale(.98); }
-      @media (max-width: 900px) { .ktools h2 { white-space: normal; font-size: 28px; } .ktools li { grid-template-columns: 36px 1fr; } }
+      @media (max-width: 900px) { .ktools h2 { white-space: normal; font-size: 32px; } .ktools li { grid-template-columns: 36px 1fr; } }
       .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin: 40px 0 0; }
       .klinks a { font-family: var(--serif); font-size: 13.5px; color: var(--ink-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.1); transition: color .5s var(--ease), border-color .5s var(--ease), transform .5s var(--ease); }
       .klinks a:hover { color: var(--ink); border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
@@ -215,6 +225,22 @@
         <li data-mode="synastry" tabindex="0" role="button"><span class="n">05</span><b>Две даты</b><span>синастрия: где ваши Солнца, Луны и Венеры согласны</span></li>
         <li data-mode="directions" tabindex="0" role="button"><span class="n">06</span><b>Сдвиг на годы</b><span>дирекции: символическое движение карты во времени</span></li>
       </ol></section>
+      <section class="kguide rv" style="--i:0" id="kak-chitat"><h2>Как читать натальную карту<small>пять шагов — от расчёта к смыслу</small></h2>
+        <p>Натальная карта — это снимок неба в минуту рождения, увиденный из города, где вы родились. В ней четыре слоя: <b>планеты</b> (кто действует), <b>знаки</b> (как действует), <b>дома</b> (в какой области жизни) и <b>аспекты</b> (кто с кем связан). Первые три — чистая геометрия и считаются точно; смысл им веками давала традиция. Ниже — порядок, в котором карту разбирали Птолемей, Уильям Лилли и Алан Лео.</p>
+        <ol>
+          <li><b>Солнце, Луна и Асцендент.</b> Солнце — воля и призвание, Луна — потребности и привычки, Асцендент (восходящий знак) — то, как вас видят. Если времени рождения нет, Асцендент не считается: без него карта честно остаётся «дневной».</li>
+          <li><b>Хозяин карты.</b> Планета, которая управляет знаком Асцендента, окрашивает всю карту. Где она стоит — туда уходит главная энергия жизни.</li>
+          <li><b>Стихии и кресты.</b> Посчитайте, сколько планет в огне, земле, воздухе и воде. Перекос по стихиям описывает темперамент точнее, чем один знак Солнца.</li>
+          <li><b>Дома.</b> Мы используем целознаковые дома — самую старую систему: каждый знак от Асцендента целиком занимает один дом. Планета в 10-м доме — о карьере, в 7-м — о партнёрстве, в 4-м — о доме и роде.</li>
+          <li><b>Аспекты.</b> Углы между планетами: соединение (0°) сплавляет, трин (120°) и секстиль (60°) помогают, квадрат (90°) и оппозиция (180°) требуют работы. Самые важные — самые точные, с орбисом до 1–2°.</li>
+        </ol>
+        <h3>Знак зодиака и настоящее созвездие</h3>
+        <p>Знаки гороскопа — это двенадцать равных секторов по 30°, отсчитанных от точки весеннего равноденствия. Они описывают сезон рождения. Созвездия — реальные участки неба с границами Международного астрономического союза, и из-за прецессии земной оси за две тысячи лет они уехали почти на целый знак. Поэтому мы показываем оба ответа рядом: <b>знак</b> — для традиционного разбора, <b>созвездие</b> — как астрономический факт. В этом и есть наш подход «астрология + наука»: ничего не прячем, ничего не выдаём за доказанное.</p>
+        <h3>Что считается точно, а что — толкование</h3>
+        <p>Положения планет посчитаны по эфемеридам VSOP87 и ELP с точностью до угловых минут; ключевые величины сверены с NASA JPL Horizons (протокол сверки открыт). Метка <b>ТОЧНО</b> стоит у всего, что можно проверить телескопом. Метка <b>ТРАДИЦИЯ</b> — у толкований из первоисточников (Птолемей «Тетрабиблос», Лилли «Христианская астрология», Лео «Как судить о рождении»). Метка <b>НАУКА</b> — у того, что об этом знает современная наука, например о влиянии сезона рождения на здоровье. Так вы видите, где заканчивается расчёт и начинается смысл.</p>
+        <h3>Если время рождения неизвестно</h3>
+        <p>Солнце за сутки сдвигается меньше чем на градус, поэтому знаки Солнца, Меркурия, Венеры, Марса и дальних планет почти всегда верны и без времени. Луна проходит знак за два с половиной дня — в дни смены знака мы предупредим. А вот Асцендент меняется каждые два часа, и без времени дома не строятся. Поищите время в роддомовской выписке или в записях родителей: даже точность в полчаса уже даёт Асцендент.</p>
+      </section>
       <section class="kfaq rv" style="--i:0"><h2>Вопросы<small>честно о том, что считаем</small></h2><div>
         <details><summary>Чем это отличается от других астропроцессоров?</summary><p>Те же таблицы — положения, углы, транзиты, соляр, синастрия — плюс разбор по классике (Птолемей, Лилли, Лео): характер, путь, наставление. Каждое число вычислено по эфемеридам VSOP87 и помечено ТОЧНО / ОЦЕНКА, трактовка — ТРАДИЦИЯ с источником, рядом — НАУКА. Рядом со знаком гороскопа показано настоящее созвездие по границам МАС.</p></details>
         <details><summary>Что если я не знаю время рождения?</summary><p>Введи только дату: Солнце и планеты определяются точно, Луна — с погрешностью до 6,5°. Асцендент и MC без времени не показываем — их без него не существует.</p></details>

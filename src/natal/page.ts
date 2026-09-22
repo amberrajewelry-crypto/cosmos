@@ -6,6 +6,7 @@ import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from 
 import { natalBodies } from '../compute/natalbodies';
 import { dossier } from './dossier';
 import { dateFacts } from './datefacts';
+import { dateDeepHtml } from './datedeep';
 import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
@@ -149,6 +150,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p><span class="tag">[НАУКА]</span> ${SIGNS[signIndex].science}</p>
     <p class="note">Источник: Птолемей «Тетрабиблос» III; Алан Лео «How to Judge a Nativity» (1903). Знак — тропический (сезон рождения); созвездие Солнца в этот день — ${matches ? 'то же' : 'другое, см. выше'}. Полный разбор с Луной, домами и аспектами — <a href="/karta/">в карте</a>: введи дату и время.</p>
   </div>` : ''}
+  ${lang === 'ru' ? dateDeepHtml(REF_YEAR, month, day, starCat, (m, d) => urlFor('ru', m, d)) : ''}
   ${skyHtml}
   ${isOphiuchus ? `<p class="why"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold)">${lang === 'ru' ? 'Твоё созвездие — Змееносец, настоящий 13-й знак зодиака →' : 'Your constellation is Ophiuchus — the real 13th zodiac sign →'}</a></p>` : ''}
   ${faqHtml}${faqLd}
@@ -205,12 +207,12 @@ ${altLinks}
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 <script type="application/ld+json">${JSON.stringify(crumbLd)}</script>
 <style>
-@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
-:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.8);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--display:'Manrope','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
+:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.8);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--head:'Cormorant Garamond',Georgia,'Times New Roman',serif;--display:'Manrope','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;hyphens:auto;font-variant-numeric:tabular-nums}
+body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.75;font-size:19px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;hyphens:auto;font-variant-numeric:tabular-nums}
 p,li{text-wrap:pretty}main p{max-width:68ch}
-h1,h2,h3,summary{hyphens:manual}
+h1,h2,h3,summary{hyphens:manual;font-variant-numeric:lining-nums proportional-nums}
 ::selection{background:rgba(201,168,92,.35);color:var(--ink)}
 main a{color:var(--gold);text-underline-offset:.18em;text-decoration-thickness:1px}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -223,20 +225,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;m
 @media(max-width:560px){.top .more{display:none}}
 .crumbs{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;margin:44px 0 0;font-family:var(--serif);font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--gold)}
 .crumbs a{color:inherit;text-decoration:none}.crumbs span{opacity:.55}.crumbs .cur{opacity:1;color:var(--ink2)}
-h1{font-family:var(--display);font-weight: 500;font-size:clamp(28px,3.6vw,48px);line-height:1.08;letter-spacing:-.028em;text-wrap:balance;text-align:left;color:var(--ink);margin:14px 0 14px}
-h1 em,h1 b{font-style:normal;font-weight: 300;color:var(--gold)}
+h1{font-family:var(--head);font-weight:500;font-size:clamp(34px,4.3vw,58px);line-height:1.04;letter-spacing:-.012em;text-wrap:balance;text-align:left;color:var(--ink);margin:14px 0 14px}
+h1 em,h1 b{font-family:var(--head);font-style:italic;font-weight:500;color:var(--gold)}
 @media(max-width:760px){h1,h2{white-space:normal!important}}
-h2{font-family:var(--display);font-weight: 500;font-size:28px;letter-spacing:-.018em;line-height:1.2;text-align:left;color:var(--ink);margin:48px 0 12px;text-wrap:balance}
+h2{font-family:var(--head);font-weight:500;font-size:34px;letter-spacing:-.006em;line-height:1.12;text-align:left;color:var(--ink);margin:48px 0 12px;text-wrap:balance}
 main>h2::before,article>h2::before{content:'';display:block;width:34px;height:1px;background:var(--gold);margin:0 0 14px;opacity:.8}
 .facts h2::before{display:none}
-h3{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:24px 0 6px}
+h3{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:-.01em;margin:24px 0 6px}
 .lede{font-size:20px;font-weight:400;line-height:1.55;margin:14px 0 26px;max-width:60ch;color:var(--ink2)}
 .chart{color:var(--ink);width:min(90vw,620px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
-.facts h2{font-size:22px;margin:0 0 10px;color:var(--gold)}
+.facts h2{font-size:27px;margin:0 0 10px;color:var(--gold)}
 .facts.razbor{border-color:rgba(201,168,92,.45);box-shadow:0 0 0 5px rgba(201,168,92,.07),0 0 60px rgba(201,168,92,.08),inset 0 1px 0 rgba(255,255,255,.06)}
-.facts.razbor h2{font-size:26px}.facts.razbor p{font-size:16px;line-height:1.65}.facts.razbor p.note{font-size:13px;line-height:1.5}
+.facts.razbor h2{font-size:31px}.facts.razbor p{font-size:17.5px;line-height:1.7}.facts.razbor p.note{font-size:13px;line-height:1.5}
 .dossier ol{list-style:none;margin:0;padding:0;font-size:15px;line-height:1.7}.dossier li{display:inline}.dossier li+li::before{content:' · ';color:var(--gold)}.dossier li b{font-weight:500}.dossier li .tag{display:none}.dossier li p{display:inline;margin:0}.dossier li small{display:inline;margin-left:.4em;font-family:var(--mono);font-size:12.5px;opacity:.8}
 .facts ul{margin:0;padding:0;font-family:var(--serif);font-size:15px;line-height:1.75;color:var(--ink)}
 .facts li{list-style:none;display:inline}.facts li+li::before{content:' · ';color:var(--gold)}

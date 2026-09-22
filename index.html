@@ -20,11 +20,12 @@
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","name":"Астроанализ","url":"https://cosmos-alpha-three.vercel.app/","description":"Настоящая, сидерическая натальная карта по реальному положению звёзд."}
     </script>
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/cormorant-var-cyrillic.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Manropewght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geistwght.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/GeistMonowght.woff2" />
     <style>
-@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
       :root {
         --ink: #ece6d3;
         --ink-rgb: 236,230,211;
@@ -36,6 +37,7 @@
         --gold-3: rgba(201,168,92,.12);
         --bg: #0a0820;
         --glass: rgba(14,11,38,.55);
+        --head: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
         --display: 'Manrope','Geist','Geist Fallback',system-ui,sans-serif;
         --serif: 'Geist','Geist Fallback',system-ui,sans-serif;
         --mono: 'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;
@@ -90,8 +92,9 @@
       #hero > * { text-wrap: balance; }
       .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: none; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--gold-2); margin-bottom: 22px; }
       .eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
-      #hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 2.9vw, 40px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; }
-      #hero h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
+      #hero h1 { font-family: var(--head); font-weight: 500; font-size: clamp(29px, 3.2vw, 44px); line-height: 1.08; letter-spacing: -.01em; margin: 0 0 14px; }
+      h1, h2, h3 { font-variant-numeric: lining-nums proportional-nums; }
+      #hero h1 em { font-family: var(--head); font-style: italic; font-weight: 500; color: var(--gold); }
       @media (max-width: 760px) { #hero .about { display: none; } }
       #hero .about { font-family: var(--serif); font-weight: 400; font-size: 14px; line-height: 1.5; color: var(--ink-2); opacity: .85; margin: 10px auto 0; max-width: none; white-space: nowrap; } #hero .about a, #hero .about .lnk { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,92,.35); } .lnk { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
       .wish-chips { display: flex; flex-wrap: wrap; gap: 6px; } .wrong-form .wish-chips label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.12); cursor: pointer; transition: border-color .4s var(--ease), color .4s var(--ease); } .wrong-form .wish-chips label:has(:checked) { color: var(--ink); border-color: var(--gold); } .wish-chips input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -103,7 +106,7 @@
       html.staged .stage { opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease), filter 1.1s var(--ease); }
       html.staged .stage.on { opacity: 1; transform: none; filter: none; }
       /* Разбор: блоки характер/путь/наставление */
-      .rz-wrap h3 { font-family: var(--display); font-weight: 500; font-size: 23px; letter-spacing: -.015em; margin: 34px 0 10px; color: var(--gold); white-space: nowrap; }
+      .rz-wrap h3 { font-family: var(--head); font-weight: 500; font-size: 27px; letter-spacing: -.005em; margin: 34px 0 10px; color: var(--gold); white-space: nowrap; }
       .rz-syn { padding: 14px 16px; border-radius: 16px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.08); margin: 0 0 8px; }
       .rz-syn h3 { margin: 0 0 6px; } .rz-syn p { margin: 4px 0; font-size: 14px; line-height: 1.5; }
       .rz { padding: 18px 0 20px; border-top: 1px solid rgba(var(--ink-rgb),.1); } .rz-wrap h3 + .rz { border-top: 0; padding-top: 2px; }
@@ -172,12 +175,12 @@
       @media (min-width: 761px) {
         /* Титры одной полосой снизу по центру: [заголовок · строка] / [CTA · дата], без столбика */
         #hero { left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%); max-width: 94vw; padding: 0; margin: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        #hero h1 { font-size: 27px; margin: 0; display: inline; white-space: nowrap; } #hero h1 em { margin-left: .28em; }
+        #hero h1 { font-size: 31px; margin: 0; display: inline; white-space: nowrap; } #hero h1 em { margin-left: .28em; }
         #hero .open { display: inline; margin: 0 0 0 16px; font-size: 15px; max-width: none; white-space: nowrap; } #hero .open b { font-size: 15px; }
         #hero > * { text-wrap: nowrap; }
         .hero-row { margin-top: 0; }
         .hero-line { display: flex; align-items: baseline; justify-content: center; }
-        @media (max-height: 800px) { #hero .about { font-size: 13.5px; } #hero .open { font-size: 13.5px; } #hero h1 { font-size: 23px; } #hero { bottom: 10px; gap: 5px; } }
+        @media (max-height: 800px) { #hero .about { font-size: 13.5px; } #hero .open { font-size: 13.5px; } #hero h1 { font-size: 27px; } #hero { bottom: 10px; gap: 5px; } }
         .cta { padding: 9px 9px 9px 18px; } .cta i { width: 30px; height: 30px; }
         .natal-more summary { margin: 0; }
         #scale { left: auto; right: 40px; bottom: 56px; transform: none; width: 340px; text-align: right; }
@@ -215,7 +218,7 @@
       #status:empty { display: none; }
       /* Досье по реальным данным (карта рождения) */
       .dossier { max-width: 520px; margin: 26px auto 10px; text-align: left; }
-      .dossier h3 { font-family: var(--display); font-weight: 500; font-size: 18px; letter-spacing: -.01em; text-align: center; margin: 0 0 6px; }
+      .dossier h3 { font-family: var(--head); font-weight: 500; font-size: 22px; letter-spacing: -.01em; text-align: center; margin: 0 0 6px; }
       .dossier-lead { font-family: var(--serif); font-size: 13.5px; color: var(--ink-2); text-align: center; margin: 0 0 14px; }
       .dossier ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: d; }
       .dossier li { position: relative; padding: 12px 14px 12px 40px; border-radius: 16px; background: rgba(var(--ink-rgb),.035); border: 1px solid rgba(var(--ink-rgb),.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
@@ -306,7 +309,7 @@
       #wrongDlg, #wishDlg { background: transparent; border: 0; padding: 0; max-width: min(92vw, 460px); }
       #wrongDlg::backdrop, #wishDlg::backdrop { background: rgba(6,4,20,.7); backdrop-filter: blur(10px); }
       .wrong-form { position: relative; display: grid; gap: 14px; padding: 28px 26px 22px; border-radius: 22px; background: linear-gradient(180deg, rgba(20,16,52,.96), rgba(12,10,32,.96)); border: 1px solid rgba(var(--ink-rgb),.1); color: var(--ink); font-family: var(--serif); }
-      .wrong-form h2 { font-family: var(--display); font-weight: 500; font-size: 22px; margin: 0; text-align: center; }
+      .wrong-form h2 { font-family: var(--head); font-weight: 500; font-size: 27px; margin: 0; text-align: center; }
       .wrong-shown { font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin: 0; text-align: center; }
       .wrong-form label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
       .wrong-form input[type=text], .wrong-form input:not([type]) { font: 13px var(--mono); color: var(--ink); background: var(--glass); border: 1px solid rgba(var(--ink-rgb),.12); border-radius: 12px; padding: 9px 12px; }
@@ -358,7 +361,7 @@
       .honesty-box, .ask-box { position: relative; width: min(92vw, 640px); padding: 6px; border-radius: var(--r); background: rgba(var(--ink-rgb),.04); border: 1px solid rgba(var(--ink-rgb),.08); margin: 24px; }
       .honesty-box > *:not(.honesty-close), .ask-box > *:not(.ask-close) { position: relative; }
       .honesty-box, .ask-box { padding: 30px 32px; background: linear-gradient(180deg, rgba(20,16,52,.9), rgba(12,10,32,.92)); }
-      .honesty-box h2, .ask-box h2 { font-family: var(--display); font-weight: 500; font-size: 22px; color: var(--ink); margin: 0 44px 10px 0; letter-spacing: -.01em; }
+      .honesty-box h2, .ask-box h2 { font-family: var(--head); font-weight: 500; font-size: 27px; color: var(--ink); margin: 0 44px 10px 0; letter-spacing: -.01em; }
       .honesty-box p, .ask-hint { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
       .honesty-note { font-size: 14px; }
       .honesty-box table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-family: var(--mono); font-size: 12px; }
@@ -397,7 +400,7 @@
         .eb-more { display: inline; }
         #hero { position: relative; top: 0; max-width: 100%; padding: 74px 20px 0; }
         .hero-line { display: block; }
-        #hero h1 { font-size: 23px; margin-bottom: 8px; }
+        #hero h1 { font-size: 28px; margin-bottom: 8px; }
         #hero .open { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
         .hint { top: auto; bottom: 21vh; font-size: 12px; white-space: nowrap; } .hint.out { transform: translate(-50%, 6px); }
         @media (max-height: 700px) { .hint { display: none; } }
