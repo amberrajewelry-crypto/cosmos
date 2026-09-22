@@ -26,10 +26,10 @@
       .eyebrow-k { display: inline-flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: none; color: var(--gold); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(201,168,92,.28); background: rgba(201,168,92,.06); margin: 0 0 18px; }
       .eyebrow-k::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 2.6s var(--ease) infinite; }
       @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
-      .kp h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.9vw, 54px); line-height: 1.06; white-space: nowrap; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
+      .kp h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.9vw, 54px); line-height: 1.06; letter-spacing: -.028em; text-align: left; margin: 0 0 16px; text-wrap: balance; }
       .kp h1 em { font-style: normal; font-weight: 300; color: var(--gold); }
       .kp p, .kp li { text-wrap: pretty; } .kp { font-variant-numeric: tabular-nums; } ::selection { background: rgba(201,168,92,.35); }
-      .kp .lede { text-align: left; color: var(--ink-2); font-size: 18px; line-height: 1.55; max-width: none; margin: 0 0 22px; }
+      .kp .lede { text-align: left; color: var(--ink-2); font-size: 18px; line-height: 1.6; max-width: 66ch; margin: 0 0 22px; }
       .hero-fig { position: relative; margin: 40px 0 0; padding: 6px; border-radius: 30px; background: rgba(var(--ink-rgb),.045); border: 1px solid rgba(var(--ink-rgb),.09); box-shadow: 0 30px 60px -30px rgba(3,2,14,.9); }
       .hero-fig .core { position: relative; overflow: hidden; border-radius: 24px; aspect-ratio: 21 / 6; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
       .hero-fig img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -48,7 +48,7 @@
       .core { border-radius: 24px; background: var(--card); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
       .kform { display: grid; gap: 14px; padding: 26px; }
       @media (max-width: 640px) { .kform { padding: 18px; } }
-      .kform label { display: grid; min-width: 0; gap: 7px; font-family: var(--serif); font-size: 12.5px; font-weight: 500; letter-spacing: .02em; text-transform: none; color: var(--gold); }
+      .kform label { display: grid; min-width: 0; gap: 7px; font-family: var(--serif); font-size: 13.5px; font-weight: 500; letter-spacing: .02em; text-transform: none; color: var(--gold); }
       .kform input, .kform select { font-family: var(--serif); font-size: 15px; color: var(--ink); background: rgba(var(--ink-rgb),.035); border: 1px solid rgba(var(--ink-rgb),.1); border-radius: 14px; padding: 12px 14px; color-scheme: dark; width: 100%; min-width: 0; box-sizing: border-box; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .5s var(--ease), background .5s var(--ease), box-shadow .5s var(--ease); }
       .kform input:focus, .kform select:focus { outline: none; border-color: rgba(201,168,92,.55); background: rgba(var(--ink-rgb),.05); box-shadow: 0 0 0 4px rgba(201,168,92,.12); }
       .kform .row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px; }
@@ -60,10 +60,10 @@
       .kform #openNatal .ic { width: 34px; height: 34px; border-radius: 50%; background: rgba(10,8,32,.14); display: grid; place-items: center; font-family: var(--mono); font-size: 14px; transition: transform .5s var(--ease); }
       .kform #openNatal:hover .ic { transform: translate(2px, -1px) scale(1.05); }
       .kform #openNatal:active { transform: scale(.98); }
-      .kform #birthHere { font-family: var(--serif); font-size: 12.5px; letter-spacing: 0; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .kform #birthHere { font-family: var(--serif); font-size: 13.5px; letter-spacing: 0; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
       .kform #birthHere:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
-      #status { font-family: var(--serif); font-size: 12.5px; color: var(--ink-2); }
-      .kform .natal-hint { font-family: var(--serif); font-size: 12.5px; line-height: 1.5; color: var(--ink-2); opacity: .75; }
+      #status { font-family: var(--serif); font-size: 13.5px; color: var(--ink-2); }
+      .kform .natal-hint { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-2); opacity: .85; }
       #natalMore { display: block; } .natal-more summary { display: none; } .kform .natal-more-row { justify-content: flex-start; margin-top: 0; }
       .kform .sub { display: none; border-top: 1px solid rgba(var(--ink-rgb),.08); padding-top: 16px; } .kform .sub.on { display: block; animation: subin .7s var(--ease) both; }
       @keyframes subin { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
@@ -97,26 +97,26 @@
       .ktools li:last-child { border-bottom: 1px solid rgba(var(--ink-rgb),.1); }
       .ktools .n { font-family: var(--mono); font-size: 13px; color: var(--gold); letter-spacing: .06em; }
       .ktools b { font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: -.01em; color: var(--ink); }
-      .ktools li > span:last-child { grid-column: 2; font-family: var(--serif); font-weight: 300; font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+      .ktools li > span:last-child { grid-column: 2; font-family: var(--serif); font-weight: 400; font-size: 15.5px; color: var(--ink-2); margin-top: 4px; }
       .kcta { margin: 44px 0 0; } .kcta a { display: inline-flex; align-items: center; gap: 14px; font-family: var(--serif); font-size: 17px; font-weight: 500; color: #120f2a; background: var(--gold); border-radius: 999px; padding: 10px 10px 10px 24px; text-decoration: none; transition: transform .4s var(--ease); }
       .kcta a .ic { width: 36px; height: 36px; border-radius: 50%; background: rgba(10,8,32,.14); display: grid; place-items: center; font-family: var(--mono); font-size: 14px; } .kcta a:hover .ic { transform: translate(2px,-1px); } .kcta a:active { transform: scale(.98); }
       @media (max-width: 900px) { .ktools h2 { white-space: normal; font-size: 28px; } .ktools li { grid-template-columns: 36px 1fr; } }
       .klinks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin: 40px 0 0; }
-      .klinks a { font-family: var(--serif); font-size: 12.5px; color: var(--ink-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.1); transition: color .5s var(--ease), border-color .5s var(--ease), transform .5s var(--ease); }
+      .klinks a { font-family: var(--serif); font-size: 13.5px; color: var(--ink-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(var(--ink-rgb),.1); transition: color .5s var(--ease), border-color .5s var(--ease), transform .5s var(--ease); }
       .klinks a:hover { color: var(--ink); border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
       .wnow { display: flex; gap: 8px; } .wnow input { flex: 1; }
-      .kform .now { font-family: var(--serif); font-size: 12.5px; letter-spacing: 0; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 0 12px; cursor: pointer; white-space: nowrap; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .kform .now { font-family: var(--serif); font-size: 13.5px; letter-spacing: 0; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 0 12px; cursor: pointer; white-space: nowrap; transition: color .5s var(--ease), border-color .5s var(--ease); }
       .kform .now:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
       .act-r { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
-      .act-r button { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
+      .act-r button { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-2); background: transparent; border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: color .5s var(--ease), border-color .5s var(--ease); }
       .act-r button:hover { color: var(--ink); border-color: rgba(201,168,92,.5); }
       .recent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(var(--ink-rgb),.08); }
-      .recent span { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-right: 4px; }
+      .recent span { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-right: 4px; }
       .recent button { font-family: var(--serif); font-size: 13px; color: var(--ink); background: rgba(var(--ink-rgb),.04); border: 1px solid rgba(var(--ink-rgb),.1); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: border-color .5s var(--ease), transform .5s var(--ease); }
       .recent button:hover { border-color: rgba(201,168,92,.5); transform: translateY(-1px); }
-      .recent button.x { padding: 6px 9px; color: var(--ink-2); font-family: var(--mono); font-size: 11px; }
+      .recent button.x { padding: 6px 9px; color: var(--ink-2); font-family: var(--mono); font-size: 12px; }
       @media print { body { background: #fff; color: #111; } #nav, .hero-fig, .modes, .shell:not(#natal), .kfaq, .klinks, .ktools, .kcta, .trust, .natal-share, .natal-tabs, .eyebrow-k { display: none !important; } .kp { padding: 0; max-width: none; } .kp h1 { color: #111; } #natal { box-shadow: none; border: none; } #natal .core { background: none; box-shadow: none; } .nt th { color: #333; } .nt td, .nt th { border-color: #ddd; } .rv { opacity: 1 !important; transform: none !important; } }
-      .ferr { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: none; color: #e0a0a0; }
+      .ferr { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: none; color: #e0a0a0; }
       .kform input[aria-invalid="true"] { border-color: rgba(224,160,160,.6); }
       #burger { display: none; }
       @media (max-width: 760px) {
@@ -133,7 +133,7 @@
         #natalView .nt td:first-child { position: sticky; left: 0; background: var(--card-solid); }
       }
       /* Light theme: pure white ground, same gold, ink inverted */
-      html.light { --ink: #17142b; --ink-rgb: 23,20,43; --ink-2: rgba(23,20,43,.68); --gold: #9a7a34; --gold-2: rgba(154,122,52,.35); --gold-3: rgba(154,122,52,.12); --bg: #ffffff; --glass: rgba(255,255,255,.7); --card: linear-gradient(180deg, #ffffff, #faf8f3); --card-solid: #fbfaf6; }
+      html.light { --ink: #17142b; --ink-rgb: 23,20,43; --ink-2: rgba(23,20,43,.78); --gold: #9a7a34; --gold-2: rgba(154,122,52,.35); --gold-3: rgba(154,122,52,.12); --bg: #ffffff; --glass: rgba(255,255,255,.7); --card: linear-gradient(180deg, #ffffff, #faf8f3); --card-solid: #fbfaf6; }
       html.light body { background: #fff; }
       html.light body::after { display: none; }
       html.light .shell, html.light .hero-fig, html.light .modes { background: rgba(23,20,43,.035); box-shadow: 0 30px 60px -40px rgba(23,20,43,.35); }
@@ -154,7 +154,7 @@
       .dyn-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 260px; }
       .dyn-row input[type=range] { flex: 1; accent-color: var(--gold); height: 2px; }
       .dyn-row .now { height: 30px; }
-      .dyn-row output { font-family: var(--mono); font-size: 11px; color: var(--gold); min-width: 86px; text-align: right; }
+      .dyn-row output { font-family: var(--mono); font-size: 12px; color: var(--gold); min-width: 86px; text-align: right; }
       /* Entry reveals: transform + opacity only, staggered by --i */
       html.js .rv { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
       html.js .rv.in { opacity: 1; transform: none; }
