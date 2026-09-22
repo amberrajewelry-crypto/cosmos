@@ -57,3 +57,15 @@ describe('symbolic directions', () => {
     expect(directionReading(natal, 25, undefined).length).toBe(0);
   });
 });
+
+import { solarAspects, SOLAR_MARS } from '../src/natal/interp/time';
+describe('solar return', () => {
+  it('12 Mars-of-the-year texts; solar Venus on natal Moon reads as «Венера соляра»', () => {
+    expect(SOLAR_MARS).toHaveLength(12);
+    const natal = [{ key: 'moon', glyph: '☽', name: 'Луна', lon: 100 }];
+    const solar = [{ key: 'venus', glyph: '♀', name: 'Венера', lon: 101.5 }, { key: 'sun', glyph: '☉', name: 'Солнце', lon: 100 }];
+    const h = solarAspects(natal, solar);
+    expect(h).toHaveLength(1);
+    expect(h[0].text).toMatch(/^Венера соляра на Луне/);
+  });
+});

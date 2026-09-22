@@ -84,7 +84,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       : kind === 'transits' ? transitHtml(when, at, angles?.asc) + transitsTable(when, at)
       : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)
       : kind === 'directions' ? directionsHtml(when, at, angles?.asc) + transitsTable(when, at) + returnsTable(when, at)
-      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarHtml(when, solYear) + solarTable(when, solYear)
+      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarHtml(when, solYear, angles?.asc) + solarTable(when, solYear)
       : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryHtml(when, new Date(synDate + 'T12:00:00Z')) + synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
       : returnsTable(when);
     view.hidden = false;

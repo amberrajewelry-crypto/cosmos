@@ -8,7 +8,7 @@ import { PLANETS, MERCURY_IN_SIGN, VENUS_IN_SIGN, MARS_IN_SIGN, JUPITER_IN_SIGN,
 import { HOUSES, PLANET_IN_HOUSE, houseOf } from './houses';
 import { ASPECTS, PAIRS } from './aspects';
 import { OUTER_GEN, OUTER_IN_HOUSE, NORTH_NODE_IN_SIGN, NORTH_NODE_IN_HOUSE, FORTUNE_IN_HOUSE, dignity, ELEMENT_TEXT, CROSS_TEXT, MOON_PHASE, RETRO, RULER_OF_SIGN } from './extras';
-import { transitReading, synastryReading, directionReading, SOLAR_MOON, type TimeHit } from './time';
+import { transitReading, synastryReading, directionReading, solarAspects, SOLAR_MOON, SOLAR_MARS, type TimeHit } from './time';
 
 export interface Block { title: string; fact: string; d?: Delineation; science?: string; source: string; }
 
@@ -146,10 +146,18 @@ export function synastryHtml(a: Date, b: Date): string {
   const s = synastryReading(rows(a), rows(b));
   return `<div class="rz-wrap"><h3>Что между вами</h3>${s.length ? s.map(hitHtml).join('') : '<p class="nt-cap">Точных аспектов между картами нет — связь строится волей, не небом.</p>'}<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Птолемей IV.5 «О дружбе и вражде»; Лео HJN.</p></div>`;
 }
-export function solarHtml(birth: Date, year: number): string {
+export function solarHtml(birth: Date, year: number, asc?: number): string {
   const { at } = solarReturn(birth, year); if (!at) return '';
-  const m = rows(at).find((x) => x.key === 'moon')!, ms = signIdx(m.lon);
-  return `<div class="rz-wrap"><h3>Тема года ${year}–${year + 1}</h3><article class="rz"><h4>☽ Луна соляра в ${SIGNS[ms].loc}</h4><p class="rz-trad">${SOLAR_MOON[ms][0].toUpperCase()}${SOLAR_MOON[ms].slice(1)}. ${MOON_IN_SIGN[ms].advice}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Возвращение Солнца ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC; Луна ${deg(m.lon)} ${SIGNS[ms].ru}.</p><p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III «Революции»</p></article></div>`;
+  const sr = rows(at);
+  const m = sr.find((x) => x.key === 'moon')!, ms = signIdx(m.lon);
+  const ma = sr.find((x) => x.key === 'mars')!, mas = signIdx(ma.lon);
+  const hits = solarAspects(rows(birth), sr, asc);
+  const ymd = at.toISOString().slice(0, 16).replace('T', ' ');
+  return `<div class="rz-wrap"><h3>Тема года ${year}–${year + 1}</h3>`
+    + `<article class="rz"><h4>☽ Луна соляра в ${SIGNS[ms].loc}</h4><p class="rz-trad">${SOLAR_MOON[ms][0].toUpperCase()}${SOLAR_MOON[ms].slice(1)}. ${MOON_IN_SIGN[ms].advice}</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Возвращение Солнца ${ymd} UTC; Луна ${deg(m.lon)} ${SIGNS[ms].ru}.</p></article>`
+    + `<article class="rz"><h4>♂ Марс соляра в ${SIGNS[mas].loc}</h4><p class="rz-trad">${SOLAR_MARS[mas][0].toUpperCase()}${SOLAR_MARS[mas].slice(1)}.</p><p class="rz-fact"><span class="tag tag-inline">[ТОЧНО]</span> Марс ${deg(ma.lon)} ${SIGNS[mas].ru}${ma.retro ? ', ретроградный — энергия года идёт на доделки и возвраты к старому' : ''}.</p></article>`
+    + (hits.length ? `<h3>Планеты соляра на точках карты рождения</h3>${hits.map(hitHtml).join('')}` : '<p class="nt-cap">Точных аспектов планет соляра (орбис 2°) к карте рождения нет — год без резких акцентов.</p>')
+    + `<p class="rz-src"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Лилли CA III «Революции». <span class="tag tag-inline">[НАУКА]</span> Момент возвращения Солнца — точная астрономия; связь карты года с событиями статистикой не показана.</p></div>`;
 }
 
 // Symbolic directions to a target date: arc = years of life, 1° per year.
