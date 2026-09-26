@@ -87,17 +87,17 @@ export function initTalk(stage: HTMLElement, bf: BirthApi, values: () => Value[]
   let pending: SpokenBirth | null = null; // дата есть, ждём время
   const history: string[] = [];
 
-  const build = async (s: SpokenBirth): Promise<void> => {
-    let place: Place | undefined;
+  const build = async (s: SpokenBirth, note = ''): Promise<void> => {
+    let place: Place | undefined, miss = '';
     if (s.place) {
       place = matchSpokenPlace(await loadPlaces(), s.place);
-      if (!place) oracle.say(`Не нашёл «${s.place}» в базе городов. Считаю без места — назови крупный город рядом, и я уточню.`);
+      if (!place) miss = `Не нашёл «${s.place}» в базе городов — считаю без места. Назови крупный город рядом, и я уточню.`;
     }
     bf.fill({ date: s.date, time: s.time, place });
     const when = localToUtc(s.date!, s.time ?? '12:00', place?.tz);
     const asc = s.time && place ? ascMc(place.lat, place.lon, when).asc : undefined;
     chart = reading(when, asc);
-    oracle.say(...chart.message.slice(0, 3), 'Спрашивай: Луна, Асцендент, судьба, совет — или о чём угодно. Полная карта — кнопкой ниже.');
+    oracle.sayOnly(note, miss, ...chart.message.slice(0, 3), 'Спрашивай: Луна, Асцендент, судьба, совет — или о чём угодно. Полная карта — кнопкой ниже.');
   };
 
   const handle = async (text: string): Promise<void> => {
@@ -107,17 +107,16 @@ export function initTalk(stage: HTMLElement, bf: BirthApi, values: () => Value[]
       const t = parseSpokenBirth(text);
       const s = { ...pending, time: t.time, place: pending.place ?? t.place };
       pending = null;
-      if (!t.time && !/не знаю|нет/.test(q)) oracle.say('Время не расслышал — считаю без него, дома не будет.');
-      await build(s); return;
+      await build(s, !t.time && !/не знаю|нет/.test(q) ? 'Время не расслышал — считаю без него, дома не будет.' : ''); return;
     }
     const s = parseSpokenBirth(text);
     if (s.date) {
-      if (!s.time) { pending = s; oracle.say('Во сколько ты родился? Если не знаешь — скажи «не знаю».'); return; }
+      if (!s.time) { pending = s; oracle.sayOnly('Во сколько ты родился? Если не знаешь — скажи «не знаю».'); return; }
       await build(s); return;
     }
     const local = answerLocal(text, chart, oracle.skyLines(values()));
-    if (local) { oracle.say(...local); return; }
-    oracle.say('Думаю…');
+    if (local) { oracle.sayOnly(...local); return; }
+    oracle.sayOnly('Думаю…');
     const extra = [chart ? `РАЗБОР КАРТЫ СОБЕСЕДНИКА:\n${chart.message.join('\n')}` : '', history.length ? `РАЗГОВОР:\n${history.join('\n')}` : '']
       .filter(Boolean).join('\n\n');
     const res = await ask(text, values(), extra);

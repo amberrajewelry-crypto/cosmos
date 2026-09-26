@@ -129,6 +129,7 @@ const drag = initGestures(stageEl, scale, reduceMotion);
 const syncLook = (): void => { LOOK.y = portrait ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
+const TALK_ANGLE = 0.8; // рад: лицо смотрит в +Z, 0.8 = три четверти вправо — видны и профиль, и челюсть
 let facing = 0, talkLvl = 0; // разговор: доля поворота к зрителю и сглаженное открытие рта
 fit(); baseCam.copy(stage.camera.position);
 // Адаптивное качество: если кадр стабильно > 33 мс — снижаем pixelRatio до 1 (только вниз).
@@ -147,10 +148,11 @@ function loop(now = performance.now()) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     if (drag.x == null) { drag.rot += drag.v; drag.v *= 0.93; } // инерция после отпускания: докручивается и гаснет
-    // Говорит — поворачивается к зрителю (фронт лица = поворот 0 mod 2π), замолчал — вращение продолжается.
+    // Говорит — встаёт в три четверти к зрителю (анфас из искр не читается, профиль — да), замолчал — вращение продолжается.
     const spin = t * 0.25 + drag.rot, mo = oracle.mouth(now / 1000);
     facing += ((mo > 0 ? 1 : 0) - facing) * (mo > 0 ? 0.04 : 0.008); // к зрителю быстро, обратно — плавно, паузы между репликами не дёргают
-    body.rotation.y = spin + (Math.round(spin / (2 * Math.PI)) * 2 * Math.PI - spin) * facing;
+    const front = Math.round((spin - TALK_ANGLE) / (2 * Math.PI)) * 2 * Math.PI + TALK_ANGLE;
+    body.rotation.y = spin + (front - spin) * facing;
     talkLvl += (mo - talkLvl) * 0.35; bodyPts.setTalk(talkLvl);
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
