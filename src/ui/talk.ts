@@ -1,6 +1,6 @@
-// Разговор с лицом: голос → распознавание браузера → ответ лица репликой и голосом.
+// Разговор с лицом: услышанная фраза (ui/listen.ts) → ответ лица репликой и голосом.
 // Два контура ответа: про карту и небо — из уже посчитанного (без сети, числа не выдумать),
-// остальное — через ask() с тем же карантином чисел. Звук распознаёт браузер (Google/Apple) — это сказано у кнопки.
+// остальное — через ask() с тем же карантином чисел. Модуль грузится по первому слову, не со страницей.
 import type { Value } from '../types';
 import { parseSpokenBirth, matchSpokenPlace, type SpokenBirth } from './voice-parse';
 import { loadPlaces, type Place } from '../data/places';
@@ -9,32 +9,6 @@ import { ascMc } from '../compute/angles';
 import { reading, type Reading, type Block } from '../natal/interp';
 import { ask } from '../live/ask';
 import * as oracle from './oracle';
-
-type Recognition = {
-  lang: string; interimResults: boolean; maxAlternatives: number;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null;
-  start: () => void; stop: () => void;
-};
-const Rec = (): (new () => Recognition) | undefined => {
-  const w = window as unknown as Record<string, unknown>;
-  return (w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => Recognition) | undefined;
-};
-export const canListen = (): boolean => typeof window !== 'undefined' && !!Rec();
-
-/** Одна фраза с микрофона. Пустая строка — ничего не сказано / отказ в доступе. */
-function listen(): Promise<string> {
-  return new Promise((resolve) => {
-    const R = Rec(); if (!R) { resolve(''); return; }
-    const r = new R();
-    r.lang = 'ru-RU'; r.interimResults = false; r.maxAlternatives = 1;
-    let heard = '';
-    r.onresult = (e) => { heard = e.results[0]?.[0]?.transcript ?? ''; };
-    r.onerror = () => { /* no-speech / not-allowed — вернём пусто */ };
-    r.onend = () => resolve(heard.trim());
-    r.start();
-  });
-}
 
 const fold = (s: string): string => s.toLowerCase().replace(/ё/g, 'е');
 const plainTitle = (b: Block): string => b.title.replace(/^\S+︎\s*/, '').replace(/\s*℞/, '');
@@ -76,64 +50,45 @@ export function answerLocal(text: string, r: Reading | null, sky: string[]): str
 
 interface BirthApi { fill: (s: { date?: string; time?: string; place?: Place }) => void; }
 
-export function initTalk(stage: HTMLElement, bf: BirthApi, values: () => Value[]): void {
-  if (!canListen() || document.getElementById('talk')) return;
-  const btn = document.createElement('button');
-  btn.id = 'talk'; btn.type = 'button'; btn.textContent = 'говорить с лицом';
-  btn.title = 'Речь распознаёт браузер (Google или Apple). Карта и координаты остаются у тебя.';
-  stage.appendChild(btn);
+// Состояние разговора живёт в модуле: он загружается один раз и помнит карту между фразами.
+let chart: Reading | null = null;
+let pending: SpokenBirth | null = null; // дата есть, ждём время
+const history: string[] = [];
+const FREE_OFF = 'Свободные вопросы сейчас недоступны. Про карту и небо отвечу сразу: Луна, Асцендент, судьба, совет, что надо мной.';
 
-  let chart: Reading | null = null;
-  let pending: SpokenBirth | null = null; // дата есть, ждём время
-  const history: string[] = [];
+async function build(s: SpokenBirth, bf: BirthApi, note = ''): Promise<void> {
+  let place: Place | undefined, miss = '';
+  if (s.place) {
+    place = matchSpokenPlace(await loadPlaces(), s.place);
+    if (!place) miss = `Не нашёл «${s.place}» в базе городов — считаю без места. Назови крупный город рядом, и я уточню.`;
+  }
+  bf.fill({ date: s.date, time: s.time, place });
+  const when = localToUtc(s.date!, s.time ?? '12:00', place?.tz);
+  const asc = s.time && place ? ascMc(place.lat, place.lon, when).asc : undefined;
+  chart = reading(when, asc);
+  oracle.sayOnly(note, miss, ...chart.message.slice(0, 3), 'Спрашивай: Луна, Асцендент, судьба, совет — или о чём угодно. Полная карта — кнопкой ниже.');
+}
 
-  const build = async (s: SpokenBirth, note = ''): Promise<void> => {
-    let place: Place | undefined, miss = '';
-    if (s.place) {
-      place = matchSpokenPlace(await loadPlaces(), s.place);
-      if (!place) miss = `Не нашёл «${s.place}» в базе городов — считаю без места. Назови крупный город рядом, и я уточню.`;
-    }
-    bf.fill({ date: s.date, time: s.time, place });
-    const when = localToUtc(s.date!, s.time ?? '12:00', place?.tz);
-    const asc = s.time && place ? ascMc(place.lat, place.lon, when).asc : undefined;
-    chart = reading(when, asc);
-    oracle.sayOnly(note, miss, ...chart.message.slice(0, 3), 'Спрашивай: Луна, Асцендент, судьба, совет — или о чём угодно. Полная карта — кнопкой ниже.');
-  };
-
-  const handle = async (text: string): Promise<void> => {
-    const q = fold(text);
-    if (/^(стоп|хватит|замолчи|тихо)/.test(q)) { oracle.sayOnly('Молчу.'); return; }
-    if (pending) {
-      const t = parseSpokenBirth(text);
-      const s = { ...pending, time: t.time, place: pending.place ?? t.place };
-      pending = null;
-      await build(s, !t.time && !/не знаю|нет/.test(q) ? 'Время не расслышал — считаю без него, дома не будет.' : ''); return;
-    }
-    const s = parseSpokenBirth(text);
-    if (s.date) {
-      if (!s.time) { pending = s; oracle.sayOnly('Во сколько ты родился? Если не знаешь — скажи «не знаю».'); return; }
-      await build(s); return;
-    }
-    const local = answerLocal(text, chart, oracle.skyLines(values()));
-    if (local) { oracle.sayOnly(...local); return; }
-    oracle.sayOnly('Думаю…');
-    const extra = [chart ? `РАЗБОР КАРТЫ СОБЕСЕДНИКА:\n${chart.message.join('\n')}` : '', history.length ? `РАЗГОВОР:\n${history.join('\n')}` : '']
-      .filter(Boolean).join('\n\n');
-    const res = await ask(text, values(), extra);
-    oracle.sayOnly(res.text);
-    history.push(`Вопрос: ${text}`, `Ответ: ${res.text}`); history.splice(0, Math.max(0, history.length - 6));
-  };
-
-  btn.addEventListener('click', async () => {
-    if (btn.classList.contains('on')) return;
-    oracle.enableVoice();
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); // не слушать собственный голос
-    btn.classList.add('on'); btn.textContent = 'слушаю…';
-    document.documentElement.classList.add('talk-listening');
-    const text = await listen();
-    btn.classList.remove('on'); btn.textContent = 'говорить с лицом';
-    document.documentElement.classList.remove('talk-listening');
-    if (!text) { oracle.sayOnly('Не расслышал. Нажми и скажи ещё раз.'); return; }
-    await handle(text);
-  });
+/** Ответить на одну фразу. Реплики уходят в очередь лица; дождаться конца речи — oracle.idle(). */
+export async function reply(text: string, bf: BirthApi, values: () => Value[]): Promise<void> {
+  const q = fold(text);
+  if (pending) {
+    const t = parseSpokenBirth(text);
+    const s = { ...pending, time: t.time, place: pending.place ?? t.place };
+    pending = null;
+    await build(s, bf, !t.time && !/не знаю|нет/.test(q) ? 'Время не расслышал — считаю без него, дома не будет.' : ''); return;
+  }
+  const s = parseSpokenBirth(text);
+  if (s.date) {
+    if (!s.time) { pending = s; oracle.sayOnly('Во сколько ты родился? Если не знаешь — скажи «не знаю».'); return; }
+    await build(s, bf); return;
+  }
+  const local = answerLocal(text, chart, oracle.skyLines(values()));
+  if (local) { oracle.sayOnly(...local); return; }
+  oracle.sayOnly('Думаю…');
+  const extra = [chart ? `РАЗБОР КАРТЫ СОБЕСЕДНИКА:\n${chart.message.join('\n')}` : '', history.length ? `РАЗГОВОР:\n${history.join('\n')}` : '']
+    .filter(Boolean).join('\n\n');
+  const res = await ask(text, values(), extra);
+  oracle.sayOnly(res.disabled ? FREE_OFF : res.text);
+  if (res.ok) { history.push(`Вопрос: ${text}`, `Ответ: ${res.text}`); history.splice(0, Math.max(0, history.length - 6)); }
 }

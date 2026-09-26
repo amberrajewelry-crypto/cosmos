@@ -25,6 +25,7 @@ import { sendFeedback, track, trackZoom } from '../live/feedback';
 import { wrongNumberMailto } from './panel';
 import { contentValues, levelName, type Ctx } from '../registry/content';
 import * as oracle from './oracle';
+import { canListen, listen } from './listen';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -342,8 +343,41 @@ const showNatal = (): void => { const m = bf.moment(); track('natal'); openNatal
 openBtn.addEventListener('click', showNatal);
 // Шеринг-ссылка (§2.1): /?birth=… открывает карту сразу.
 if (bf.applyQuery(new URLSearchParams(location.search))) { birth.dispatchEvent(new Event('input')); showNatal(); }
-// Разговор с лицом (голос): модуль грузится лениво, кнопка появляется только там, где браузер умеет слушать.
-import('./talk').then((m) => m.initTalk(document.getElementById('stage') as HTMLElement, bf, allValues)).catch(() => { /* без голоса */ });
+// Разговор с лицом: нажал — лицо слушает, отвечает и снова слушает, пока человек говорит; тишина или
+// повторное нажатие — конец. Кнопка есть только там, где браузер умеет слушать (не в Firefox).
+if (canListen()) {
+  const talkBtn = document.createElement('button');
+  talkBtn.id = 'talk'; talkBtn.type = 'button';
+  talkBtn.title = 'Речь распознаёт браузер (Google или Apple). Карта и координаты остаются у тебя.';
+  document.getElementById('stage')?.appendChild(talkBtn);
+  const label = (t: string, on = false): void => { talkBtn.textContent = t; talkBtn.classList.toggle('on', on); };
+  label('говорить с лицом');
+  let live = false, stopMic = (): void => {};
+  const conversation = async (): Promise<void> => {
+    const talk = import('./talk'); // грузится, пока человек говорит первую фразу
+    for (let first = true; live; first = false) {
+      label('слушаю… (нажми — закончить)', true);
+      const mic = listen(); stopMic = mic.stop;
+      const { text, error } = await mic.done;
+      if (!live) break;
+      if (error === 'not-allowed' || error === 'service-not-allowed') { if (first) oracle.sayOnly('Нужен доступ к микрофону — разреши его в адресной строке и нажми ещё раз.'); break; } // Safari не даёт слушать повторно без жеста — тихо ждём нажатия
+      if (!text) { if (first) oracle.sayOnly('Не расслышал. Нажми и скажи ещё раз.'); break; }
+      if (/^(стоп|хватит|замолчи|тихо|пока)/i.test(text)) { oracle.sayOnly('Хорошо. Я здесь, когда захочешь.'); break; }
+      label(`«${text.length > 42 ? text.slice(0, 40) + '…' : text}»`); // что расслышано — видно сразу, ошибку распознавания легко заметить
+      await (await talk).reply(text, bf, allValues);
+      await oracle.idle();
+    }
+    live = false; label('говорить с лицом');
+  };
+  talkBtn.addEventListener('click', () => {
+    if (live) { live = false; stopMic(); oracle.sayOnly(); label('говорить с лицом'); return; }
+    live = true;
+    oracle.enableVoice();
+    // iOS разрешает речь только из жеста: короткая пустая реплика «открывает» синтез, дальнейшие ответы звучат.
+    if (typeof speechSynthesis !== 'undefined') { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); }
+    void conversation();
+  });
+}
 
 // Esc закрывает любой открытый оверлей (§3.10).
 document.addEventListener('keydown', (e) => {

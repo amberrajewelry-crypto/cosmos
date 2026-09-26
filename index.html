@@ -166,7 +166,7 @@
       #oracleVoice { position: fixed; left: 40px; top: calc(50% + 62px); z-index: 2; background: none; border: 0; border-bottom: 1px solid var(--gold-2); padding: 0 0 2px; font-family: var(--serif); font-weight: 300; font-size: 13px; color: var(--ink-2); opacity: .55; cursor: pointer; transition: opacity .4s var(--ease); }
       #oracleVoice:hover, #oracleVoice[aria-pressed="true"] { opacity: .95; color: var(--gold); }
       @media (max-width: 760px) { #oracleVoice { position: absolute; left: 50%; transform: translateX(-50%); top: auto; bottom: -14px; font-size: 12px; } }
-      #talk { position: fixed; left: 40px; top: calc(50% + 92px); z-index: 2; background: none; border: 0; border-bottom: 1px solid var(--gold-2); padding: 0 0 2px; font-family: var(--serif); font-weight: 300; font-size: 13px; color: var(--ink-2); opacity: .7; cursor: pointer; transition: opacity .4s var(--ease), color .4s var(--ease); }
+      #talk { position: fixed; left: 40px; top: calc(50% + 92px); z-index: 2; max-width: 30ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: none; border: 0; border-bottom: 1px solid var(--gold-2); padding: 0 0 2px; font-family: var(--serif); font-weight: 300; font-size: 13px; color: var(--ink-2); opacity: .7; cursor: pointer; transition: opacity .4s var(--ease), color .4s var(--ease); }
       #talk:hover { opacity: .95; color: var(--gold); }
       #talk.on { opacity: 1; color: var(--gold); animation: talkPulse 1.2s var(--ease) infinite; }
       @keyframes talkPulse { 50% { opacity: .45; } }

@@ -196,6 +196,9 @@ async function pump(): Promise<void> {
   speaking = false;
 }
 
+/** Дождаться, пока лицо договорит всё из очереди (разговор слушает только после этого — не себя). */
+export async function idle(): Promise<void> { while (speaking || queue.length) await wait(200); }
+
 /** Сказать вместо всего, что ещё не сказано: для частых событий (зум), где важна только последняя. */
 export function sayOnly(...lines: Array<string | null | undefined>): void {
   queue.length = 0; gen++;
