@@ -129,6 +129,7 @@ const drag = initGestures(stageEl, scale, reduceMotion);
 const syncLook = (): void => { LOOK.y = portrait ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
+let facing = 0, talkLvl = 0; // разговор: доля поворота к зрителю и сглаженное открытие рта
 fit(); baseCam.copy(stage.camera.position);
 // Адаптивное качество: если кадр стабильно > 33 мс — снижаем pixelRatio до 1 (только вниз).
 let slowFrames = 0, lastFrame = performance.now(), degraded = false;
@@ -146,7 +147,11 @@ function loop(now = performance.now()) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     if (drag.x == null) { drag.rot += drag.v; drag.v *= 0.93; } // инерция после отпускания: докручивается и гаснет
-    body.rotation.y = t * 0.25 + drag.rot; // continuous turn like every other figure (~50 s per revolution)
+    // Говорит — поворачивается к зрителю (фронт лица = поворот 0 mod 2π), замолчал — вращение продолжается.
+    const spin = t * 0.25 + drag.rot, mo = oracle.mouth(now / 1000);
+    facing += ((mo > 0 ? 1 : 0) - facing) * (mo > 0 ? 0.04 : 0.008); // к зрителю быстро, обратно — плавно, паузы между репликами не дёргают
+    body.rotation.y = spin + (Math.round(spin / (2 * Math.PI)) * 2 * Math.PI - spin) * facing;
+    talkLvl += (mo - talkLvl) * 0.35; bodyPts.setTalk(talkLvl);
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
@@ -335,6 +340,8 @@ const showNatal = (): void => { const m = bf.moment(); track('natal'); openNatal
 openBtn.addEventListener('click', showNatal);
 // Шеринг-ссылка (§2.1): /?birth=… открывает карту сразу.
 if (bf.applyQuery(new URLSearchParams(location.search))) { birth.dispatchEvent(new Event('input')); showNatal(); }
+// Разговор с лицом (голос): модуль грузится лениво, кнопка появляется только там, где браузер умеет слушать.
+import('./talk').then((m) => m.initTalk(document.getElementById('stage') as HTMLElement, bf, allValues)).catch(() => { /* без голоса */ });
 
 // Esc закрывает любой открытый оверлей (§3.10).
 document.addEventListener('keydown', (e) => {

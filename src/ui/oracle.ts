@@ -94,8 +94,29 @@ function speak(line: string): void {
   const u = new SpeechSynthesisUtterance(line);
   u.lang = 'ru-RU'; u.rate = 0.92; u.pitch = 0.85; u.volume = 0.9; // ровнее и ниже обычного — это голос фигуры, не навигатора
   const v = ruVoice(); if (v) u.voice = v;
+  u.onboundary = () => { lastWord = performance.now(); };
   speechSynthesis.speak(u);
 }
+
+// --- Рот: уровень 0..1 для шейдера лица. Говорит, пока печатается реплика или звучит голос. ---
+let typing = false, lastWord = 0;
+const voiced = (): boolean => voiceOn && canSpeak() && speechSynthesis.speaking;
+/** Открытие рта сейчас (t — секунды сцены). Слоговый ритм + толчок на каждом слове, если браузер их шлёт. */
+export function mouth(t: number): number {
+  if (!typing && !voiced()) return 0;
+  const syll = Math.abs(Math.sin(t * 11) * Math.sin(t * 4.3 + 1));
+  const word = Math.max(0, 1 - (performance.now() - lastWord) / 160);
+  return Math.min(1, 0.25 + 0.6 * syll + 0.4 * word);
+}
+
+/** Включить голос без кнопки — лицо в разговоре отвечает вслух. */
+export function enableVoice(): void {
+  const btn = document.getElementById('oracleVoice') as HTMLButtonElement | null;
+  if (btn) setVoice(true, btn); else voiceOn = true;
+}
+
+// Дождаться, пока голос договорит реплику (иначе следующая оборвёт её на полуслове).
+async function spoken(): Promise<void> { while (voiced()) await wait(150); }
 
 function setVoice(on: boolean, btn: HTMLButtonElement): void {
   voiceOn = on;
@@ -164,9 +185,9 @@ async function pump(): Promise<void> {
     const line = queue.shift() as string, g = gen;
     el.classList.add('on');
     speak(line);
-    await type(el, line, g);
+    typing = true; await type(el, line, g); typing = false;
     if (g !== gen) continue; // перебили — не держим паузу на устаревшей реплике
-    await wait(HOLD_MS + line.length * 14);
+    if (voiced()) { await spoken(); await wait(600); } else await wait(HOLD_MS + line.length * 14);
     if (g !== gen) continue;
     el.classList.remove('on');
     await wait(FADE_MS);
