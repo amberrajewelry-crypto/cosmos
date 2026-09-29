@@ -78,5 +78,12 @@ export function initBirthForm() {
     }
     return true;
   };
-  return { birth, moment, link, inputsText, applyQuery };
+  // Голосовой ввод (ui/talk.ts): те же поля, что заполняет человек, — дальше всё как при ручном вводе.
+  const fill = (s: { date?: string; time?: string; place?: Place }): void => {
+    if (s.date) birth.value = s.date;
+    if (s.time) { birthTime.value = s.time; (document.getElementById('natalMore') as HTMLDetailsElement | null)?.setAttribute('open', ''); }
+    if (s.place) pickPlace(s.place);
+    birth.dispatchEvent(new Event('input'));
+  };
+  return { birth, moment, link, inputsText, applyQuery, fill };
 }

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!fb || !KINDS.has(fb.kind)) { res.status(400).end(); return; }
   const token = process.env.TG_BOT_TOKEN, chat = process.env.TG_CHAT_ID;
   if (!token || !chat) { res.status(503).json({ ok: false }); return; }
-  const lines = [`COSMOS · ${fb.kind}${fb.id ? ' · ' + fb.id : ''}${fb.tz ? ' · ' + fb.tz : ''}`];
+  const lines = [`АСТРОАНАЛИЗ · ${fb.kind}${fb.id ? ' · ' + fb.id : ''}${fb.tz ? ' · ' + fb.tz : ''}`];
   for (const [k, v] of Object.entries(fb)) if (!['kind', 'id', 'tz'].includes(k)) lines.push(`${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v).slice(0, 1500)}`);
   const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
