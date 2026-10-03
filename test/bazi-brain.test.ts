@@ -51,3 +51,16 @@ describe("такт и год с союзами натала", () => {
     expect(b.steps.some((s) => s.text.includes("五阴"))).toBe(true);
   });
 });
+
+describe("сила на грани: 用神 решает такт (朱祖夏 гл.2 中和)", () => {
+  it("1975-09-15: баланс, в тактах-давлении полезна Вода, а не Огонь", () => {
+    const c = computeChart({ date: "1975-09-15", time: "12:00", timeKnown: true, tz: "Asia/Tbilisi", lat: 41.7, lon: 44.8, male: true }, DEFAULT_VARIANT);
+    const b = analyze(c).brain;
+    expect(b.power.key).toBe("balanced");
+    expect(b.alt).toMatchObject({ lean: "weak", yong: 4 });
+    expect(c.luck.some((l) => periodVerdict(b, l.idx, c).text.includes("中和"))).toBe(true);
+  });
+  it("у Владимира (слегка сильный) второго набора нет", () => {
+    expect(run("1991-11-10", "00:37").alt).toBeUndefined();
+  });
+});
