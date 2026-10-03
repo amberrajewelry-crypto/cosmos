@@ -351,7 +351,8 @@ function secRazbor(c: Chart, a: Analysis) {
         ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах <span class="src">ЮХ, условно — ЦПЦЦ гл.1 образы стволов отвергает</span></h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
-        <h4 class="sub">Что вас питает (расчёт по трём методам)</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
+        <h4 class="sub">Полезный бог (用神) по классике · ${esc(a.brain.frame.name)} ${a.brain.frame.zh}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text, src: st.src })).join('')}
+        <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
       <div class="card pane"><h3>10 божеств: профиль · ${gp.top.join(' · ')}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
         ${godNatureNotes(a).map(noteHtml).join('')}

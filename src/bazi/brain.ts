@@ -1,0 +1,134 @@
+// «Мозг» карты: структура (格局 / внешние 格) и полезный бог (用神) по классике — порядок из 命理约言 卷一 看用神法:
+// сначала внешний格 (从/化/一行得气), иначе 扶抑 по корням (ЦПЦЦ гл.6, ДТС 衰旺), затем 调候 (穷通宝鉴; 命理约言 卷四),
+// 通关 (ДТС) и 病药 (神峰通考). Результат питает разбор, такты и календарь дней (consensus/avoid в calc.ts).
+import { STEMS, BRANCHES, EL, GODS, godOf, stageOf, seasonState, type El } from './core';
+import { rootOf, TIAOHOU } from './reading';
+import type { Analysis, Chart } from './calc';
+
+export interface Step { title: string; text: string; src: string }
+export interface Brain {
+  frame: { kind: 'normal' | 'follow' | 'vibrant' | 'transform'; name: string; zh: string };
+  power: { score: number; key: 'weak' | 'balanced' | 'strong'; ru: string };
+  yong: El; xi: El[]; ji: El[]; steps: Step[];
+}
+
+const SEASON_PTS = [3, 2, -1, -2, -3];  // 旺相休囚死
+const DIRS: [number[], El][] = [[[2, 3, 4], 0], [[5, 6, 7], 1], [[8, 9, 10], 3], [[11, 0, 1], 4]];
+const TRINE: [number[], El][] = [[[11, 3, 7], 0], [[2, 6, 10], 1], [[5, 9, 1], 3], [[8, 0, 4], 4]];
+const COMBO: [number, number, El][] = [[0, 5, 2], [1, 6, 3], [2, 7, 4], [3, 8, 0], [4, 9, 1]];
+const VIBRANT = [['曲直', 'Прямое-кривое'], ['炎上', 'Пламя вверх'], ['稼穑', 'Посев и жатва'], ['从革', 'Следующий переменам'], ['润下', 'Влага вниз']];
+const uniq = (xs: El[]) => xs.filter((x, i) => xs.indexOf(x) === i);
+
+export function brain(c: Chart, a: Analysis): Brain {
+  const P = c.pillars, dm = a.dm, d = a.dmEl;
+  const month = P.find((p) => p.pos === 'month')!;
+  const res = ((d + 4) % 5) as El, out = ((d + 1) % 5) as El, wealth = ((d + 2) % 5) as El, officer = ((d + 3) % 5) as El;
+  const vis = P.filter((p) => p.pos !== 'day');
+  const steps: Step[] = [];
+
+  // 1. Сила: сезон + корни (шкала ЦПЦЦ гл.6) + стволы + главные ци ветвей (кроме месяца — он уже в сезоне).
+  const season = seasonState(d, BRANCHES[month.branch].el);
+  const roots = P.reduce((s, p) => s + (rootOf(dm, p.branch)?.w ?? 0), 0);
+  const elOf = (s: number) => STEMS[s].el;
+  let friend = roots + (season === 0 ? 3 : 0), resSup = season === 1 ? 2 : 0, against = season >= 2 ? -SEASON_PTS[season] : 0;
+  for (const p of vis) { const e = elOf(p.stem); if (e === d) friend += 1; else if (e === res) resSup += 1; else against += 1; }
+  for (const p of P) if (p.pos !== 'month') { const e = elOf(BRANCHES[p.branch].hidden[0]); if (e === res) resSup += 1; else if (e !== d) against += 1; }
+  // ponytail: линейная сумма баллов с порогами 3 / −1 — грубая шкала; уточнять по сверке карт.
+  const score = friend + resSup - against;
+  const key = score >= 3 ? 'strong' : score <= -1 ? 'weak' : 'balanced';
+  const ru = { strong: 'сильный', weak: 'слабый', balanced: 'на грани' }[key];
+  steps.push({ title: 'Сила', src: 'ЦПЦЦ гл.3, гл.6; ДТС 衰旺; 命理约言 卷一 看日主法',
+    text: `Сезон: ${['процветает', 'крепнет', 'отдыхает', 'заперт', 'мёртв'][season]}; корни в ветвях: ${roots || 'нет'}; опора своих ${friend}, Печати ${resSup}, против ${against} → ${ru} (${score > 0 ? '+' : ''}${score}).` });
+
+  const done = (frame: Brain['frame'], yong: El, xi: El[], ji: El[]): Brain => {
+    const fav = uniq([yong, ...xi]);
+    return { frame, power: { score, key, ru }, yong, xi: fav.slice(1, 3), ji: uniq(ji).filter((e) => !fav.includes(e)).slice(0, 2), steps };
+  };
+
+  // 2. Внешние структуры (命理约言 卷二 从局赋 / 化局赋 / 一行得气赋).
+  const helpStems = vis.some((p) => elOf(p.stem) === d || elOf(p.stem) === res);
+  if (roots === 0 && !helpStems && season >= 2) {
+    const dom = [out, wealth, officer].sort((x, y) => a.scores[y] - a.scores[x])[0];
+    if (a.scores[res] < a.scores[dom]) {
+      const g = dom === out ? 'Выражение' : dom === wealth ? 'Богатство' : 'Власть';
+      steps.push({ title: `Следование за ${g} (从格)`, src: '命理约言 卷二 从局赋; ДТС 从象',
+        text: `Корней нет, поддержки в стволах нет — «日主无根…舍弱以从强». Полезно то, за чем следуем, и что его питает; вредны Печать и «свои»: «已弃之命，逢根即属不祥».` });
+      return done({ kind: 'follow', name: `Следование за ${g}`, zh: '从格' }, dom, dom === wealth ? [out, officer] : [wealth], [res, d]);
+    }
+    steps.push({ title: 'Следования нет', src: '命理约言 卷二 从局赋', text: 'Корней нет, но Печати много — «印多则无从理»: остаёмся в обычной структуре.' });
+  }
+  const branches = P.map((p) => p.branch);
+  const full = [...DIRS, ...TRINE].some(([set, e]) => e === d && set.every((b) => branches.includes(b)));
+  const earthAll = d === 2 && branches.filter((b) => BRANCHES[b].el === 2).length >= 3;
+  if (season === 0 && (full || earthAll) && !vis.some((p) => elOf(p.stem) === officer)) {
+    const [zh, nm] = VIBRANT[d];
+    steps.push({ title: `Одна стихия (${zh})`, src: '命理约言 卷二 一行得气赋; ДТС 一行得气',
+      text: `Стихия дня в сезоне и собрана ветвями в сторону/союз — «一行得气». Полезны своя стихия, Печать и выход силы (食伤 «秀气流行»); вреден Чиновник/Убийство.` });
+    return done({ kind: 'vibrant', name: nm, zh: `${zh}格` }, d, [out, res], [officer, wealth]);
+  }
+  for (const p of vis.filter((q) => q.pos === 'month' || q.pos === 'hour')) {
+    const pair = COMBO.find(([x, y]) => (x === dm && y === p.stem) || (y === dm && x === p.stem));
+    if (!pair) continue;
+    const hua = pair[2], rival = vis.filter((q) => q.stem === p.stem).length > 1 || vis.some((q) => q.stem === dm);
+    const breaker = vis.some((q) => elOf(q.stem) === (hua + 3) % 5);
+    if (BRANCHES[month.branch].el === hua && !rival && !breaker) {
+      steps.push({ title: `Превращение в ${EL[hua]} (化气)`, src: '命理约言 卷二 化局赋; ЦПЦЦ гл.5',
+        text: `Господин в союзе с соседним стволом ${STEMS[p.stem].zh}, месяц — стихия союза, соперника и разрушителя нет: «先观月气，乃化神根本之乡». Полезны ${EL[hua]} и то, что её питает; вредно то, что её бьёт.` });
+      return done({ kind: 'transform', name: `Превращение в ${EL[hua]}`, zh: '化气格' }, hua, [((hua + 4) % 5) as El], [((hua + 3) % 5) as El, d]);
+    }
+  }
+
+  // 3. Обычная структура: бог ветви месяца, проступивший в стволах (ЦПЦЦ гл.8, гл.10).
+  const st = stageOf(dm, month.branch);
+  const hid = BRANCHES[month.branch].hidden, vs = vis.map((p) => p.stem);
+  const axis = hid.find((h) => vs.includes(h) && elOf(h) !== d) ?? hid[0];
+  const g = st === 3 ? { zh: '建禄', ru: 'Опора месяца' } : st === 4 && STEMS[dm].yang ? { zh: '月刃', ru: 'Клинок месяца' } : GODS[godOf(dm, axis).key];
+  const frame = { kind: 'normal' as const, name: g.ru, zh: `${g.zh}格` };
+  steps.push({ title: `Структура: ${g.ru} (${g.zh}格)`, src: 'ЦПЦЦ гл.8, гл.10; 命理约言 卷一 看格局法',
+    text: elOf(axis) === d ? 'Месяц — своя стихия: структуру дают Чиновник, Богатство или Выражение в стволах («禄刃…用官煞财食»).' : `Бог ветви месяца ${vs.includes(axis) ? 'проступил — структура явная' : 'не проступил — структура по главной ци, слабее'}.` });
+
+  // 4. 扶抑 — что именно давит / что именно усиливает (ДТС 衰旺; 命理约言 比劫赋).
+  let yong: El, xi: El[], ji: El[], why: string;
+  const lean = key === 'balanced' ? (score >= 1 ? 'strong' : 'weak') : key;
+  if (lean === 'strong') {
+    if (a.scores[res] > a.scores[d]) { yong = wealth; xi = [out]; ji = [res, d]; why = 'силён за счёт Печати — нужно Богатство, «贪财坏印» здесь лекарство (ЦПЦЦ, 印格 «印多逢财»)'; }
+    else if (a.scores[wealth] >= 1) { yong = officer; xi = [wealth]; ji = [d, res]; why = 'силён за счёт «своих» при наличии Богатства — Чиновник/Убийство: «惟有正官偏官，可除其孽» (命理约言 比劫赋)'; }
+    else { yong = out; xi = [wealth]; ji = [res, d]; why = 'силён за счёт «своих», Богатства нет — выпускать силу через Выражение: «旺者宜泄»'; }
+  } else {
+    const top = [wealth, officer, out].sort((x, y) => a.scores[y] - a.scores[x])[0];
+    if (top === wealth) { yong = d; xi = [res]; ji = [wealth, out]; why = 'давит Богатство — «свои», а не Печать (Печать Богатство разобьёт): ДТС 衰旺'; }
+    else if (top === officer) { yong = res; xi = [d]; ji = [officer, wealth]; why = 'давит Чиновник/Убийство — Печать переводит давление в поддержку: «煞重用印»'; }
+    else { yong = res; xi = [d]; ji = [out, wealth]; why = 'силы уходят в Выражение — Печать обуздывает его и питает господина'; }
+  }
+  steps.push({ title: 'Поддержать или ослабить (扶抑)', src: 'ДТС 衰旺; ЦПЦЦ гл.6; 命理约言 卷一 看用神法',
+    text: `${key === 'balanced' ? 'Сила на грани — вывод слабее обычного. ' : ''}${why[0].toUpperCase()}${why.slice(1)}. Полезный бог — ${EL[yong]}.` });
+
+  // 5. 调候: зимой без Огня и летом без Воды климат важнее баланса.
+  const winter = [11, 0, 1].includes(month.branch), summer = [5, 6, 7].includes(month.branch);
+  const need: number = winter ? 1 : summer ? 4 : -1;
+  // Тепло зимой и влага летом во вред не записываются никогда (ЦТБЦ: зимой 丙丁, летом 壬癸 — у всех стволов).
+  if (need >= 0) ji = ji.filter((e) => e !== need);
+  if (need >= 0 && a.pct[need] < 0.1 && yong !== need) {
+    xi = [yong, ...xi]; yong = need as El;
+    steps.push({ title: `Климат: ${winter ? 'холодно' : 'жарко'} (调候)`, src: '穷通宝鉴; 命理约言 卷四 «寒则喜温…炎则喜润»; ДТС 寒暖',
+      text: `${winter ? 'Зимняя' : 'Летняя'} карта, ${EL[need]} почти нет (${Math.round(a.pct[need] * 100)}%) — климат первым: ${EL[need]} становится полезным богом, баланс — вторым. Нужные стволы по 穷通宝鉴: ${[...TIAOHOU[dm][month.branch]].join(' ')}.` });
+  }
+
+  // 6. 通关: две враждующие сильные стихии — нужен посредник.
+  for (let x = 0; x < 5; x++) {
+    const y = (x + 2) % 5, m = ((x + 1) % 5) as El;
+    if (a.pct[x] >= 0.3 && a.pct[y] >= 0.3 && !ji.includes(m) && m !== yong) {
+      xi = [m, ...xi];
+      steps.push({ title: `Посредник: ${EL[m]} (通关)`, src: 'ДТС 通关', text: `${EL[x]} и ${EL[y]} обе сильны и воюют — ${EL[m]} переводит удар в рождение.` });
+    }
+  }
+  // 7. 病药: стихия в избытке (≥40%) — болезнь; то, что её сдерживает, — лекарство.
+  const ill = a.pct.findIndex((p) => p >= 0.4);
+  if (ill >= 0 && ji.includes(ill as El)) {
+    const med = ((ill + 3) % 5) as El;
+    steps.push({ title: `Болезнь и лекарство (病药)`, src: '神峰通考 病药说',
+      text: `${EL[ill]} в избытке (${Math.round(a.pct[ill] * 100)}%) — это «болезнь»; ${EL[med]} её сдерживает${ji.includes(med) ? ', но для этой карты вредна — лекарство только через полезного бога' : ' — «лекарство»'}.` });
+    if (!ji.includes(med)) xi = [...xi, med];
+  }
+  return done(frame, yong, xi, ji);
+}

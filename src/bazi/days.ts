@@ -50,7 +50,10 @@ export function dayInfo(c: Chart, a: Analysis, y: number, m: number, d: number):
   const idx = dayIdx(y, m, d), s = idx % 10, b = idx % 12;
   const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
   const se = STEMS[s].el, be = BRANCHES[b].el;
-  let type: DayType = fav(se) && !bad(be) ? 'peak' : bad(se) || bad(be) ? 'heavy' : 'calm';
+  // Ветвь вредна, если это главный вред карты; второстепенный вред под полезным стволом, который она рождает,
+  // работает как корень этого ствола (ДТС 天覆地载): 丙寅 при полезном Огне — сильный день, а не тяжёлый.
+  const branchBad = be === a.avoid[0] || (bad(be) && !(fav(se) && (be + 1) % 5 === se));
+  let type: DayType = fav(se) && !branchBad ? 'peak' : bad(se) || branchBad ? 'heavy' : 'calm';
   const notes: string[] = [];
   let hit = false;
   for (const p of c.pillars) {

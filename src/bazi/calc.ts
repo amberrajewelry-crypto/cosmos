@@ -2,6 +2,7 @@
 // солнечных сезонов (долгота Солнца, astronomy-engine), час — по поясному или истинному солнечному времени.
 import { SunPosition, SearchSunLongitude, HourAngle, Body, Observer } from 'astronomy-engine';
 import { localToUtc } from '../compute/localtime';
+import { brain, type Brain } from './brain';
 import {
   STEMS, BRANCHES, cyc, godOf, hiddenOf, stageOf, nayinOf, voidOf, gen, ctl, seasonState, type El, type God,
 } from './core';
@@ -108,7 +109,7 @@ export interface Analysis {
   season: number; monthEl: El;
   useful: { method: string; fav: El[]; unfav: El[]; why: string }[]; consensus: El[]; avoid: El[];
   gods: Record<string, number>; interactions: Interaction[]; stars: { name: string; pos: Pos[]; sense: string }[];
-  voids: number[];
+  voids: number[]; brain: Brain;
 }
 
 const CLASH = (a: number, b: number) => Math.abs(a - b) === 6;
@@ -210,7 +211,12 @@ export function analyze(c: Chart): Analysis {
   if (STEMS[dm].yang) push('Клинок Ян', [[3, -1, 6, -1, 6, -1, 9, -1, 0, -1][dm]], 'резкая сила, решимость, риск травм и ссор');
   const voids = voidOf(day.idx);
   push('Пустота', voids, 'столп «в пустоте» — его тема ощущается нереальной или приходит с задержкой');
-  return { dm, dmEl, scores, pct, support, ratio, strength, strengthKey, season, monthEl, useful, consensus, avoid, gods, interactions: I, stars, voids };
+  const base = { dm, dmEl, scores, pct, support, ratio, strength, strengthKey, season, monthEl, useful, consensus, avoid, gods, interactions: I, stars, voids } as Analysis;
+  // Полезные/вредные — по классике (brain.ts); расчёт трёх методов кода остаётся в useful для сравнения.
+  base.brain = brain(c, base);
+  base.consensus = [base.brain.yong, ...base.brain.xi];
+  base.avoid = base.brain.ji;
+  return base;
 }
 
 // Все варианты школ для одной даты.
