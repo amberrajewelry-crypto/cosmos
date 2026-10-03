@@ -12,6 +12,7 @@ import {
 } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
+import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -107,12 +108,15 @@ $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
   const input: BirthInput = { date: fd.value, time: fnt.checked ? '12:00' : ft.value || '12:00', timeKnown: !fnt.checked, tz: chosen.tz, lat: chosen.lat, lon: chosen.lon, male, place: lbl(chosen) };
   const q = new URLSearchParams({ d: input.date, t: input.timeKnown ? input.time : '-', p: `${chosen.lat},${chosen.lon},${chosen.tz},${lbl(chosen)}`, g: male ? 'm' : 'f' });
   history.replaceState(null, '', `?${q}`);
+  lastQuery = q.toString();
   msg.textContent = '';
   build(input);
 });
 
 // ——— Построение ———
 let current: { input: BirthInput; variant: Variant } | null = null;
+let lastQuery = '';
+const ME_KEY = 'bazi-me';
 function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   current = { input, variant };
   const variants = allVariants(input);
@@ -121,13 +125,14 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
     drawLinks(c, a);
     out.querySelectorAll<HTMLCanvasElement>('canvas.fxc').forEach((cv) => mountFx(cv, +cv.dataset.stem!));
     wire(c, a, charts);
+    wireDays(c, a);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -383,6 +388,54 @@ function secSchools(charts: { v: Variant; c: Chart; a: Analysis }[], active: Var
 }
 const sameV = (a: Variant, b: Variant) => a.zi === b.zi && a.solar === b.solar && a.south === b.south;
 
+// ——— Мои дни: календарь по карте ———
+const WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const dLabel = (d: DayInfo, wd = true) => { const [y, m, dd] = d.iso.split('-').map(Number); const w = new Date(y, m - 1, dd).getDay(); return `${dd} ${MON[m - 1]}${wd ? ', ' + WD[w] : ''}`; };
+const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], dd = +d.iso.slice(8);
+  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}"><b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSrc(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
+function dayCard(d: DayInfo, big = false) {
+  const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], m = BRANCHES[d.monthIdx % 12], ms = STEMS[d.monthIdx % 10];
+  return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
+    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru}</p>
+    <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
+    <p><b>Что делать:</b> ${d.act}.</p>
+    <p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>
+    ${d.notes.length ? `<p class="dnote">Осторожно: ${d.notes.map(esc).join('; ')}.</p>` : ''}
+    ${big ? `<p class="dhint">Месяц: ${EL[ms.el]} · ${m.animal} (${EL[m.el]}).</p>` : ''}
+  </div></div>`;
+}
+function secDays(c: Chart, a: Analysis) {
+  const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = daysFrom(c, a, start, 120), today = days[0];
+  const best = days.slice(0, 45).filter((d) => d.type === 'peak').slice(0, 8);
+  const pairs = showThenClose(days).slice(0, 5);
+  const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
+  const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
+  const fav = a.consensus.map((e) => EL[e]).join(' и '), bad = a.avoid.map((e) => EL[e]).join(' и ');
+  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни <span class="tag d">ТРАДИЦИЯ</span></h2></div>
+    <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav})${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
+    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
+    <h3 style="margin-top:26px">8 недель</h3>
+    <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный с ударом</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
+    <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
+    <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
+    ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
+    <div class="acts" style="margin-top:20px"><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить «Мою карту»' : 'Сохранить как мою карту'}</button><span class="dhint" id="savemsg"></span></div>
+  </section>`;
+}
+function wireDays(c: Chart, a: Analysis) {
+  const sel = document.getElementById('dsel'); if (!sel) return;
+  const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 56);
+  document.querySelectorAll<HTMLButtonElement>('.dc').forEach((b) => (b.onclick = () => {
+    document.querySelectorAll('.dc.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
+    const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
+    sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
+  }));
+  const sv = document.getElementById('saveme');
+  if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить «Мою карту»'; document.getElementById('melink')?.removeAttribute('hidden'); };
+}
+
 function secAsk() {
   return `<section class="block"><div class="bhead"><div><h2>Спросить карту</h2></div><p>Ответ строится только из вашего разбора выше — без выдуманных чисел.</p></div>
     <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Например: какая профессия мне подходит?" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
@@ -421,9 +474,13 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
 
 // ——— Старт: из адреса ———
 (() => {
-  const q = new URLSearchParams(location.search);
+  let q = new URLSearchParams(location.search);
+  const me = localStorage.getItem(ME_KEY);
+  if (me) document.getElementById('melink')?.removeAttribute('hidden');
+  if (q.has('me') && me) { q = new URLSearchParams(me); history.replaceState(null, '', `?${me}`); }
   const d = q.get('d'), p = q.get('p');
   if (!d || !p) return;
+  lastQuery = q.toString();
   const [lat, lon, tz, ...name] = p.split(',');
   const t = q.get('t') ?? '12:00';
   fd.value = d; ft.value = t === '-' ? '12:00' : t; fnt.checked = t === '-'; ft.disabled = fnt.checked; fp.value = name.join(',');
