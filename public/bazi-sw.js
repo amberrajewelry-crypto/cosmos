@@ -1,7 +1,7 @@
 // Service worker раздела /bazi/: офлайн-работа приложения «Бацзы».
 // Страница — сначала сеть, при отсутствии — кэш; ассеты с хэшем, шрифты, города — из кэша.
-const CACHE = 'bazi-v1';
-const CORE = ['/bazi/', '/cities.json', '/bazi.webmanifest', '/icons/bazi-192.png', '/icons/bazi-512.png', '/favicon.svg'];
+const CACHE = 'bazi-v2';
+const CORE = ['/bazi/', '/places/core.json', '/bazi.webmanifest', '/icons/bazi-192.png', '/icons/bazi-512.png', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
@@ -41,7 +41,15 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  if (/^\/(assets|fonts|icons)\//.test(url.pathname) || url.pathname === '/cities.json' || url.pathname === '/favicon.svg') {
+  // ядро базы мест: сначала сеть (в нём версия шардов), без сети — кэш
+  if (url.pathname === '/places/core.json') {
+    e.respondWith(fetch(req).then(async (res) => { if (res.ok) (await caches.open(CACHE)).put(req, res.clone()); return res; })
+      .catch(async () => (await caches.match(req)) || Response.error()));
+    return;
+  }
+
+  // хэшированные ассеты, шрифты, иконки, шарды базы мест (путь с версией) — из кэша
+  if (/^\/(assets|fonts|icons|places)\//.test(url.pathname) || url.pathname === '/favicon.svg') {
     e.respondWith((async () => {
       const hit = await caches.match(req);
       if (hit) return hit;

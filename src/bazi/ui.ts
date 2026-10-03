@@ -1,5 +1,5 @@
 import './bazi.css';
-import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
+import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
 import { canListen, listen } from '../ui/listen';
 import { parseSpokenBirth, matchSpokenPlace } from '../ui/voice-parse';
 import { ask } from '../live/ask';
@@ -68,11 +68,13 @@ const qi = (() => {
 let places: Place[] = [], chosen: Place | undefined;
 const fd = $<HTMLInputElement>('fd'), ft = $<HTMLInputElement>('ft'), fnt = $<HTMLInputElement>('fnt'), fp = $<HTMLInputElement>('fp'), fpl = $<HTMLUListElement>('fpl'), msg = $('fmsg');
 fp.addEventListener('focus', async () => { if (!places.length) places = await loadPlaces(); });
+let seq = 0;
 fp.addEventListener('input', async () => {
   chosen = undefined;
-  if (!places.length) places = await loadPlaces();
-  const hits = searchPlaces(places, fp.value, 8);
-  fpl.innerHTML = hits.map((p, i) => `<li data-i="${i}">${esc(placeLabel(p))}</li>`).join('');
+  const my = ++seq;
+  const hits = await findPlaces(fp.value, 10);
+  if (my !== seq) return; // пришёл ответ на старый ввод
+  fpl.innerHTML = hits.map((p, i) => `<li data-i="${i}"><b>${esc(p.ru || p.name)}${p.alias ? ` <i>(${esc(p.alias)})</i>` : ''}</b><small>${esc(placeDetail(p))}</small></li>`).join('');
   fpl.hidden = !hits.length;
   fpl.onclick = (e) => { const li = (e.target as HTMLElement).closest('li'); if (!li) return; chosen = hits[+li.dataset.i!]; fp.value = lbl(chosen); fpl.hidden = true; };
 });
@@ -101,7 +103,7 @@ if (canListen()) {
 $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!places.length) places = await loadPlaces();
-  if (!chosen) chosen = searchPlaces(places, fp.value, 1)[0];
+  if (!chosen) chosen = (await findPlaces(fp.value, 1))[0];
   if (!fd.value) { msg.textContent = 'Укажите дату рождения.'; return; }
   if (!chosen) { msg.textContent = 'Не нашёл такой город — начните вводить и выберите из списка.'; return; }
   fp.value = lbl(chosen);
