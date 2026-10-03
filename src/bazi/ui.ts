@@ -12,6 +12,7 @@ import {
 } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
+import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -156,7 +157,7 @@ function secWho(c: Chart, a: Analysis) {
     <div class="who-txt"><p class="eyebrow">Ваш Господин дня</p>
       <h2>${d.ru} — ${t.title.toLowerCase()}</h2>
       <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(' и ')}</p>
-      <p>${t.core}</p>
+      ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
@@ -324,33 +325,42 @@ function secLuck(c: Chart, a: Analysis) {
   }).join('');
   const yrs = Array.from({ length: 10 }, (_, k) => nowY - 1 + k).map((y) => {
     const i = yearIdx(y), r = luckReading(a, i), s = STEMS[i % 10], b = BRANCHES[i % 12];
-    return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text)}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
+    return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text + ' ' + luckDetail(c, a, i).join(' '))}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
   }).join('');
   const sel = cur >= 0 ? cur : 0, rd = luckReading(a, c.luck[sel].idx);
   return `<section class="block"><div class="bhead"><div><h2>Такты удачи <span class="tag d">ТРАДИЦИЯ</span></h2></div>
     <p>Десятилетия идут от столпа месяца ${c.forward ? 'вперёд' : 'назад'} по циклу из 60. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="luck">${cards}</div>
-    <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)}</div>
+    <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;
 }
+
+const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p>${n.quote || n.src ? `<p class="q">${n.quote ? `「${n.quote}」 ` : ''}${n.src ? `<span class="src">${esc(n.src)}</span>` : ''}</p>` : ''}</div>`;
 
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
   const stars = a.stars.map((s) => `<li><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, w]) => `<li><b>${GODS[k].ru}</b> · ${w.toFixed(1)} — ${GODS[k].sense}</li>`).join('');
-  void c;
-  return `<section class="block"><div class="bhead"><div><h2>Разбор <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Толкования — по классике («Ди тянь суй», «Цюн тун бао цзянь», «Цзы пин чжэнь цюань»), своими словами. Это язык самоанализа, а не приговор.</p></div>
+  const combos = comboNotes(c, a), bonds = bondNotes(c, a);
+  return `<section class="block"><div class="bhead"><div><h2>Разбор <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Каждый вывод — из фактов вашей карты и правил классики: цитата и источник под ним (ДТС — «Ди тянь суй», ЦПЦЦ — «Цзы пин чжэнь цюань», ЮХ — «Юань хай цзы пин», СМ — «Сань мин тун хуэй»). Где школы спорят — сказано. Это язык самоанализа, а не приговор.</p></div>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
-        <p>${t.core}</p><p><b>Дар:</b> ${t.gift}.</p><p><b>Тень:</b> ${t.shadow}.</p><p><b>Путь:</b> ${t.way}</p></div>
-      <div class="card pane"><h3>Что вас питает</h3>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
+        ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
+        <div class="note"><h4>В образах <span class="src">ЮХ, условно — ЦПЦЦ гл.1 образы стволов отвергает</span></h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
+      <div class="card pane"><h3>Ось и климат</h3>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
+        <h4 class="sub">Что вас питает (расчёт по трём методам)</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
-      <div class="card pane"><h3>10 божеств: профиль · ${gp.top.join(' · ')}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul></div>
+      <div class="card pane"><h3>10 божеств: профиль · ${gp.top.join(' · ')}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
+        ${godNatureNotes(a).map(noteHtml).join('')}
+        <h4 class="sub">Классические формулы в стволах</h4>${combos.length ? combos.map(noteHtml).join('') : '<p>Ни одна из классических формул (官印相生, 食神制杀, 伤官见官…) в стволах не сложилась — карта читается по оси и силе.</p>'}</div>
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
+        ${bonds.map(noteHtml).join('')}
+        <p class="q"><span class="src">刑/害 показываются, но веса не имеют — «刑害不足論» (Жэнь); снятие: союз снимает удар (ЦПЦЦ гл.7)</span></p>
         ${stars ? `<h3 style="margin-top:18px">Звёзды-символы</h3><ul class="list">${stars}</ul>` : ''}</div>
     </div></section>`;
 }
+
 const INTER_SENSE: Record<string, string> = {
   clash: 'разрыв и движение: переезды, смена работы или отношений в сферах этих столпов',
   six: 'тайный союз и притяжение — поддержка, которая приходит через людей',
@@ -451,7 +461,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   document.querySelectorAll<HTMLButtonElement>('.lk').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.lk.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
     const l = c.luck[+b.dataset.i!], r = luckReading(a, l.idx);
-    lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет.</b> ${esc(r.text)}`;
+    lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет.</b> ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
   }));
   document.querySelectorAll<HTMLButtonElement>('.vt button[data-v]').forEach((b) => (b.onclick = () => {
     sessionStorage.setItem('bazi-scrolled', '1');
@@ -459,7 +469,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     document.querySelector('.vt')?.scrollIntoView({ block: 'center' });
     sessionStorage.removeItem('bazi-scrolled');
   }));
-  const ctx = chartSummary(c, a) + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + DM_TEXT[a.dm].core + ' ' + DM_TEXT[a.dm].way;
+  const notes = [natureNote(a), strengthNote(c, a), axisNote(c, a), climateNote(c, a), ...comboNotes(c, a), ...bondNotes(c, a)];
+  const ctx = chartSummary(c, a) + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
   document.getElementById('askf')!.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;
