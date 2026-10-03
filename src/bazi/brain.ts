@@ -5,9 +5,12 @@ import { STEMS, BRANCHES, EL, GODS, godOf, stageOf, seasonState, type El } from 
 import { rootOf, TIAOHOU } from './reading';
 import type { Analysis, Chart } from './calc';
 
+export const STRENGTH_RU = (score: number) =>
+  score <= -6 ? 'крайне слабый' : score <= -3 ? 'слабый' : score <= -1 ? 'слегка слабый' : score <= 2 ? 'на грани' : score <= 5 ? 'слегка сильный' : score <= 8 ? 'сильный' : 'крайне сильный';
+
 export interface Step { title: string; text: string; src: string }
 export interface Brain {
-  frame: { kind: 'normal' | 'follow' | 'vibrant' | 'transform'; name: string; zh: string };
+  frame: { kind: 'normal' | 'follow' | 'vibrant' | 'transform' | 'two' | 'hidden'; name: string; zh: string };
   power: { score: number; key: 'weak' | 'balanced' | 'strong'; ru: string };
   yong: El; xi: El[]; ji: El[]; steps: Step[];
 }
@@ -36,7 +39,7 @@ export function brain(c: Chart, a: Analysis): Brain {
   // ponytail: линейная сумма баллов с порогами 3 / −1 — грубая шкала; уточнять по сверке карт.
   const score = friend + resSup - against;
   const key = score >= 3 ? 'strong' : score <= -1 ? 'weak' : 'balanced';
-  const ru = { strong: 'сильный', weak: 'слабый', balanced: 'на грани' }[key];
+  const ru = STRENGTH_RU(score);
   steps.push({ title: 'Сила', src: 'ЦПЦЦ гл.3, гл.6; ДТС 衰旺; 命理约言 卷一 看日主法',
     text: `Сезон: ${['процветает', 'крепнет', 'отдыхает', 'заперт', 'мёртв'][season]}; корни в ветвях: ${roots || 'нет'}; опора своих ${friend}, Печати ${resSup}, против ${against} → ${ru} (${score > 0 ? '+' : ''}${score}).` });
 
@@ -76,6 +79,29 @@ export function brain(c: Chart, a: Analysis): Brain {
         text: `Господин в союзе с соседним стволом ${STEMS[p.stem].zh}, месяц — стихия союза, соперника и разрушителя нет: «先观月气，乃化神根本之乡». Полезны ${EL[hua]} и то, что её питает; вредно то, что её бьёт.` });
       return done({ kind: 'transform', name: `Превращение в ${EL[hua]}`, zh: '化气格' }, hua, [((hua + 4) % 5) as El], [((hua + 3) % 5) as El, d]);
     }
+  }
+
+  // Две стихии (两神成象): ровно две стихии, по два ствола и две ветви (главный ци) у каждой.
+  const els = [...P.map((p) => elOf(p.stem)), ...P.map((p) => elOf(BRANCHES[p.branch].hidden[0]))];
+  const kinds = [...new Set(els)] as El[];
+  if (kinds.length === 2 && kinds.every((e) => P.filter((p) => elOf(p.stem) === e).length === 2 && P.filter((p) => elOf(BRANCHES[p.branch].hidden[0]) === e).length === 2)) {
+    const [x, y] = kinds, born = (x + 1) % 5 === y || (y + 1) % 5 === x;
+    const boss = (x + 2) % 5 === y ? x : y;  // кто бьёт (для пары удара)
+    const ji = born ? [((x + 3) % 5) as El, ((y + 3) % 5) as El] : [((boss + 3) % 5) as El];
+    steps.push({ title: `Две стихии (两神成象): ${EL[x]} и ${EL[y]}`, src: '命理约言 卷一 看两神成象法, 卷二 两神成象赋',
+      text: `Карта из двух стихий поровну — «${born ? '相生' : '相成'}». Полезны обе; вредно то, что вмешивается${born ? ' и бьёт любую из них' : ', — то, что бьёт сильную сторону'}: «一路澄清，必位高而禄厚；中途混乱，恐职夺而家倾».` });
+    return done({ kind: 'two', name: `Две стихии: ${EL[x]} и ${EL[y]}`, zh: '两神成象格' }, x, [y], ji);
+  }
+  // 暗冲/暗合: ветвь дня повторена 3–4 раза, Чиновника нет — он «вызывается» ударом или союзом.
+  const dayP = P.find((p) => p.pos === 'day')!, dayName = STEMS[dayP.stem].zh + BRANCHES[dayP.branch].zh;
+  const HID: Record<string, [string, number]> = { 丙午: ['冲', 0], 丁巳: ['冲', 11], 庚子: ['冲', 6], 壬子: ['冲', 6], 辛亥: ['冲', 5], 癸亥: ['冲', 5],
+    甲辰: ['合', 9], 戊戌: ['合', 3], 癸卯: ['合', 10], 癸酉: ['合', 4] };
+  const hd = HID[dayName];
+  const officerAnywhere = P.some((p) => elOf(p.stem) === officer || BRANCHES[p.branch].hidden.some((h) => elOf(h) === officer && godOf(dm, h).key === 'ZG'));
+  if (hd && branches.filter((x) => x === dayP.branch).length >= 3 && !branches.includes(hd[1]) && !officerAnywhere) {
+    steps.push({ title: `Скрытый ${hd[0] === '冲' ? 'удар' : 'союз'} (暗${hd[0]}格)`, src: '命理约言 卷一 看暗冲法/看暗合法, 卷二 暗冲暗合赋',
+      text: `Ветвь дня ${BRANCHES[dayP.branch].zh} повторена ${branches.filter((x) => x === dayP.branch).length} раза, Чиновника нет — он «вызывается» из ${BRANCHES[hd[1]].zh}. Полезны Чиновник «в пустоте» и Богатство; вредно «填实»: сам знак ${BRANCHES[hd[1]].zh} или Чиновник в такте и годе.` });
+    return done({ kind: 'hidden', name: `Скрытый ${hd[0] === '冲' ? 'удар' : 'союз'}`, zh: `暗${hd[0]}格` }, wealth, [d], [officer, out]);
   }
 
   // 3. Обычная структура: бог ветви месяца, проступивший в стволах (ЦПЦЦ гл.8, гл.10).
@@ -135,12 +161,34 @@ export function brain(c: Chart, a: Analysis): Brain {
 
 /** Такт или год целиком: ствол и ветвь вместе, «上下俱喜则十年全吉…一喜一忌则吉凶参半»; кто кого бьёт, тот весит больше
  *  («上克下者，上之力胜于下») — 命理约言 卷一 看运法, 卷二 行运赋. */
-export function periodVerdict(b: Brain, idx: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
-  const se = STEMS[idx % 10].el, be = BRANCHES[idx % 12].el;
+export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
+  let se: El = STEMS[idx % 10].el;
+  const be = BRANCHES[idx % 12].el;
   const v = (e: El) => (e === b.yong ? 2 : b.xi.includes(e) ? 1 : b.ji.includes(e) ? -1.5 : 0);
-  let s = v(se), r = v(be);
+  // Союз ствола периода со стволом натала (命理约言 干合论; ЦПЦЦ гл.5): связанный ствол «贪合» — работает вполсилы;
+  // если ветвь месяца карты — стихия союза, он превращается (丙辛 зимой → Вода; ДТС «丙辛生於冬月»).
+  let bond = '', k = 1;
+  if (c) {
+    const st = idx % 10, month = c.pillars.find((p) => p.pos === 'month')!;
+    const order = [...c.pillars].sort((x, y) => (y.pos === 'day' ? 1 : 0) - (x.pos === 'day' ? 1 : 0));
+    for (const p of order) {
+      const pair = COMBO.find(([x, y]) => (x === st && y === p.stem) || (y === st && x === p.stem));
+      if (!pair) continue;
+      if (p.pos === 'day') { bond = ` Ствол ${STEMS[st].zh} в союзе с господином дня — «合必日之正配…正喜相逢» (流年赋), сам по себе не вред`; break; }
+      // На собственном сильном корне (禄/刃/长生) ствол не превращается, только связан (ЦПЦЦ гл.5 «合而不化»).
+      if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].zh} связан с натальным ${STEMS[p.stem].zh} и превращается: работает как ${EL[pair[2]]} (месяц карты — эта стихия)`; }
+      else { k = 0.5; bond = ` ${STEMS[st].zh} связан с натальным ${STEMS[p.stem].zh} — «贪合», действует вполсилы`; }
+      break;
+    }
+  }
+  let s = v(se) * k, r = v(be);
   if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
   const t = s + r;
+  const res0 = verdictOf(s, r, t);
+  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') };
+}
+
+function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   if (s > 0 && r > 0) return { tone: 'good', text: 'ствол и ветвь оба полезны — период хорош целиком' };
   if (s < 0 && r < 0) return { tone: 'bad', text: 'ствол и ветвь оба вредны — период тяжёлый целиком' };
   if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одно полезно, другое вредно — «吉凶参半»; перевешивает ${Math.abs(s) > Math.abs(r) ? 'ствол' : 'ветвь'}` };

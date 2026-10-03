@@ -24,3 +24,25 @@ describe("мозг: структура и полезный бог по клас�
     }
   });
 });
+
+import { periodVerdict } from "../src/bazi/brain";
+import { yearIdx } from "../src/bazi/calc";
+describe("такт и год с союзами натала", () => {
+  const c = computeChart({ date: "1991-11-10", time: "00:37", timeKnown: true, tz: "Asia/Tbilisi", lat: 42.27, lon: 42.7, male: true }, DEFAULT_VARIANT);
+  const b = analyze(c).brain;
+  it("2026 丙午: 丙 на своём корне 午 не превращается, только связан с 辛 — год хороший", () => {
+    const v = periodVerdict(b, yearIdx(2026), c);
+    expect(v.tone).toBe("good"); expect(v.text).toMatch(/贪合/);
+  });
+  it("такт 丙申: 丙 без корня, месяц 亥 — 丙辛 работает как Вода, такт тяжёлый", () => {
+    const l = c.luck.find((x) => x.idx % 10 === 2 && x.idx % 12 === 8)!;
+    const v = periodVerdict(b, l.idx, c);
+    expect(v.tone).toBe("bad"); expect(v.text).toMatch(/Вода/);
+  });
+  it("2029 己: союз с господином дня — не вред", () => {
+    expect(periodVerdict(b, yearIdx(2029), c).text).toMatch(/господином дня/);
+  });
+  it("сила Владимира по шкале классики — «слегка сильный», как в my-chart.md", () => {
+    expect(analyze(c).strength).toBe("слегка сильный");
+  });
+});

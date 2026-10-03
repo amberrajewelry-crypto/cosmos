@@ -216,6 +216,10 @@ export function analyze(c: Chart): Analysis {
   base.brain = brain(c, base);
   base.consensus = [base.brain.yong, ...base.brain.xi];
   base.avoid = base.brain.ji;
+  // Сила — по шкале классики (сезон + корни + стволы), её же показывают все разделы; ratio остаётся для шкалы «опора %».
+  const sc = base.brain.power.score;
+  base.strength = base.brain.power.ru;
+  base.strengthKey = sc <= -6 ? 'vweak' : sc <= -3 ? 'weak' : sc <= 0 ? 'sweak' : sc <= 5 ? 'sstrong' : sc <= 8 ? 'strong' : 'vstrong';
   return base;
 }
 
