@@ -426,6 +426,7 @@
         .card { flex: 0 0 82vw; scroll-snap-align: center; }
         .ph-note { flex: 0 0 calc(100vw - 40px); margin: 0; }
       }
+      #menu a.flag { color: var(--gold, #c9a85c); }
     </style>
       <script>
       // Без WebGL сцена не запустится — вместо пустого экрана честное объяснение и рабочий путь к карте по дате.
@@ -446,6 +447,7 @@
       <a class="brand" href="/">Астроанализ</a>
       <button id="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
       <div id="menu" class="links">
+        <a href="/bazi/" class="flag">Бацзы</a>
         <a href="/karta/">Астропроцессор</a>
         <a id="natalHub" href="/natalnaya-karta/"><span class="eb-more">По </span>дате</a>
         <button id="openPanel" type="button">Параметры</button>

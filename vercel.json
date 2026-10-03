@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/bazi/",
+      "destination": "/bazi.html"
+    },
+    {
+      "source": "/bazi",
+      "destination": "/bazi.html"
+    },
+    {
       "source": "/karta/",
       "destination": "/karta.html"
     },
@@ -38,6 +46,43 @@
       "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele",
       "destination": "/natalnaya-karta/znak/:znak/",
       "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/bazi-sw.js",
+      "headers": [
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/bazi/"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/bazi.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    },
+    {
+      "source": "/places/:ver([0-9a-f]{8})/:file",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 }
