@@ -493,3 +493,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   sessionStorage.removeItem('bazi-scrolled');
 })();
 void [SEASON_STATE];
+
+// Приложение (PWA): офлайн-кэш раздела /bazi/; в dev не регистрируем.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  addEventListener('load', () => { navigator.serviceWorker.register('/bazi-sw.js', { scope: '/bazi/' }).catch(() => {}); });
+}
