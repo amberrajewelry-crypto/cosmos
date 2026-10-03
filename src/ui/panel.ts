@@ -11,7 +11,7 @@ export function wrongNumberMailto(v: Value): string {
     `Источник: ${v.source} · рассчитано: ${new Date(v.computedAt).toISOString()}`,
     '', 'Что показывает эталон и какой (ссылка):', '',
   ].join('\n');
-  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('COSMOS: число неверно — ' + v.id)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('АСТРОАНАЛИЗ: число неверно — ' + v.id)}&body=${encodeURIComponent(body)}`;
 }
 
 // Единица контента — карточка параметра (§2.5). Фактура кодирует тег (§4.4), НЕ цвет (§3.10).

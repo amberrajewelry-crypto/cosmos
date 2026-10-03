@@ -34,6 +34,26 @@ export function zodiacLines(cat: StarCatalog, year: number): Array<Array<[number
   return out;
 }
 
+// Подписи 13 созвездий: русское имя + средняя эклиптическая долгота их звёзд (с учётом перехода через 0°).
+export function zodiacLabels(cat: StarCatalog, year: number): Array<[name: string, lon: number]> {
+  const byHip = new Map(cat.stars.map((s) => [s[0], s]));
+  const out: Array<[string, number]> = [];
+  for (const ab of ZODIAC13) {
+    const c = cat.constellations[ab]; if (!c) continue;
+    const hips = [...new Set(c.lines.flat())];
+    let x = 0, y = 0, n = 0;
+    for (const h of hips) { const st = byHip.get(h); if (!st) continue; const [lon] = toEcliptic(st[1], st[2], year); x += Math.cos((lon * Math.PI) / 180); y += Math.sin((lon * Math.PI) / 180); n++; }
+    if (n) out.push([c.ru, ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360]);
+  }
+  // Соседи ближе 14° (Скорпион/Змееносец) раздвигаются симметрично, чтобы подписи не легли друг на друга.
+  out.sort((a, b) => a[1] - b[1]);
+  for (let k = 0; k < 3; k++) for (let i = 0; i < out.length; i++) {
+    const j = (i + 1) % out.length; const gap = ((out[j][1] - out[i][1] + 360) % 360);
+    if (gap < 14) { const push = (14 - gap) / 2; out[i][1] = (out[i][1] - push + 360) % 360; out[j][1] = (out[j][1] + push) % 360; }
+  }
+  return out;
+}
+
 const LY_PER_MAS = 3261.56;
 // Именованная звезда, чей свет вышел ближе всего к возрасту (лет). Параллакс → расстояние.
 export function nearestLightStar(cat: StarCatalog, ageYears: number): { name: string; ly: number } | null {

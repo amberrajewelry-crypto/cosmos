@@ -1,4 +1,4 @@
-import { loadPlaces, searchPlaces, placeLabel, type Place } from '../data/places';
+import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
 import { localToUtc } from '../compute/localtime';
 
 // Форма момента рождения: дата + местное время + город (база в браузере, §3.7) → UTC-момент, координаты, ссылка шеринга (§2.1).
@@ -15,9 +15,10 @@ export function initBirthForm() {
   const placeHint = document.getElementById('placeHint') as HTMLElement;
 
   // Подсказки по префиксу, выбор → координаты + зона.
-  let places: Place[] = [], shown: Place[] = [], sel = -1;
+  let shown: Place[] = [], sel = -1, seq = 0;
+  const esc = (x: string): string => x.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
   const showPlaces = (items: Place[]): void => {
-    placeList.innerHTML = items.map((p, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${placeLabel(p)}<small>${p.tz}</small></li>`).join('');
+    placeList.innerHTML = items.map((p, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${esc(p.ru || p.name)}${p.alias ? ` (${esc(p.alias)})` : ''}<small>${esc(placeDetail(p))}</small></li>`).join('');
     placeList.hidden = items.length === 0;
   };
   const pickPlace = (p: Place): void => {
@@ -25,11 +26,13 @@ export function initBirthForm() {
     placeList.hidden = true; sel = -1;
     placeHint.textContent = `время — местное (${p.tz}); координаты остаются в браузере`;
   };
-  birthPlace.addEventListener('focus', () => { loadPlaces().then((p) => { places = p; }); });
+  birthPlace.addEventListener('focus', () => { void loadPlaces(); });
   birthPlace.addEventListener('input', async () => {
     birthTz.value = ''; birthLat.value = ''; birthLon.value = '';
-    if (!places.length) places = await loadPlaces();
-    sel = -1; shown = searchPlaces(places, birthPlace.value); showPlaces(shown);
+    const my = ++seq;
+    const hits = await findPlaces(birthPlace.value, 10);
+    if (my !== seq) return;
+    sel = -1; shown = hits; showPlaces(shown);
   });
   birthPlace.addEventListener('keydown', (e) => {
     if (placeList.hidden) return;
@@ -78,5 +81,12 @@ export function initBirthForm() {
     }
     return true;
   };
-  return { birth, moment, link, inputsText, applyQuery };
+  // Голосовой ввод (ui/talk.ts): те же поля, что заполняет человек, — дальше всё как при ручном вводе.
+  const fill = (s: { date?: string; time?: string; place?: Place }): void => {
+    if (s.date) birth.value = s.date;
+    if (s.time) { birthTime.value = s.time; (document.getElementById('natalMore') as HTMLDetailsElement | null)?.setAttribute('open', ''); }
+    if (s.place) pickPlace(s.place);
+    birth.dispatchEvent(new Event('input'));
+  };
+  return { birth, moment, link, inputsText, applyQuery, fill };
 }
