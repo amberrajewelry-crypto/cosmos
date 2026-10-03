@@ -3,18 +3,18 @@ import { computeChart, analyze, DEFAULT_VARIANT } from "../src/bazi/calc";
 const run = (date: string, time: string, male = true) => analyze(computeChart({ date, time, timeKnown: true, tz: "Asia/Tbilisi", lat: 41.7, lon: 44.8, male }, DEFAULT_VARIANT)).brain;
 
 describe("мозг: структура и полезный бог по классике", () => {
-  it("甲 в 亥, Огня 3%: 用 Огонь (调候), 喜 Земля, 忌 Вода и Дерево — как my-chart.md", () => {
+  it("甲 в 亥, Огня 3%: 用 Земля (проступившее Богатство), 喜 Огонь (调候) и Металл, 忌 Вода и Дерево", () => {
     const b = run("1991-11-10", "00:37");
-    expect([b.yong, ...b.xi]).toEqual([1, 2]);
+    expect([b.yong, ...b.xi]).toEqual([2, 1, 3]);
     expect(b.ji).toEqual([4, 0]);
     expect(b.frame.zh).toBe("偏印格");
     expect(b.steps.map((s) => s.title).join()).toMatch(/调候/);
   });
-  it("乙 в 卯 с Богатством: 建禄格, сильный, 用 Металл (Чиновник), Дерево — болезнь", () => {
+  it("乙 в 卯 с Богатством: 建禄格, сильный, 用 Земля (禄劫用财), 喜 Огонь (食伤), Дерево — болезнь", () => {
     const b = run("1975-03-20", "15:30", false);
     expect(b.frame.zh).toBe("建禄格");
     expect(b.power.key).toBe("strong");
-    expect(b.yong).toBe(3);
+    expect(b.yong).toBe(2); expect(b.xi).toContain(1);
     expect(b.steps.some((s) => s.title.includes("病药"))).toBe(true);
   });
   it("летом Вода и зимой Огонь никогда не во вреде", () => {
@@ -62,5 +62,18 @@ describe("сила на грани: 用神 решает такт (朱祖夏 гл
   });
   it("у Владимира (слегка сильный) второго набора нет", () => {
     expect(run("1991-11-10", "00:37").alt).toBeUndefined();
+  });
+});
+
+import masters from "./fixtures/bazi-masters.json";
+describe("сверка с мастерами (任铁樵, 徐乐吾, 朱祖夏, 韦千里, 戴永长)", () => {
+  it("用神 совпадает не реже 40% (случайно 20%; правило до 03.10 — 29%)", () => {
+    const G = "甲乙丙丁戊己庚辛壬癸", Z = "子丑寅卯辰巳午未申酉戌亥";
+    const pil = (s: string, pos: string) => { const stem = G.indexOf(s[0]), branch = Z.indexOf(s[1]); return { pos, stem, branch, idx: [...Array(60).keys()].find((i) => i % 10 === stem && i % 12 === branch)! }; };
+    const hit = (masters as { pillars: string[]; yong: number }[]).filter((c) => {
+      const ch = { pillars: [pil(c.pillars[3], "hour"), pil(c.pillars[2], "day"), pil(c.pillars[1], "month"), pil(c.pillars[0], "year")], luck: [] } as never;
+      return analyze(ch).brain.yong === c.yong;
+    }).length;
+    expect(hit / masters.length).toBeGreaterThanOrEqual(0.4);
   });
 });
