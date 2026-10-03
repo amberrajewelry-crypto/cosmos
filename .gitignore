@@ -31,3 +31,30 @@ public/sitemap-natal.xml
 .gindex.json
 api/nebo.mjs
 test-results/
+
+# генерируется scripts/gen-pages.mjs
+public/sitemap-pages.xml
+public/retrogradnyj-merkurij/
+public/znaki-zodiaka-po-datam/
+public/ekliptika/
+public/precessiya/
+public/zodiakalnye-sozvezdiya/
+public/nebo-v-den-rozhdeniya/
+public/kakoe-sozvezdie-v-den-rozhdeniya/
+public/polozhenie-planet-v-den-rozhdeniya/
+public/zodiak-smestilsya/
+public/novolunie-oktyabr-2026/
+public/polnolunie-oktyabr-2026/
+public/magnitnye-buri-oktyabr-2026/
+public/o-proekte/
+public/kontakty/
+public/politika/
+public/sinastriya/
+public/tranzity/
+public/solyar/
+public/kosmogramma/
+public/direkcii/
+karta.html
+
+# база мест собирается при сборке из data/places.tsv.gz (scripts/gen-places.mjs)
+public/places/

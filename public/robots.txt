@@ -4,3 +4,5 @@ Allow: /
 Sitemap: https://cosmos-alpha-three.vercel.app/sitemap-natal.xml
 
 Sitemap: https://cosmos-alpha-three.vercel.app/sitemap-nebo.xml
+
+Sitemap: https://cosmos-alpha-three.vercel.app/sitemap-pages.xml
