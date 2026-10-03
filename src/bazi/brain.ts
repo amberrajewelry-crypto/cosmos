@@ -50,12 +50,14 @@ export function brain(c: Chart, a: Analysis): Brain {
 
   // 2. Внешние структуры (命理约言 卷二 从局赋 / 化局赋 / 一行得气赋).
   const helpStems = vis.some((p) => elOf(p.stem) === d || elOf(p.stem) === res);
-  if (roots === 0 && !helpStems && season >= 2) {
+  // 五阳从气不从势，五阴从势无情义 (ДТС; 徐乐吾 评注 гл.1): инь-ствол следует и при одном лёгком корне.
+  const rootCap = STEMS[dm].yang ? 0 : 1;
+  if (roots <= rootCap && !helpStems && season >= 2) {
     const dom = [out, wealth, officer].sort((x, y) => a.scores[y] - a.scores[x])[0];
     if (a.scores[res] < a.scores[dom]) {
       const g = dom === out ? 'Выражение' : dom === wealth ? 'Богатство' : 'Власть';
       steps.push({ title: `Следование за ${g} (从格)`, src: '命理约言 卷二 从局赋; ДТС 从象',
-        text: `Корней нет, поддержки в стволах нет — «日主无根…舍弱以从强». Полезно то, за чем следуем, и что его питает; вредны Печать и «свои»: «已弃之命，逢根即属不祥».` });
+        text: `${roots ? 'Корень один и лёгкий, ствол инь — «五阴从势无情义»' : 'Корней нет'}, поддержки в стволах нет — «日主无根…舍弱以从强». Полезно то, за чем следуем, и что его питает; вредны Печать и «свои»: «已弃之命，逢根即属不祥».` });
       return done({ kind: 'follow', name: `Следование за ${g}`, zh: '从格' }, dom, dom === wealth ? [out, officer] : [wealth], [res, d]);
     }
     steps.push({ title: 'Следования нет', src: '命理约言 卷二 从局赋', text: 'Корней нет, но Печати много — «印多则无从理»: остаёмся в обычной структуре.' });

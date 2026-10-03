@@ -45,4 +45,9 @@ describe("такт и год с союзами натала", () => {
   it("сила Владимира по шкале классики — «слегка сильный», как в my-chart.md", () => {
     expect(analyze(c).strength).toBe("слегка сильный");
   });
+  it("инь-ствол с одним лёгким корнем следует (五阴从势, ДТС; 徐乐吾)", () => {
+    const b = run("1950-12-18", "02:00");
+    expect(b.frame.kind).toBe("follow");
+    expect(b.steps.some((s) => s.text.includes("五阴"))).toBe(true);
+  });
 });
