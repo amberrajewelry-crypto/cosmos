@@ -132,3 +132,17 @@ export function brain(c: Chart, a: Analysis): Brain {
   }
   return done(frame, yong, xi, ji);
 }
+
+/** Такт или год целиком: ствол и ветвь вместе, «上下俱喜则十年全吉…一喜一忌则吉凶参半»; кто кого бьёт, тот весит больше
+ *  («上克下者，上之力胜于下») — 命理约言 卷一 看运法, 卷二 行运赋. */
+export function periodVerdict(b: Brain, idx: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
+  const se = STEMS[idx % 10].el, be = BRANCHES[idx % 12].el;
+  const v = (e: El) => (e === b.yong ? 2 : b.xi.includes(e) ? 1 : b.ji.includes(e) ? -1.5 : 0);
+  let s = v(se), r = v(be);
+  if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
+  const t = s + r;
+  if (s > 0 && r > 0) return { tone: 'good', text: 'ствол и ветвь оба полезны — период хорош целиком' };
+  if (s < 0 && r < 0) return { tone: 'bad', text: 'ствол и ветвь оба вредны — период тяжёлый целиком' };
+  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одно полезно, другое вредно — «吉凶参半»; перевешивает ${Math.abs(s) > Math.abs(r) ? 'ствол' : 'ветвь'}` };
+  return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'нейтрально' };
+}
