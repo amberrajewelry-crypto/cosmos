@@ -3,6 +3,7 @@ import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../
 import { canListen, listen } from '../ui/listen';
 import { parseSpokenBirth, matchSpokenPlace } from '../ui/voice-parse';
 import { ask } from '../live/ask';
+import { track, sendFeedback } from '../live/feedback';
 import {
   STEMS, BRANCHES, EL, EL_RGB, EL_COLOR, GODS, godOf, hiddenOf, stageOf, STAGES, nayinOf, TERMS, SEASON_STATE, type El,
 } from './core';
@@ -86,6 +87,13 @@ fp.addEventListener('input', async () => {
 });
 fp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !fpl.hidden) { e.preventDefault(); (fpl.firstElementChild as HTMLElement)?.click(); } });
 document.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('.place')) fpl.hidden = true; });
+const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme', 'ms-go']);
+document.addEventListener('click', (e) => {
+  const t = e.target as HTMLElement, b = t.closest<HTMLElement>('button[id]'), sm = t.closest('summary');
+  if (b && TRACKED.has(b.id)) track(`bazi:${b.id}`);
+  if (sm) track(`bazi:open:${sm.closest('section')?.querySelector('h2')?.textContent?.slice(0, 24) ?? '?'}`);
+});
+document.addEventListener('submit', (e) => { const id = (e.target as HTMLElement).id; if (id === 'askf' || id === 'cf') track(`bazi:${id}`); });
 fnt.addEventListener('change', () => (ft.disabled = fnt.checked));
 
 const voiceBtn = $<HTMLButtonElement>('voice');
@@ -147,7 +155,8 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secMasters(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secMasters(), secFeedback(), secHonest()].join('');
+  track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -579,6 +588,11 @@ function secAsk() {
   return `<section class="block"><div class="bhead"><div><h2>Спросить карту</h2></div><p>Ответ строится только из вашего разбора выше — без выдуманных чисел.</p></div>
     <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Например: какая профессия мне подходит?" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
 }
+function secFeedback() {
+  return `<section class="block" id="s-fb"><div class="bhead"><div><h2>Разбор попал?</h2></div><p>Нам важно, где непонятно или мимо — читаем каждое сообщение. Дата рождения не отправляется.</p></div>
+    <div class="card pane"><div class="acts dacts" id="fbv"><button class="ghost" type="button" data-ok="1">Да, узнаю себя</button><button class="ghost" type="button" data-ok="0">Скорее мимо</button></div>
+    <form class="askf" id="fbf"><input id="fbq" maxlength="1500" placeholder="Что было непонятно или неточно?" aria-label="Что было непонятно или неточно" /><button class="go" type="submit">Отправить</button></form><div class="ans" id="fbmsg"></div></div></section>`;
+}
 function secHonest() {
   return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы <span class="tag n">НАУКА</span></h3>
     <p>Календарная часть — точная астрономия: моменты сезонов по долготе Солнца (astronomy-engine), истинное солнечное время по долготе места и уравнению времени, 60-ричный цикл дней без пропусков с древности.</p>
@@ -609,6 +623,19 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     ans.textContent = 'Думаю над картой…';
     const r = await ask(`${q}\n(Отвечай как знаток Бацзы, опираясь на разбор карты.)`, [], ctx);
     ans.textContent = r.text;
+  });
+  const fbmsg = document.getElementById('fbmsg')!, thanks = (ok: boolean) => (fbmsg.textContent = ok ? 'Спасибо, получили.' : 'Не отправилось — попробуйте позже.');
+  document.querySelectorAll<HTMLButtonElement>('#fbv button').forEach((b) => (b.onclick = async () => {
+    document.querySelectorAll<HTMLButtonElement>('#fbv button').forEach((x) => (x.disabled = true));
+    thanks(await sendFeedback({ kind: 'clear', id: 'bazi', ok: b.dataset.ok === '1' }));
+  }));
+  document.getElementById('fbf')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = document.getElementById('fbq') as HTMLInputElement, text = q.value.trim();
+    if (!text) return;
+    const ok = await sendFeedback({ kind: 'note', text: `[бацзы] ${text}` });
+    if (ok) q.value = '';
+    thanks(ok);
   });
   let rt = 0;
   onresize = () => { clearTimeout(rt); rt = window.setTimeout(() => drawLinks(c, a, false), 150); };

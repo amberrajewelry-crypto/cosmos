@@ -57,6 +57,42 @@ const groupOf = (a: Analysis) => {
   return Object.entries(g).map(([k, w]) => [k, w / tot] as [string, number]).sort((x, y) => y[1] - x[1]);
 };
 
+// Сочетания богов (KB 05 §4, KB 06): срабатывают только при наличии обоих участников — отсюда разница между картами.
+type Combo = { sphere: string; title: string; text: string; quote: string; src: string };
+const SHENG = ['木賴水生，水多木漂', '火賴木生，木多火熾', '土賴火生，火多土焦', '金賴土生，土多金埋', '水賴金生，金多水濁'];
+export function combos(c: Chart, a: Analysis): Combo[] {
+  const w = (k: string) => a.gods[k] ?? 0, has = (k: string) => w(k) >= 0.8;
+  const shown = (k: string) => c.pillars.some((p) => p.pos !== 'day' && godOf(a.dm, p.stem).key === k);
+  const k = a.brain.power.key, r = rel(a), res = has('ZY') || has('PY'), wealth = has('ZC') || has('PC');
+  const month = P(c, 'month')!, out: Combo[] = [];
+  if (has('QS') && (has('SS') || has('SG')) && k !== 'weak') out.push({ sphere: 'career', title: 'Давление под контролем (食神制杀)', text: 'В карте есть и «Давление», и талант, который его обуздывает: жёсткие задачи, конкуренция, кризисы — ваша среда, мастерство превращает нажим в результат.', quote: '七煞喜食神以制伏', src: 'ЦПЦЦ гл.8 (KB 05 §4.4)' });
+  else if (has('QS') && k === 'weak' && !res) out.push({ sphere: 'career', title: 'Давления больше, чем сил', text: '«Давление» в карте тяжелее господина дня, а смягчить его нечем: постоянный прессинг вам вреден — выбирайте среду, где спрос за результат, а не за выносливость.', quote: '煞重身輕終身有損', src: 'СМ т.11 (KB 05 §4.4)' });
+  if (has('QS') && res) out.push({ sphere: 'career', title: 'Давление через знание (杀印相生)', text: 'Рядом с «Давлением» стоит Печать: нажим переплавляется в опыт, наставника, квалификацию. Вы растёте через трудные экзамены и строгих учителей.', quote: '衆煞混行一仁可化', src: 'СМ т.11, 六神篇 (KB 05 §4.9)' });
+  if (has('ZG') && has('ZY')) out.push({ sphere: 'career', title: 'Статус и образование заодно (官印相生)', text: 'Чиновник и Печать питают друг друга: дипломы, документы и репутация работают на должность — лестница в системе для вас рабочая.', quote: '官印雙全', src: 'ЦПЦЦ гл.9 (KB 05 §4.5)' });
+  if (shown('SG') && shown('ZG')) {
+    const metalWinter = a.dmEl === 3 && [11, 0, 1].includes(month.branch);
+    out.push(metalWinter
+      ? { sphere: 'career', title: 'Бунтарь рядом с начальником — на пользу', text: 'Обычно «Ранящий» и «Чиновник» в стволах — конфликт с правилами, но у Металла, рождённого зимой, Чиновник-Огонь греет: острый ум и критика ценятся системой.', quote: '金水見之，反爲秀氣', src: 'ЦПЦЦ гл.14 (KB 05 §4.1)' }
+      : { sphere: 'career', title: 'Бунтарь против начальника (伤官见官)', text: '«Ранящий» и «Чиновник» оба на виду: вы видите, где правила глупы, и говорите это вслух. Лучше своя зона ответственности или роль эксперта, чем прямое подчинение.', quote: '伤官见官，为祸百端', src: 'ЮХ, 论十神 (KB 05 §4.1)' });
+  }
+  if (has('SG') && res && !(shown('SG') && shown('ZG'))) out.push({ sphere: 'career', title: 'Яркость с опорой на знание', text: '«Ранящий» уравновешен Печатью: смелость мысли держится на глубоком знании — экспертиза, преподавание, авторская работа.', quote: '傷官佩印', src: 'ЦПЦЦ, 傷官格 (KB 06)' });
+  if (has('ZG') && has('QS') && shown('ZG') && shown('QS')) out.push({ sphere: 'career', title: 'Два стиля власти сразу (官煞混雜)', text: 'В стволах и «Статус», и «Давление»: вас тянет то к правилам, то к прорыву. Сильнее там, где выбрана одна линия.', quote: '取清則貴', src: 'ЦПЦЦ, 七煞格 (KB 05 §4.7)' });
+  if (has('SS') && wealth) out.push({ sphere: 'money', title: 'Талант кормит (食神生财)', text: 'Бог еды питает Богатство: спокойное мастерство, продукт и сервис ровно превращаются в доход — без рывков, зато надолго.', quote: '食神生財', src: 'ЮХ (KB 06)' });
+  else if (has('SG') && wealth) out.push({ sphere: 'money', title: 'Идея в деньги (伤官生财)', text: '«Ранящий» питает Богатство: деньги приносит смелая идея, своё дело, продажа себя — доход неровный, но крупнее среднего.', quote: '傷官生財', src: 'ЦПЦЦ, 傷官格 (KB 06)' });
+  if (wealth && !has('ZG') && !has('QS')) out.push({ sphere: 'money', title: 'Деньги без статуса (孤財不貴)', text: 'Богатство в карте есть, а Власти, что его оформляет, нет: доход получается, но должность и признание надо строить отдельно.', quote: '孤財不貴', src: 'ЦПЦЦ, 財格 (KB 05 §4.9)' });
+  if (has('PY') && has('SS') && !wealth) out.push({ sphere: 'character', title: 'Начать легко, закончить трудно (枭神夺食)', text: '«Интуиция» спорит с «Богом еды»: много начинаний и интересов, меньше доведённого до конца. Помогают сроки, заказчик и деньги как мерило.', quote: '好学艺而多学少成', src: 'ЮХ, 相心賦 (KB 05 §5)' });
+  if (a.pct[r.res] >= 0.35) out.push({ sphere: 'character', title: 'Опеки больше, чем нужно', text: `Печати (${EL[r.res].toLowerCase()}, ${pc(a.pct[r.res])}) столько, что поддержка начинает душить: много советов и страховки, мало своего хода. Нужен выход — действие и результат.`, quote: SHENG[a.dmEl], src: 'ЮХ, 论五行生剋制化 (KB 05 §4.9)' });
+  const zc = w('ZC'), pcw = w('PC');
+  if (zc + pcw >= 0.8) out.push({ sphere: 'money', title: zc >= pcw ? 'Ваш тип денег — заработок' : 'Ваш тип денег — сделки', text: zc >= pcw ? 'Сильнее «Прямое богатство»: ваше — постоянный доход, накопление, понятная цена труда. Рискованные схемы дают меньше, чем кажется.' : 'Сильнее «Косвенное богатство»: ваше — проекты, сделки, оборот. Доход идёт волнами — держите резерв на тихие месяцы.', quote: '財喜根深，不宜太露', src: 'ЦПЦЦ гл.8' });
+  const [s1, s2] = c.input.male ? ['ZC', 'PC'] : ['ZG', 'QS'];
+  if (w(s1) + w(s2) >= 0.8) {
+    const t = w(s1) >= w(s2) ? s1 : s2;
+    const TYPE: Record<string, string> = { ZC: 'надёжный, хозяйственный человек, с которым строится быт', PC: 'яркий, щедрый, подвижный человек — с ним интересно, но нужен общий план', ZG: 'надёжный, правильный, с репутацией — опора и порядок', QS: 'сильный, решительный, ведущий — рядом с ним растёшь, но важно не потерять себя' };
+    out.push({ sphere: 'love', title: 'Ваш тип партнёра', text: `Сильнее «${GODS[t].ru}» — тянет к типу «${TYPE[t]}».`, quote: c.input.male ? '用神即是财神，妻美而且富贵' : '女命之夫星，即是用神', src: c.input.male ? 'ЦЛ (KB 12 §4)' : 'ДТС (KB 14 §2)' });
+  }
+  return out;
+}
+
 function character(c: Chart, a: Analysis): Sphere {
   const t = DM_TEXT[a.dm], k = a.brain.power.key;
   const top = groupOf(a)[0];
@@ -247,5 +283,9 @@ function family(c: Chart, a: Analysis): Sphere {
 }
 
 export function spheres(c: Chart, a: Analysis, now = new Date().getFullYear()): Sphere[] {
-  return [character(c, a), career(c, a, now), money(c, a, now), love(c, a, now), health(c, a), family(c, a)];
+  const cs = combos(c, a);
+  return [character(c, a), career(c, a, now), money(c, a, now), love(c, a, now), health(c, a), family(c, a)].map((x) => {
+    const mine = cs.filter((k) => k.sphere === x.key);
+    return mine.length ? { ...x, points: [...mine.map((k) => `${k.title}. ${k.text}`), ...x.points], notes: [...x.notes, ...mine.filter((k) => !x.notes.some((n) => n.quote === k.quote)).map((k) => ({ title: k.title, quote: k.quote, src: k.src, text: k.text }))] } : x;
+  });
 }
