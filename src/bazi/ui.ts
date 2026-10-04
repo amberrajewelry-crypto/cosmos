@@ -8,7 +8,7 @@ import {
   STEMS, BRANCHES, EL, EL_RGB, EL_COLOR, GODS, godOf, hiddenOf, stageOf, STAGES, nayinOf, TERMS, SEASON_STATE, type El,
 } from './core';
 import {
-  computeChart, analyze, allVariants, variantLabel, DEFAULT_VARIANT, POS_RU, POS_SENSE, yearIdx,
+  computeChart, analyze, allVariants, DEFAULT_VARIANT, POS_RU, POS_SENSE, yearIdx,
   type BirthInput, type Chart, type Analysis, type Variant, type Pos,
 } from './calc';
 import { mountFx, elIcon } from './fx';
@@ -17,13 +17,13 @@ import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes,
 import { spheres } from './spheres';
 import { compat } from './compat';
 import { daysIcs } from './ics';
-import { taiyuan, minggong, xiaoyun } from './oldschool';
-import { masterRows, BOOK_RU, type MasterRow } from './masters';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+// Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
+const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
+const esc = (s: string) => plain(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const rgb = (e: number) => EL_RGB[e];
 const pol = (yang: boolean) => (yang ? 'ян' : 'инь');
 const lbl = (p: Place) => (p.cc ? placeLabel(p) : p.ru);
@@ -87,7 +87,7 @@ fp.addEventListener('input', async () => {
 });
 fp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !fpl.hidden) { e.preventDefault(); (fpl.firstElementChild as HTMLElement)?.click(); } });
 document.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('.place')) fpl.hidden = true; });
-const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme', 'ms-go']);
+const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme']);
 document.addEventListener('click', (e) => {
   const t = e.target as HTMLElement, b = t.closest<HTMLElement>('button[id]'), sm = t.closest('summary');
   if (b && TRACKED.has(b.id)) track(`bazi:${b.id}`);
@@ -155,7 +155,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secMasters(), secFeedback(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
@@ -220,15 +220,10 @@ function secPillars(c: Chart, a: Analysis) {
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
   const eot = `${c.eotMin >= 0 ? '+' : '−'}${Math.abs(c.eotMin).toFixed(1)} мин`;
   return `<section class="block" id="s-pillars">
-    <div class="bhead"><div><h2>Четыре столпа <span class="tag t">ТОЧНО</span></h2></div>
+    <div class="bhead"><div><h2>Четыре столпа</h2></div>
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
     <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · расчётное время ${pad(L.h)}:${pad(L.min)} (${c.variant.solar ? `истинное солнечное, уравнение времени ${eot}` : 'поясное'})</p>
-    <details class="old"><summary>Старая школа (справочно): эмбрион, дворец судьбы, малые такты</summary>
-      <p>Школа Цзы пин («Цзы пин чжэнь цюань», «Ди тянь суй») этими столпами не пользуется, поэтому в разборе и прогнозе их нет. Их считала годовая школа («Сань мин тун хуэй», т.2) — даём для сверки с другими сайтами.</p>
-      <ul class="list"><li><b>Эмбрион 胎元</b> — ${pillarZh(taiyuan(c))} (${pillarRuHtml(taiyuan(c))}): ствол месяца +1, ветвь +3 — «胎月是四柱之根苗».</li>
-      <li><b>Дворец судьбы 命宫</b> — ${(() => { const m = minggong(c); return m === null ? 'нужен час рождения' : `${pillarZh(m)} (${pillarRuHtml(m)})`; })()}: «天轮转出地轮上，卯上分明是命宫».</li>
-      <li><b>Малые такты 小运</b> до первого большого (${c.startAge.toFixed(1)} лет): ${xiaoyun(c).map((x) => `${x.age}-й год — ${pillarZh(x.idx)}`).join(', ')}.</li></ul></details>
   </section>`;
 }
 
@@ -299,14 +294,14 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
   const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${u.fav.map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
-  return `<section class="block"><div class="bhead"><div><h2>Пять стихий <span class="tag d">ТРАДИЦИЯ</span></h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>
     <p>Стволы весят 1, ветви — по долям спрятанных стволов, ветвь месяца ×2 (сезон). Стрелки по кругу — порождение, пунктир внутри — подавление.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
       <div class="gauge"><h3>Сила Господина дня: ${a.strength}</h3>
         <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${a.ratio * 100}%"></div></div>
         <div class="lbl"><span>слабый</span><span>баланс</span><span>сильный</span></div>
-        <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Опора ${Math.round(a.ratio * 100)}% · в сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}. Рамка — разброс по всем школам (${Math.round(lo * 100)}–${Math.round(hi * 100)}%).</p></div>
+        <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Опора ${Math.round(a.ratio * 100)}% · в сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
       <div class="methods">${methods}</div>
@@ -337,7 +332,7 @@ function secSeason(c: Chart) {
   s += `<text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="14" fill="rgba(236,230,211,.6)">${term[1]}</text>`;
   s += `<text x="${cx}" y="${cy + 44}" text-anchor="middle" font-size="13" fill="#e2c47c">Солнце ${c.sunLon.toFixed(2)}°</text>`;
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
-  return `<section class="block"><div class="bhead"><div><h2>Сезон рождения <span class="tag t">ТОЧНО</span></h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Сезон рождения</h2></div>
     <p>Китайский год делится на 24 сезона по долготе Солнца. Месяц Бацзы начинается не с 1-го числа, а в момент «цзе» — когда Солнце проходит очередные 30°.</p></div>
     <div class="grid2"><div class="card pane"><svg class="ring" viewBox="0 0 460 460" role="img" aria-label="Кольцо 24 сезонов">${s}</svg></div>
     <div class="card pane"><div class="facts">
@@ -363,24 +358,24 @@ function secLuck(c: Chart, a: Analysis) {
     return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text + ' ' + luckDetail(c, a, i).join(' '))}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
   }).join('');
   const sel = cur >= 0 ? cur : 0, rd = luckReading(a, c.luck[sel].idx);
-  return `<section class="block"><div class="bhead"><div><h2>Такты удачи <span class="tag d">ТРАДИЦИЯ</span></h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>
     <p>Десятилетия идут от столпа месяца ${c.forward ? 'вперёд' : 'назад'} по циклу из 60. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="luck">${cards}</div>
     <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;
 }
 
-const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p>${n.quote || n.src ? `<p class="q">${n.quote ? `「${n.quote}」 ` : ''}${n.src ? `<span class="src">${esc(n.src)}</span>` : ''}</p>` : ''}</div>`;
+const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div>`;
 
 function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  const pill = (idx: number) => `${pillarZh(idx)} · ${BRANCHES[idx % 12].animal}`;
+  const pill = (idx: number) => pillarRuHtml(idx);
   const months = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
     <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
   const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
     <br><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></li>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Год бацзы начинается в Личунь (около 4 февраля), месяц — в день сезона «цзе». Тон каждого периода — по вашему полезному богу: ствол и ветвь вместе, как учит 命理约言; дело месяца — по богу его ствола.</p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
     <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
       <div class="fm-grid">${months}</div></div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3><ul class="list fy-list">${years}</ul></div></section>`;
@@ -388,34 +383,32 @@ function secForecast(c: Chart, a: Analysis) {
 
 function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
-    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>${x.how ? `<p class="dhint">${esc(x.how)}</p>` : ''}
-    <details><summary>Откуда это — классика</summary>${x.notes.map(noteHtml).join('')}</details></div>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p><p class="acc">Точность ядра проверена: полезный бог совпадает с разбором мастеров (Жэнь Тецяо, Сюй Лэу и др.) в 44% из 302 карт, случайный выбор даёт 20%. <button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button><button class="ghost" id="share" type="button">Поделиться ссылкой</button></p></div>
+    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p></div>`).join('');
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам</h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты.</p><p class="acc"><button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button><button class="ghost" id="share" type="button">Поделиться ссылкой</button></p></div>
     <div class="sph-grid">${cards}</div></section>`;
 }
 
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
-  const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}${s.folk ? ` <small>· народная звезда, классика не опирается: ${esc(s.folk)}</small>` : ''}</li>`).join('');
+  const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, w]) => `<li><b>${GODS[k].ru}</b> · ${w.toFixed(1)} — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
-  return `<section class="block"><div class="bhead"><div><h2>Разбор <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Каждый вывод — из фактов вашей карты и правил классики: цитата и источник под ним (ДТС — «Ди тянь суй», ЦПЦЦ — «Цзы пин чжэнь цюань», ЮХ — «Юань хай цзы пин», СМ — «Сань мин тун хуэй»). Где школы спорят — сказано. Это язык самоанализа, а не приговор.</p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Разбор</h2></div><p>Подробный разбор вашей карты: из чего она сложена и как это проявляется. Это язык самоанализа, а не приговор.</p></div>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
         ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
-        <div class="note"><h4>В образах <span class="src">ЮХ, условно — ЦПЦЦ гл.1 образы стволов отвергает</span></h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
+        <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
-        <h4 class="sub">Полезный бог (用神) по классике · ${esc(a.brain.frame.name)} ${a.brain.frame.zh}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text, src: st.src })).join('')}
+        <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
         <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
       <div class="card pane"><h3>10 божеств: профиль · ${gp.top.join(' · ')}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
         ${godNatureNotes(a).map(noteHtml).join('')}
-        <h4 class="sub">Классические формулы в стволах</h4>${combos.length ? combos.map(noteHtml).join('') : '<p>Ни одна из классических формул (官印相生, 食神制杀, 伤官见官…) в стволах не сложилась — карта читается по оси и силе.</p>'}</div>
+        ${combos.length ? `<h4 class="sub">Классические формулы в стволах</h4>${combos.map(noteHtml).join('')}` : ''}</div>
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
         ${bonds.map(noteHtml).join('')}
-        <p class="q"><span class="src">刑/害 показываются, но веса не имеют — «刑害不足論» (Жэнь); снятие: союз снимает удар (ЦПЦЦ гл.7)</span></p>
-        <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}<p class="dhint">На других сайтах звёзд до тридцати. Классика большинство из них отвергает — «吉凶神煞之多端，何如生克制化之一理» (ДТС): судьбу решают стихии, а не звёзды. Мы показываем признанные «Мин ли юэ янь» (благородный помощник, небесная и лунная добродетели, почтовая лошадь, пустота) как смягчение, а не прогноз, и помечаем народные.</p></div>
+        <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}</div>
     </div></section>`;
 }
 
@@ -431,37 +424,6 @@ const INTER_SENSE: Record<string, string> = {
   dir: 'сезонный союз — вся сторона света в карте, стихия доминирует',
 };
 
-function secSchools(charts: { v: Variant; c: Chart; a: Analysis }[], active: Variant) {
-  const base = charts.find((x) => sameV(x.v, DEFAULT_VARIANT)) ?? charts[0];
-  const rows = charts.map((x, i) => {
-    const cells = x.c.pillars.map((p, j) => `<td class="p${p.idx !== base.c.pillars[j]?.idx ? ' diff' : ''}">${pillarRuHtml(p.idx)}</td>`).join('');
-    return `<tr class="${sameV(x.v, active) ? 'act' : ''}"><td>${variantLabel(x.v)}</td>${cells}<td>${x.a.strength}</td><td>${x.a.consensus.map((e) => EL[e]).join(', ')}</td><td>${sameV(x.v, active) ? '●' : `<button data-v="${i}">выбрать</button>`}</td></tr>`;
-  }).join('');
-  const n = charts.length;
-  const samePillars = charts.every((x) => x.c.pillars.every((p, j) => p.idx === base.c.pillars[j].idx));
-  const sameDm = charts.every((x) => x.a.dm === base.a.dm);
-  const top = base.a.consensus[0], topN = charts.filter((x) => x.a.consensus[0] === top).length;
-  const sameStr = charts.every((x) => x.a.strengthKey === base.a.strengthKey);
-  const card = (ok: boolean, t: string, s: string) => `<div class="${ok ? 'ok' : 'warn'}"><b>${t}</b>${s}</div>`;
-  const heads = base.c.pillars.map((p) => `<th>${POS_RU[p.pos]}</th>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Разночтения школ <span class="tag n">НАУКА</span></h2></div>
-    <p>Мы считаем карту во всех вариантах сразу. Что совпадает везде — надёжно. Где школы расходятся — видно честно, без выбора «правды» за вас.</p></div>
-    <div class="stab">
-      ${card(samePillars, samePillars ? 'Все столпы одинаковы' : 'Столпы расходятся', ` в ${n} вариантах`)}
-      ${card(sameDm, sameDm ? 'Господин дня устойчив' : 'Господин дня зависит от школы', sameDm ? ` — ${STEMS[base.a.dm].ru} во всех ${n}` : ' — рождение около полуночи')}
-      ${card(sameStr, sameStr ? `Сила: ${base.a.strength}` : 'Сила на границе', sameStr ? ' — во всех вариантах' : ' — трактовки расходятся')}
-      ${card(topN === n, `Полезная: ${EL[top]}`, ` — в ${topN} из ${n}`)}
-    </div>
-    <div class="card pane vt-wrap"><table class="vt"><thead><tr><th>Школа</th>${heads}<th>Сила</th><th>Полезно</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
-}
-const sameV = (a: Variant, b: Variant) => a.zi === b.zi && a.solar === b.solar && a.south === b.south;
-
-// ——— Мои дни: календарь по карте ———
-const WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const dLabel = (d: DayInfo, wd = true) => { const [y, m, dd] = d.iso.split('-').map(Number); const w = new Date(y, m - 1, dd).getDay(); return `${dd} ${MON[m - 1]}${wd ? ', ' + WD[w] : ''}`; };
-const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], dd = +d.iso.slice(8);
-  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}"><b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSrc(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
 function dayCard(d: DayInfo, big = false) {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], m = BRANCHES[d.monthIdx % 12], ms = STEMS[d.monthIdx % 10];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
@@ -473,6 +435,14 @@ function dayCard(d: DayInfo, big = false) {
     ${big ? `<p class="dhint">Месяц: ${EL[ms.el]} · ${m.animal} (${EL[m.el]}).</p>` : ''}
   </div></div>`;
 }
+
+// ——— Мои дни: календарь по карте ———
+const WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const dLabel = (d: DayInfo, wd = true) => { const [y, m, dd] = d.iso.split('-').map(Number); const w = new Date(y, m - 1, dd).getDay(); return `${dd} ${MON[m - 1]}${wd ? ', ' + WD[w] : ''}`; };
+const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], dd = +d.iso.slice(8);
+  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}"><b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSrc(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
+
 function secDays(c: Chart, a: Analysis) {
   const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = daysFrom(c, a, start, 120), today = days[0];
@@ -481,7 +451,7 @@ function secDays(c: Chart, a: Analysis) {
   const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e]).join(' и '), bad = a.avoid.map((e) => EL[e]).join(' и ');
-  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни <span class="tag d">ТРАДИЦИЯ</span></h2></div>
+  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav})${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
     <h3 style="margin-top:26px">8 недель</h3>
@@ -501,17 +471,6 @@ function wireDays(c: Chart, a: Analysis) {
     const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
-  const msGo = document.getElementById('ms-go');
-  if (msGo) msGo.onclick = async () => {
-    msGo.textContent = 'Считаю…';
-    const rows = await masterRows(), out = document.getElementById('ms-out')!;
-    const draw = (only: string, miss: boolean) => {
-      out.innerHTML = mastersHtml(rows, only, miss);
-      const bk = document.getElementById('ms-book') as HTMLSelectElement, ms = document.getElementById('ms-miss') as HTMLInputElement;
-      bk.onchange = ms.onchange = () => draw(bk.value, ms.checked);
-    };
-    msGo.remove(); draw('', false);
-  };
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;
@@ -557,31 +516,10 @@ function wireDays(c: Chart, a: Analysis) {
 }
 
 function secCompat() {
-  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает («其谬甚矣», Шэнь Фэн). Итог — легче или труднее, не «можно/нельзя».</p></div>
+  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает. Итог — легче или труднее, не «можно/нельзя».</p></div>
     <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
-}
-
-function secMasters() {
-  return `<section class="block" id="s-masters"><div class="bhead"><div><h2>Проверка на картах мастеров <span class="tag n">НАУКА</span></h2></div><p>302 карты, которые разобрали сами классики: Жэнь Тецяо, Сюй Лэу, Чжу Цзуся, Вэй Цяньли, Дай Юнчан. Рядом — полезный бог (用神) мастера и тот, что выбрала наша программа. Ни один сайт не показывает, где он ошибается; мы показываем.</p></div>
-    <div class="card pane"><button class="ghost" id="ms-go" type="button">Показать 302 карты</button><div id="ms-out"></div></div></section>`;
-}
-const EL_ZH5 = '木火土金水';
-function mastersHtml(rows: MasterRow[], only: string, miss: boolean) {
-  const by = new Map<string, MasterRow[]>();
-  for (const r of rows) by.set(r.book, [...(by.get(r.book) ?? []), r]);
-  const pct = (xs: MasterRow[], f: (r: MasterRow) => boolean) => `${Math.round((100 * xs.filter(f).length) / xs.length)}%`;
-  const sum = [...by.entries()].map(([b, xs]) => `<tr><td>${esc(BOOK_RU[b] ?? b)}</td><td>${xs.length}</td><td>${pct(xs, (r) => r.hit === 'yes')}</td><td>${pct(xs, (r) => r.hit !== 'no')}</td></tr>`).join('')
-    + `<tr class="tot"><td>Всего</td><td>${rows.length}</td><td>${pct(rows, (r) => r.hit === 'yes')}</td><td>${pct(rows, (r) => r.hit !== 'no')}</td></tr>`;
-  const list = rows.filter((r) => (only ? r.book === only : true) && (miss ? r.hit !== 'yes' : true));
-  const HIT = { yes: '✓ совпал', xi: '≈ у нас второй', no: '✗ иначе' };
-  const tr = list.map((r) => `<tr class="h-${r.hit}"><td>${r.pillars.join(' ')}</td><td>${EL[r.yong]} ${EL_ZH5[r.yong]}<small> ${esc(r.phrase)}</small></td><td>${EL[r.ours]}</td><td>${HIT[r.hit]}</td></tr>`).join('');
-  return `<table class="vt ms-sum"><thead><tr><th>Книга</th><th>Карт</th><th>用神 совпал</th><th>Совпал главный или второй</th></tr></thead><tbody>${sum}</tbody></table>
-    <p class="dhint">Случайный выбор стихии угадывает в 20% случаев. Главная причина расхождений — по-разному оценённая сила господина дня.</p>
-    <div class="ms-f"><select id="ms-book"><option value="">Все книги</option>${[...by.keys()].map((b) => `<option value="${esc(b)}"${b === only ? ' selected' : ''}>${esc(BOOK_RU[b] ?? b)}</option>`).join('')}</select>
-    <label><input type="checkbox" id="ms-miss"${miss ? ' checked' : ''} /> только расхождения</label> <span class="dhint">${list.length} карт</span></div>
-    <div class="vt-wrap"><table class="vt ms-t"><thead><tr><th>Столпы (год месяц день час)</th><th>Мастер</th><th>Мы</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 
 function secAsk() {
@@ -594,10 +532,8 @@ function secFeedback() {
     <form class="askf" id="fbf"><input id="fbq" maxlength="1500" placeholder="Что было непонятно или неточно?" aria-label="Что было непонятно или неточно" /><button class="go" type="submit">Отправить</button></form><div class="ans" id="fbmsg"></div></div></section>`;
 }
 function secHonest() {
-  return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы <span class="tag n">НАУКА</span></h3>
-    <p>Календарная часть — точная астрономия: моменты сезонов по долготе Солнца (astronomy-engine), истинное солнечное время по долготе места и уравнению времени, 60-ричный цикл дней без пропусков с древности.</p>
-    <p>Как мы меряем свою точность: полезный бог (用神), который выбирает программа, сверен с 302 картами, разобранными мастерами в классических книгах (任铁樵, 徐乐吾, 朱祖夏, 韦千里, 戴永长). Совпадение — 44% (случайный выбор — 20%, с учётом второй полезной стихии — 67%). Расхождения в основном там, где по-разному оценена сила господина дня — над этим работаем и публикуем цифру после каждой правки.</p>
-    <p>Толкования — традиция двух тысяч лет. Контролируемых исследований, которые подтверждали бы связь момента рождения с судьбой, нет; проверки «временных близнецов» и слепые тесты астрологии эффекта не находят. Используйте карту как язык самоанализа и планирования циклами — и проверяйте её на своей жизни, записывая прогнозы заранее.</p></div></section>`;
+  return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы</h3>
+    <p>Расчёт карты точный: сезоны — по положению Солнца, время — истинное солнечное для места рождения. Толкования — традиция, а не наука: исследований, подтверждающих связь даты рождения с судьбой, нет. Используйте карту как язык самоанализа и планирования — и проверяйте её на своей жизни.</p></div></section>`;
 }
 
 function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis }[]) {
