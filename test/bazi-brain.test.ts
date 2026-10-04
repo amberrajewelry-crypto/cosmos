@@ -32,7 +32,7 @@ describe("такт и год с союзами натала", () => {
   const b = analyze(c).brain;
   it("2026 丙午: 丙 на своём корне 午 не превращается, только связан с 辛 — год хороший", () => {
     const v = periodVerdict(b, yearIdx(2026), c);
-    expect(v.tone).toBe("good"); expect(v.text).toMatch(/贪合/);
+    expect(v.tone).toBe("good"); expect(v.text).toMatch(/в союзе.*вполсилы/);
   });
   it("такт 丙申: 丙 без корня, месяц 亥 — 丙辛 работает как Вода, такт тяжёлый", () => {
     const l = c.luck.find((x) => x.idx % 10 === 2 && x.idx % 12 === 8)!;

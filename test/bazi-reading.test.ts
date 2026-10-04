@@ -16,8 +16,8 @@ describe('разбор по KB', () => {
   });
   it('климат 甲-亥: 庚 и 丁 спрятаны → «两藏»', () => {
     const n = climateNote(c, a);
-    expect(n.text).toContain('Гэн 庚 (Металл) — спрятан');
-    expect(n.text).toContain('两藏');
+    expect(n.text).toContain('Гэн (металл) — спрятан');
+    expect(n.text).toContain('скромная');
   });
   it('ось месяца 亥: проступил только 甲 (своя стихия) → ось = Сова 壬, скрытая', () => {
     const n = axisNote(c, a);

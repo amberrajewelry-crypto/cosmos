@@ -1,7 +1,7 @@
 // Подробный разбор по базе знаний проекта (KB 02–05, 09, 10 в ~/projects/бацзы): каждый вывод — из фактов карты,
 // с цитатой и источником. Сокращения: ДТС — 滴天髓 (Жэнь Тецяо), ЦПЦЦ — 子平真诠, ЮХ — 渊海子平, СМ — 三命通会,
 // ЦТБЦ — 穷通宝鉴. Расчёт силы/полезных стихий — в calc.ts; здесь только толкование.
-import { STEMS, BRANCHES, EL, EL_GEN, GODS, STAGES, STAGES_ZH, SEASON_STATE, godOf, stageOf, seasonState, type El } from './core';
+import { STEMS, BRANCHES, EL, EL_GEN, GODS, SEASON_STATE, godOf, stageOf, seasonState, type El } from './core';
 import type { Analysis, Chart, Pos } from './calc';
 
 export interface Note { title: string; text: string; quote?: string; src?: string; tone?: 'good' | 'bad' | 'mixed' }
@@ -123,16 +123,15 @@ export function climateNote(c: Chart, a: Analysis): Note {
   const vis = visible(c).map((p) => p.stem);
   const hid = pillars(c).flatMap((p) => BRANCHES[p.branch].hidden);
   const st = (s: number) => (vis.includes(s) ? 'проступил' : hid.includes(s) ? 'спрятан' : 'нет');
-  const list = need.map((s, i) => `${i + 1}) ${STEMS[s].ru} ${SZ[s]} (${EL[STEMS[s].el]}) — ${st(s)}`).join(', ');
+  const list = need.map((s) => `${STEMS[s].ru} (${EL[STEMS[s].el].toLowerCase()}) — ${st(s) === 'проступил' ? 'есть на виду' : st(s) === 'спрятан' ? 'спрятан' : 'нет'}`).join(', ');
   const top = need.slice(0, 2).map(st);
-  const level = top.every((x) => x === 'проступил') ? 'сильная поддержка («两透»)'
-    : top.includes('проступил') && !top.includes('нет') ? 'средняя («一透一藏»)'
-      : top.every((x) => x === 'спрятан') ? 'скромная («两藏»): помогают годы и такты, где эти стволы выходят наружу'
-        : top.includes('проступил') ? 'средняя' : top.includes('спрятан') ? 'слабая: нужное есть лишь внутри ветвей' : 'слабая («全无»): нужное приходит только извне — тактами и годами';
+  const level = top.every((x) => x === 'проступил') ? 'сильная поддержка'
+    : top.includes('проступил') && !top.includes('нет') ? 'средняя'
+      : top.every((x) => x === 'спрятан') ? 'скромная: помогают годы, когда эти стихии приходят'
+        : top.includes('проступил') ? 'средняя' : top.includes('спрятан') ? 'слабая: нужное есть лишь внутри ветвей' : 'слабая: нужное приходит только извне — тактами и годами';
   return {
-    title: 'Климат (调候)',
-    text: `Для ${STEMS[a.dm].ru} в месяц ${BRANCHES[month.branch].animal} книга называет по порядку: ${list}. Итог по шкале книги — ${level}. `
-      + 'Жэнь Тецяо спорит с жёсткими таблицами («亦死法也»), поэтому это совет по климату, а не приговор.',
+    title: 'Климат',
+    text: `Чтобы карте было «по погоде» (не слишком холодно или жарко), ей нужны: ${list}. Поддержка климата — ${level}. Это совет, а не приговор.`,
     quote: '寒雖甚，要暖有氣；暖雖至，要寒有根', src: '穷通宝鉴 (таблица); ДТС 寒暖',
     tone: level.startsWith('сильная') ? 'good' : level.startsWith('слабая') ? 'bad' : 'mixed',
   };
@@ -203,7 +202,7 @@ export function godNatureNotes(a: Analysis): Note[] {
 export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   const s = idx % 10, b = idx % 12, out: string[] = [];
   const st = stageOf(a.dm, b);
-  out.push(`Господин дня в этой ветви — «${STAGES[st].toLowerCase()}» (${STAGES_ZH[st]}).`);
+  out.push(`Ваша стихия в этот период: ${['силы прибывают', 'силы неустойчивы', 'силы растут', 'силы в рабочей форме', 'силы на пике', 'силы понемногу убывают', 'сил меньше обычного', 'сил мало', 'силы уходят внутрь, копятся', 'силы на нуле — время перезагрузки', 'зреет новое начало', 'силы набираются'][st]}.`);
   const day = pillars(c).find((p) => p.pos === 'day')!, month = pillars(c).find((p) => p.pos === 'month')!;
   if (Math.abs(b - month.branch) === 6) out.push('Бьёт ветвь месяца — ось карты: «大運及歲君來衝月支則禍» (СМ т.10).');
   if (Math.abs(b - day.branch) === 6 && Math.abs(s - day.stem) === 6) out.push('Ствол и ветвь бьют столп дня разом («天克地冲», ДТС 岁运) — самый резкий тип периода.');
