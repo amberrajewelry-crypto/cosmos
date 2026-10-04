@@ -185,6 +185,17 @@ function money(c: Chart, a: Analysis, now: number): Sphere {
       for (let y = now; y < now + 10; y++) { const i = yearIdx(y); if (STEMS[i % 10].el === r.wealth && periodVerdict(a.brain, i, c).tone !== 'bad') ys.push(y); }
       return ys.length ? `Денежные годы ближайшего десятилетия (Богатство приходит и не во вред): ${ys.join(', ')}.` : '';
     })(),
+    (() => {
+      const ds = c.luck.filter((l) => l.year + 9 >= now && (STEMS[l.idx % 10].el === r.wealth || BRANCHES[l.idx % 12].el === r.wealth)).map((l) => span(l.year));
+      return ds.length ? `Десятилетия, когда Богатство приходит тактом: ${ds.slice(0, 3).join(', ')} — время для крупных денежных шагов (покупки, своё дело, рост дохода).` : '';
+    })(),
+    (() => {
+      if (wr === 'yong') return '';
+      const ys: number[] = [];
+      for (let y = now; y < now + 10; y++) { const g = godOf(a.dm, yearIdx(y) % 10).key; if (g === 'JC') ys.push(y); }
+      return ys.length && good(wr) ? `Годы «Соперника» (劫财 — отнимает Богатство): ${ys.join(', ')} — больше трат и конкурентов; крупные займы и общие кассы в эти годы не открывайте.` : '';
+    })(),
+    a.gods.PC && a.gods.PC >= 1 ? 'Косвенное богатство заметно: Шэнь Фэн по опыту считал его знаком достатка, но это мнение одного автора, а не правило.' : '',
   ].filter(Boolean);
   return {
     key: 'money', title: 'Деньги', lead, points,
@@ -231,7 +242,7 @@ function love(c: Chart, a: Analysis, now: number): Sphere {
   };
 }
 
-function health(c: Chart, a: Analysis): Sphere {
+function health(c: Chart, a: Analysis, now: number): Sphere {
   const zones: { e: El; att: El }[] = [];
   for (let e = 0 as El; e < 5; e = (e + 1) as El) {
     const att = ((e + 3) % 5) as El;
@@ -244,6 +255,17 @@ function health(c: Chart, a: Analysis): Sphere {
   const max = a.pct.indexOf(Math.max(...a.pct)) as El;
   if (a.pct[max] >= 0.45) points.push(`${EL[max]} в избытке (${pc(a.pct[max])}): перекос сам по себе — зона внимания (${ORGANS[max]}).`);
   if (zones.length) points.push(`Особенно берегите себя ${SEASON[zones[0].att]}: в этот сезон давящая стихия (${EL[zones[0].att].toLowerCase()}) в силе.`);
+  const DM_ORGAN = ['желчный пузырь', 'печень', 'тонкий кишечник', 'сердце', 'желудок', 'селезёнка', 'толстый кишечник', 'лёгкие', 'мочевой пузырь', 'почки'];
+  points.push(`Ваш ствол дня — ${STEMS[a.dm].ru}; по «Дао тянь суй» ему соответствует ${DM_ORGAN[a.dm]} — это первое место, которое отзывается на перегрузки.`);
+  const ji = a.brain.ji[0];
+  if (ji !== undefined) {
+    const inStems = visibleEls(c).includes(ji), inBranches = hiddenEls(c).includes(ji);
+    if (inBranches && !inStems) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) спрятана в ветвях — действует исподволь и долго: регулярная профилактика важнее разовых мер.`);
+    else if (inStems && !inBranches) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) только в стволах, без корня — её влияние поверхностное и проходит быстро.`);
+  }
+  const care: number[] = [];
+  for (let y = now; y < now + 10; y++) { const i = yearIdx(y); if (periodVerdict(a.brain, i, c).tone === 'bad' && STEMS[i % 10].el !== a.brain.yong) care.push(y); }
+  if (care.length) points.push(`Годы бережного режима (приходит нагрузка, полезная стихия под давлением): ${care.join(', ')} — сон, нагрузки по силам, плановые обследования.`);
   if (!points.length) points.push('Резких перекосов стихий нет — классика называет такую карту ровной: «五行和者，一世无灾».');
   return {
     key: 'health', title: 'Здоровье',
@@ -255,6 +277,8 @@ function health(c: Chart, a: Analysis): Sphere {
       : 'Держите режим, который поддерживает вашу полезную стихию; с жалобами — к врачу, не к карте.',
     notes: [
       { title: 'Болезнь — от разлада стихий', quote: '疾病皆因五行不和', src: 'СМ (KB 13 §3)', text: 'Смотрим, какая стихия бита и не защищена.' },
+      { title: 'Глубина нагрузки', quote: '忌神入五脏而病凶', src: 'ДТС (KB 13 §3)', text: 'Вредная стихия в ветвях действует глубже, чем на виду в стволах.' },
+      { title: 'Полезный бог держит здоровье', quote: '用不受傷人不滅', src: 'СМ т.12, 骨髓歌 (KB 05 §4.9)', text: 'Годы, когда полезная стихия под давлением, — время беречь режим.' },
       ...zones.slice(0, 2).map(({ e }) => ({ title: `${EL[e]} под ударом`, quote: HIT_QUOTE[e], src: '管见 探玄篇; ЮХ 论疾病 (KB 13 §3)', text: `Традиционное соответствие: ${ORGANS[e]}.` })),
     ],
   };
@@ -284,7 +308,7 @@ function family(c: Chart, a: Analysis): Sphere {
 
 export function spheres(c: Chart, a: Analysis, now = new Date().getFullYear()): Sphere[] {
   const cs = combos(c, a);
-  return [character(c, a), career(c, a, now), money(c, a, now), love(c, a, now), health(c, a), family(c, a)].map((x) => {
+  return [character(c, a), career(c, a, now), money(c, a, now), love(c, a, now), health(c, a, now), family(c, a)].map((x) => {
     const mine = cs.filter((k) => k.sphere === x.key);
     return mine.length ? { ...x, points: [...mine.map((k) => `${k.title}. ${k.text}`), ...x.points], notes: [...x.notes, ...mine.filter((k) => !x.notes.some((n) => n.quote === k.quote)).map((k) => ({ title: k.title, quote: k.quote, src: k.src, text: k.text }))] } : x;
   });

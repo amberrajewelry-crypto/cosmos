@@ -148,7 +148,7 @@ export function brain(c: Chart, a: Analysis): Brain {
   if (need >= 0 && yong !== need) {
     xi = [need as El, ...xi.filter((e) => e !== need)];
     steps.push({ title: `Климат: ${winter ? 'холодно' : 'жарко'} (调候)`, src: '穷通宝鉴; 命理约言 卷四 «寒则喜温…炎则喜润»; 朱祖夏 八字与用神 гл.2',
-      text: `${winter ? 'Зимняя' : 'Летняя'} карта (${EL[need]} ${Math.round(a.pct[need] * 100)}%): ${EL[need]} — первый помощник, полезный бог остаётся по силе («先保身，然后才能再谈调候»). Нужные стволы по 穷通宝鉴: ${[...TIAOHOU[dm][month.branch]].join(' ')}.` });
+      text: `${winter ? 'Зимняя' : 'Летняя'} карта (${EL[need]} ${Math.round(a.pct[need] * 100)}%): ${EL[need]} — первый помощник, полезный бог остаётся по силе («先保身，然后才能再谈调候»). Нужные по климату стволы: ${[...TIAOHOU[dm][month.branch]].map((z) => STEMS['甲乙丙丁戊己庚辛壬癸'.indexOf(z)].ru).join(', ')}.` });
   }
 
   // 6. 通关: две враждующие сильные стихии — нужен посредник.
