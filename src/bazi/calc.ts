@@ -180,7 +180,7 @@ export function analyze(c: Chart): Analysis {
     if (a.branch === b.branch && [4, 6, 9, 11].includes(a.branch))
       I.push({ kind: 'punish', label: `Самонаказание ${BRANCHES[a.branch].animal}`, a: a.pos, b: b.pos, tone: 'harm' });
     for (const [x, y, el] of STEM_COMBO) if ((a.stem === x && b.stem === y) || (a.stem === y && b.stem === x))
-      I.push({ kind: 'scombo', label: `Союз стволов ${STEMS[a.stem].ru}–${STEMS[b.stem].ru} → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: a.pos, b: b.pos, el, tone: 'join', stems: true });
+      I.push({ kind: 'scombo', label: `Союз ${STEMS[a.stem].ru}–${STEMS[b.stem].ru} → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: a.pos, b: b.pos, el, tone: 'join', stems: true });
     if (Math.abs(a.stem - b.stem) === 6 && Math.min(a.stem, b.stem) < 4)
       I.push({ kind: 'sclash', label: `Столкновение стволов ${STEMS[a.stem].ru}–${STEMS[b.stem].ru}`, a: a.pos, b: b.pos, tone: 'harm', stems: true });
   }
