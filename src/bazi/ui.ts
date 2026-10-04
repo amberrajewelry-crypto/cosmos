@@ -296,7 +296,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
   const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${u.fav.map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
   return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>
-    <p>Стволы весят 1, ветви — по долям спрятанных стволов, ветвь месяца ×2 (сезон). Стрелки по кругу — порождение, пунктир внутри — подавление.</p></div>
+    <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
       <div class="gauge"><h3>Сила Господина дня: ${a.strength}</h3>
