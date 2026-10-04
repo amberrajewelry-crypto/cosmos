@@ -148,7 +148,7 @@ export function brain(c: Chart, a: Analysis): Brain {
   if (need >= 0 && yong !== need) {
     xi = [need as El, ...xi.filter((e) => e !== need)];
     steps.push({ title: `Климат: ${winter ? 'холодно' : 'жарко'} (调候)`, src: '穷通宝鉴; 命理约言 卷四 «寒则喜温…炎则喜润»; 朱祖夏 八字与用神 гл.2',
-      text: `${winter ? 'Зимняя' : 'Летняя'} карта (${EL[need]} ${Math.round(a.pct[need] * 100)}%): ${EL[need]} — первый помощник, полезный бог остаётся по силе («先保身，然后才能再谈调候»). Нужные по климату стволы: ${[...TIAOHOU[dm][month.branch]].map((z) => STEMS['甲乙丙丁戊己庚辛壬癸'.indexOf(z)].ru).join(', ')}.` });
+      text: `${winter ? 'Зимняя' : 'Летняя'} карта (${EL[need]} ${Math.round(a.pct[need] * 100)}%): ${EL[need]} — первый помощник, полезный бог остаётся по силе («先保身，然后才能再谈调候»). Для равновесия нужны: ${[...new Set([...TIAOHOU[dm][month.branch]].map((z) => EL[STEMS['甲乙丙丁戊己庚辛壬癸'.indexOf(z)].el].toLowerCase()))].join(', ')}.` });
   }
 
   // 6. 通关: две враждующие сильные стихии — нужен посредник.
@@ -205,10 +205,10 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
     for (const p of order) {
       const pair = COMBO.find(([x, y]) => (x === st && y === p.stem) || (y === st && x === p.stem));
       if (!pair) continue;
-      if (p.pos === 'day') { bond = ` Ствол ${STEMS[st].zh} в союзе с господином дня — «合必日之正配…正喜相逢» (流年赋), сам по себе не вред`; break; }
+      if (p.pos === 'day') { bond = ' Период в союзе с вами — сам по себе не вред'; break; }
       // На собственном сильном корне (禄/刃/长生) ствол не превращается, только связан (ЦПЦЦ гл.5 «合而不化»).
       if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты и превращается: работает как ${EL[pair[2]]}`; }
-      else { k = 0.5; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты — действует вполсилы`; }
+      else { k = 0.5; bond = ' Часть силы периода уходит в союз с вашей картой — действует вполсилы'; }
       break;
     }
   }
@@ -220,8 +220,8 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
 }
 
 function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
-  if (s > 0 && r > 0) return { tone: 'good', text: 'ствол и ветвь оба полезны — период хорош целиком' };
-  if (s < 0 && r < 0) return { tone: 'bad', text: 'ствол и ветвь оба вредны — период тяжёлый целиком' };
-  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одно полезно, другое вредно; перевешивает ${Math.abs(s) > Math.abs(r) ? 'ствол' : 'ветвь'}` };
+  if (s > 0 && r > 0) return { tone: 'good', text: 'обе стихии периода вам полезны — он хорош целиком' };
+  if (s < 0 && r < 0) return { tone: 'bad', text: 'обе стихии периода — нагрузка, он тяжёлый целиком' };
+  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одна стихия полезна, другая — нагрузка; перевешивает ${(Math.abs(s) > Math.abs(r)) === (s > 0) ? 'польза' : 'нагрузка'}` };
   return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'нейтрально' };
 }

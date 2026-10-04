@@ -22,7 +22,7 @@ describe('разбор по KB', () => {
   it('ось месяца 亥: проступил только 甲 (своя стихия) → ось = Сова 壬, скрытая', () => {
     const n = axisNote(c, a);
     expect(n.godKey).toBe('PY');
-    expect(n.text).toContain('не проступил');
+    expect(n.text).toContain('скрыт — тема');
   });
   it('два 甲 к одному 己 — ревнивый союз (ЦПЦЦ гл.5)', () => {
     expect(bondNotes(c, a).some((n) => n.title.startsWith('Ревнивый союз'))).toBe(true);
@@ -34,6 +34,6 @@ describe('разбор по KB', () => {
   });
   it('такт 庚寅 (2072) бьёт ветвь дня 申 и ствол 甲 — 天克地冲', () => {
     const l = c.luck.find((x) => x.idx % 10 === 6 && x.idx % 12 === 2)!;
-    expect(luckDetail(c, a, l.idx).join(' ')).toContain('天克地冲');
+    expect(luckDetail(c, a, l.idx).join(' ')).toContain('самый резкий тип периода');
   });
 });
