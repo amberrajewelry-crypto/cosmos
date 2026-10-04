@@ -341,3 +341,19 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 .cf input, .cf select { min-width: 140px; }
 .cf select { background: rgba(255,255,255,.04); border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 12px; color: var(--ink); padding: 13px 14px; font: 500 16px var(--sans); }
 #cf-out h3 { margin: 18px 0 12px; }
+
+.acc { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+.acc .ghost { margin-left: 8px; padding: 6px 14px; font-size: 13px; }
+/* Печать / PDF: светлый лист, без фона, форм и анимаций */
+@media print {
+  :root { --bg: #fff; --ink: #111; --ink-rgb: 17,17,17; --ink-2: #333; --ink-3: #555; --card: #fff; --gold: #8a6a1f; --gold-2: #bbb; --gold-3: #ddd; }
+  html, body { background: #fff !important; color: #111; }
+  #qi, nav.top, .hero form, .orbit, canvas, .fxc, .askf, #s-compat, .acts, button, .ghost { display: none !important; }
+  .card { backdrop-filter: none; box-shadow: none; break-inside: avoid; }
+  .block { break-inside: auto; }
+  .who-fx, .hero .lead { display: none !important; }
+  .who, .who * { background: none !important; min-height: 0 !important; }
+  .sph-grid { grid-template-columns: 1fr; } .sph-grid .card, .fm-grid .fm { break-inside: avoid; }
+  .block > .card, .grid2 > .card { break-inside: auto; }
+  a { color: inherit; text-decoration: none; }
+}
