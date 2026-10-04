@@ -21,8 +21,9 @@ import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
 // Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
-const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
+const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
 const esc = (s: string) => plain(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const rgb = (e: number) => EL_RGB[e];
 const pol = (yang: boolean) => (yang ? 'ян' : 'инь');
@@ -188,6 +189,7 @@ function secWho(c: Chart, a: Analysis) {
       <h2>${d.ru} — ${t.title.toLowerCase()}</h2>
       <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
+      ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
@@ -218,12 +220,11 @@ function secPillars(c: Chart, a: Analysis) {
     </article>`;
   }).join('');
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
-  const eot = `${c.eotMin >= 0 ? '+' : '−'}${Math.abs(c.eotMin).toFixed(1)} мин`;
   return `<section class="block" id="s-pillars">
     <div class="bhead"><div><h2>Четыре столпа</h2></div>
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
-    <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · расчётное время ${pad(L.h)}:${pad(L.min)} (${c.variant.solar ? `истинное солнечное, уравнение времени ${eot}` : 'поясное'})</p>
+    <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
   </section>`;
 }
 
@@ -278,7 +279,7 @@ function wheel(a: Analysis) {
     if (me) s += `<circle cx="${x}" cy="${y}" r="${r + 3}" fill="none" stroke="#e2c47c" stroke-width="2.2"/>`;
     live.push({ x, y, r: Math.max(24, r * 0.78), e });
     const ly = y + (y > cy ? r + 30 : -r - 28);
-    s += `<text x="${x}" y="${ly}" text-anchor="middle" font-size="15" font-weight="600" fill="${EL_COLOR[e]}">${EL[e]} ${Math.round(a.pct[e] * 100)}%</text>`;
+    s += `<text x="${x}" y="${ly}" text-anchor="middle" font-size="15" font-weight="600" fill="${EL_COLOR[e]}">${EL[e]}</text>`;
     const tags = [me ? 'вы' : '', fav ? 'полезна' : '', bad ? 'нагрузка' : ''].filter(Boolean).join(' · ');
     if (tags) s += `<text x="${x}" y="${ly + 17}" text-anchor="middle" font-size="12" fill="rgba(236,230,211,.6)">${tags}</text>`;
     s += '</g>';
@@ -289,7 +290,7 @@ function wheel(a: Analysis) {
 }
 
 function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[]) {
-  const bars = [0, 1, 2, 3, 4].map((e) => `<div class="bar" style="--rgb:${rgb(e)}"><div>${EL[e]}<small>${SEASON_STATE[seasonStateOf(e, a.monthEl)]}</small></div><div class="track"><div class="fill" data-w="${Math.round(a.pct[e] * 100)}%"></div></div><div class="v">${Math.round(a.pct[e] * 100)}%</div></div>`).join('');
+  const bars = [0, 1, 2, 3, 4].map((e) => `<div class="bar" style="--rgb:${rgb(e)}"><div>${EL[e]}<small>${SEASON_STATE[seasonStateOf(e, a.monthEl)]}</small></div><div class="track"><div class="fill" data-w="${Math.round(a.pct[e] * 100)}%"></div></div><div class="v">${AMOUNT(a.pct[e])}</div></div>`).join('');
   const rs = charts.map((x) => x.a.ratio), lo = Math.min(...rs), hi = Math.max(...rs);
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
   const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${u.fav.map((e) => EL[e]).join(', ')}.</div>`).join('');
@@ -301,7 +302,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
       <div class="gauge"><h3>Сила Господина дня: ${a.strength}</h3>
         <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${a.ratio * 100}%"></div></div>
         <div class="lbl"><span>слабый</span><span>баланс</span><span>сильный</span></div>
-        <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Опора ${Math.round(a.ratio * 100)}% · в сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
+        <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
       <div class="methods">${methods}</div>
@@ -330,19 +331,14 @@ function secSeason(c: Chart) {
   const term = TERMS[c.termIdx].split(' · ');
   s += `<text x="${cx}" y="${cy - 10}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="30" fill="#ece6d3">${term[0]}</text>`;
   s += `<text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="14" fill="rgba(236,230,211,.6)">${term[1]}</text>`;
-  s += `<text x="${cx}" y="${cy + 44}" text-anchor="middle" font-size="13" fill="#e2c47c">Солнце ${c.sunLon.toFixed(2)}°</text>`;
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
   return `<section class="block"><div class="bhead"><div><h2>Сезон рождения</h2></div>
-    <p>Китайский год делится на 24 сезона по долготе Солнца. Месяц Бацзы начинается не с 1-го числа, а в момент «цзе» — когда Солнце проходит очередные 30°.</p></div>
+    <p>Китайский год делится на 24 сезона по Солнцу, и месяц начинается не с 1-го числа, а со сменой сезона. Поэтому знаки карты могут отличаться от привычного календаря.</p></div>
     <div class="grid2"><div class="card pane"><svg class="ring" viewBox="0 0 460 460" role="img" aria-label="Кольцо 24 сезонов">${s}</svg></div>
     <div class="card pane"><div class="facts">
-      <div><span>Момент рождения (UTC)</span><b>${c.utc.toISOString().slice(0, 16).replace('T', ' ')}</b></div>
-      <div><span>Долгота Солнца</span><b>${c.sunLon.toFixed(3)}°</b></div>
-      <div><span>Сезон</span><b>${TERMS[c.termIdx]}</b></div>
-      <div><span>Уравнение времени</span><b>${c.eotMin >= 0 ? '+' : '−'}${Math.abs(c.eotMin).toFixed(1)} мин</b></div>
-      <div><span>Расчётное местное время</span><b>${pad(L.h)}:${pad(L.min)} · ${c.variant.solar ? 'истинное солнечное' : 'поясное'}</b></div>
-      <div><span>${c.forward ? 'До следующего' : 'После прошлого'} «цзе»</span><b>${c.jieDays.toFixed(2)} дн → старт удачи ${c.startAge.toFixed(1)} лет</b></div>
-      <div><span>Направление тактов</span><b>${c.forward ? 'вперёд' : 'назад'} (год ${pol(STEMS[c.pillars.at(-1)!.stem].yang)}, ${c.input.male ? 'мужчина' : 'женщина'})</b></div>
+      <div><span>Сезон рождения</span><b>${TERMS[c.termIdx]}</b></div>
+      <div><span>Время по солнцу в месте рождения</span><b>${pad(L.h)}:${pad(L.min)}</b></div>
+      <div><span>Такты удачи начинаются</span><b>примерно в ${Math.max(1, Math.round(c.startAge))} ${Math.max(1, Math.round(c.startAge)) % 10 === 1 && Math.max(1, Math.round(c.startAge)) !== 11 ? 'год' : 'лет'}</b></div>
     </div></div></div></section>`;
 }
 
@@ -392,7 +388,7 @@ function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
   const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
-  const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, w]) => `<li><b>${GODS[k].ru}</b> · ${w.toFixed(1)} — ${GODS[k].sense}</li>`).join('');
+  const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => `<li><b>${GODS[k].ru}</b> — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><div class="bhead"><div><h2>Разбор</h2></div><p>Подробный разбор вашей карты: из чего она сложена и как это проявляется. Это язык самоанализа, а не приговор.</p></div>
     <div class="razbor">
@@ -403,7 +399,7 @@ function secRazbor(c: Chart, a: Analysis) {
         <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
         <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
-      <div class="card pane"><h3>10 божеств: профиль · ${gp.top.join(' · ')}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
+      <div class="card pane"><h3>10 божеств: ${gp.top.map((t) => t.replace(/\s*\d+%/, '')).join(' и ').toLowerCase()}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
         ${godNatureNotes(a).map(noteHtml).join('')}
         ${combos.length ? `<h4 class="sub">Классические формулы в стволах</h4>${combos.map(noteHtml).join('')}` : ''}</div>
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
@@ -516,7 +512,7 @@ function wireDays(c: Chart, a: Analysis) {
 }
 
 function secCompat() {
-  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает. Итог — легче или труднее, не «можно/нельзя».</p></div>
+  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div><p>Сравниваем две карты целиком: что каждый даёт другому в чувствах, поддержке и деньгах. Итог — легче или труднее, без «можно/нельзя».</p></div>
     <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
