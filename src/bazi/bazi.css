@@ -348,7 +348,7 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 @media print {
   :root { --bg: #fff; --ink: #111; --ink-rgb: 17,17,17; --ink-2: #333; --ink-3: #555; --card: #fff; --gold: #8a6a1f; --gold-2: #bbb; --gold-3: #ddd; }
   html, body { background: #fff !important; color: #111; }
-  #qi, nav.top, .hero form, .orbit, canvas, .fxc, .askf, #s-compat, .acts, button, .ghost { display: none !important; }
+  #qi, nav.top, .hero form, .orbit, canvas, .fxc, .askf, #s-compat, #s-fb, .acts, button, .ghost { display: none !important; }
   .card { backdrop-filter: none; box-shadow: none; break-inside: avoid; }
   .block { break-inside: auto; }
   .who-fx, .hero .lead { display: none !important; }
