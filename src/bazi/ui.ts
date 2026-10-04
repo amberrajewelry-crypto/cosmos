@@ -432,7 +432,7 @@ function dayCard(d: DayInfo, big = false) {
     <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru}</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
     <p><b>Что делать:</b> ${d.act}.</p>
-    <p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>
+    ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
     ${d.notes.length ? `<p class="dnote">Осторожно: ${d.notes.map(esc).join('; ')}.</p>` : ''}
     ${big ? `<p class="dhint">Месяц: ${EL[ms.el]} · ${m.animal} (${EL[m.el]}).</p>` : ''}
   </div></div>`;
@@ -454,7 +454,7 @@ function secDays(c: Chart, a: Analysis) {
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e]).join(' и '), bad = a.avoid.map((e) => EL[e]).join(' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
-    <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav})${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
+    <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
     <h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный с ударом</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
