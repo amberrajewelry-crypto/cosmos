@@ -43,6 +43,28 @@
   ],
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "georgia-tour.com"
+        }
+      ],
+      "destination": "https://georgia-tour.com/bazi",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.georgia-tour.com"
+        }
+      ],
+      "destination": "https://georgia-tour.com/bazi",
+      "permanent": false
+    },
+    {
       "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele",
       "destination": "/natalnaya-karta/znak/:znak/",
       "permanent": true
