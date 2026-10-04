@@ -13,6 +13,7 @@ import {
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
+import { spheres } from './spheres';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -128,7 +129,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -339,6 +340,14 @@ function secLuck(c: Chart, a: Analysis) {
 
 const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p>${n.quote || n.src ? `<p class="q">${n.quote ? `「${n.quote}」 ` : ''}${n.src ? `<span class="src">${esc(n.src)}</span>` : ''}</p>` : ''}</div>`;
 
+function secSpheres(c: Chart, a: Analysis) {
+  const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
+    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>
+    <details><summary>Откуда это — классика</summary>${x.notes.map(noteHtml).join('')}</details></div>`).join('');
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p></div>
+    <div class="sph-grid">${cards}</div></section>`;
+}
+
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
@@ -473,7 +482,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     sessionStorage.removeItem('bazi-scrolled');
   }));
   const notes = [natureNote(a), strengthNote(c, a), axisNote(c, a), climateNote(c, a), ...comboNotes(c, a), ...bondNotes(c, a)];
-  const ctx = chartSummary(c, a) + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
+  const ctx = chartSummary(c, a) + '\n' + spheres(c, a).map((x) => `${x.title}: ${x.lead} ${x.points.join(' ')} Что делать: ${x.todo}`).join('\n') + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
   document.getElementById('askf')!.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;

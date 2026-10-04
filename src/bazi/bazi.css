@@ -312,3 +312,12 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 .razbor h4.sub { margin-top: 16px; }
 .razbor .pane p.q { font-size: 13px; color: var(--ink-3, var(--ink-2)); margin-top: -4px; }
 .src { font: 500 11px var(--mono); letter-spacing: .04em; color: var(--gold); opacity: .85; }
+
+/* Сферы жизни */
+.sph-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.sph h3 { margin: 0 0 10px; }
+.sph .lead { margin: 0 0 12px; color: var(--ink); }
+.sph .todo { margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(214,166,79,.08); }
+.sph details { margin-top: 14px; }
+.sph summary { cursor: pointer; color: var(--gold); font-size: 14px; margin-bottom: 10px; }
+@media (max-width: 760px) { .sph-grid { grid-template-columns: 1fr; } }
