@@ -15,6 +15,8 @@ import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './inter
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
+import { taiyuan, minggong, xiaoyun } from './oldschool';
+import { masterRows, BOOK_RU, type MasterRow } from './masters';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
@@ -123,6 +125,19 @@ $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
 let current: { input: BirthInput; variant: Variant } | null = null;
 let lastQuery = '';
 const ME_KEY = 'bazi-me';
+// Несколько карт в этом браузере: [{ q, label }]. Хранилище может быть недоступно (приватный режим) — тогда просто пусто.
+const LIST_KEY = 'bazi-list';
+type Saved = { q: string; label: string };
+const loadSaved = (): Saved[] => { try { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); } catch { return []; } };
+const storeSaved = (xs: Saved[]) => { try { localStorage.setItem(LIST_KEY, JSON.stringify(xs)); } catch { /* storage off */ } };
+function renderSaved() {
+  const xs = loadSaved(), cur = new URLSearchParams(location.search).toString();
+  document.querySelectorAll<HTMLElement>('.saved').forEach((el) => {
+    el.hidden = !xs.length;
+    el.innerHTML = xs.length ? `<span class="eyebrow">Мои карты</span>${xs.map((x, i) => `<span class="sv${x.q === cur ? ' cur' : ''}"><a href="?${esc(x.q)}">${esc(x.label)}</a><button type="button" data-del="${i}" aria-label="Удалить ${esc(x.label)}">×</button></span>`).join('')}` : '';
+  });
+  document.querySelectorAll<HTMLButtonElement>('.saved [data-del]').forEach((b) => (b.onclick = () => { const xs2 = loadSaved(); xs2.splice(+b.dataset.del!, 1); storeSaved(xs2); renderSaved(); }));
+}
 function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   current = { input, variant };
   const variants = allVariants(input);
@@ -131,7 +146,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secMasters(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -199,6 +214,11 @@ function secPillars(c: Chart, a: Analysis) {
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
     <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · расчётное время ${pad(L.h)}:${pad(L.min)} (${c.variant.solar ? `истинное солнечное, уравнение времени ${eot}` : 'поясное'})</p>
+    <details class="old"><summary>Старая школа (справочно): эмбрион, дворец судьбы, малые такты</summary>
+      <p>Школа Цзы пин («Цзы пин чжэнь цюань», «Ди тянь суй») этими столпами не пользуется, поэтому в разборе и прогнозе их нет. Их считала годовая школа («Сань мин тун хуэй», т.2) — даём для сверки с другими сайтами.</p>
+      <ul class="list"><li><b>Эмбрион 胎元</b> — ${pillarZh(taiyuan(c))} (${pillarRuHtml(taiyuan(c))}): ствол месяца +1, ветвь +3 — «胎月是四柱之根苗».</li>
+      <li><b>Дворец судьбы 命宫</b> — ${(() => { const m = minggong(c); return m === null ? 'нужен час рождения' : `${pillarZh(m)} (${pillarRuHtml(m)})`; })()}: «天轮转出地轮上，卯上分明是命宫».</li>
+      <li><b>Малые такты 小运</b> до первого большого (${c.startAge.toFixed(1)} лет): ${xiaoyun(c).map((x) => `${x.age}-й год — ${pillarZh(x.idx)}`).join(', ')}.</li></ul></details>
   </section>`;
 }
 
@@ -367,7 +387,7 @@ function secSpheres(c: Chart, a: Analysis) {
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
-  const stars = a.stars.map((s) => `<li><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
+  const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}${s.folk ? ` <small>· народная звезда, классика не опирается: ${esc(s.folk)}</small>` : ''}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, w]) => `<li><b>${GODS[k].ru}</b> · ${w.toFixed(1)} — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><div class="bhead"><div><h2>Разбор <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Каждый вывод — из фактов вашей карты и правил классики: цитата и источник под ним (ДТС — «Ди тянь суй», ЦПЦЦ — «Цзы пин чжэнь цюань», ЮХ — «Юань хай цзы пин», СМ — «Сань мин тун хуэй»). Где школы спорят — сказано. Это язык самоанализа, а не приговор.</p></div>
@@ -385,7 +405,7 @@ function secRazbor(c: Chart, a: Analysis) {
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
         ${bonds.map(noteHtml).join('')}
         <p class="q"><span class="src">刑/害 показываются, но веса не имеют — «刑害不足論» (Жэнь); снятие: союз снимает удар (ЦПЦЦ гл.7)</span></p>
-        ${stars ? `<h3 style="margin-top:18px">Звёзды-символы</h3><ul class="list">${stars}</ul>` : ''}</div>
+        <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}<p class="dhint">На других сайтах звёзд до тридцати. Классика большинство из них отвергает — «吉凶神煞之多端，何如生克制化之一理» (ДТС): судьбу решают стихии, а не звёзды. Мы показываем признанные «Мин ли юэ янь» (благородный помощник, небесная и лунная добродетели, почтовая лошадь, пустота) как смягчение, а не прогноз, и помечаем народные.</p></div>
     </div></section>`;
 }
 
@@ -459,7 +479,8 @@ function secDays(c: Chart, a: Analysis) {
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
     <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
-    <div class="acts" style="margin-top:20px"><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить «Мою карту»' : 'Сохранить как мою карту'}</button><span class="dhint" id="savemsg"></span></div>
+    <div class="saved" hidden></div>
+    <div class="acts" style="margin-top:20px"><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить «Мою карту»' : 'Сохранить как мою карту'}</button><span class="dhint" id="savemsg"></span></div>
   </section>`;
 }
 function wireDays(c: Chart, a: Analysis) {
@@ -470,6 +491,17 @@ function wireDays(c: Chart, a: Analysis) {
     const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
+  const msGo = document.getElementById('ms-go');
+  if (msGo) msGo.onclick = async () => {
+    msGo.textContent = 'Считаю…';
+    const rows = await masterRows(), out = document.getElementById('ms-out')!;
+    const draw = (only: string, miss: boolean) => {
+      out.innerHTML = mastersHtml(rows, only, miss);
+      const bk = document.getElementById('ms-book') as HTMLSelectElement, ms = document.getElementById('ms-miss') as HTMLInputElement;
+      bk.onchange = ms.onchange = () => draw(bk.value, ms.checked);
+    };
+    msGo.remove(); draw('', false);
+  };
   const pdf = document.getElementById('pdf');
   if (pdf) pdf.onclick = () => { document.querySelectorAll('details').forEach((d) => (d.open = true)); print(); };
   const cf = document.getElementById('cf') as HTMLFormElement | null;
@@ -483,6 +515,17 @@ function wireDays(c: Chart, a: Analysis) {
     const TONE: Record<string, string> = { good: 'легче', bad: 'труднее', mixed: 'смешанно' };
     o.innerHTML = `<h3>${esc(r.summary)}</h3>${r.items.map((i) => noteHtml({ title: `${i.title} — ${TONE[i.tone]}`, text: i.text, quote: i.quote, src: i.src, tone: i.tone })).join('')}`;
   };
+  const al = document.getElementById('addlist');
+  if (al) al.onclick = () => {
+    const q = lastQuery || location.search.slice(1), xs = loadSaved();
+    const def = `${c.input.date.split('-').reverse().join('.')} · ${c.input.place ?? ''}`.trim();
+    const label = (prompt('Как подписать карту?', def) ?? '').trim();
+    if (!label) return;
+    storeSaved([...xs.filter((x) => x.q !== q), { q, label }].slice(-30));
+    document.getElementById('savemsg')!.textContent = 'Добавлено в «Мои карты» — список вверху страницы и здесь.';
+    renderSaved();
+  };
+  renderSaved();
   const sv = document.getElementById('saveme');
   if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить «Мою карту»'; document.getElementById('melink')?.removeAttribute('hidden'); };
 }
@@ -492,6 +535,27 @@ function secCompat() {
     <div class="card pane"><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
+}
+
+function secMasters() {
+  return `<section class="block" id="s-masters"><div class="bhead"><div><h2>Проверка на картах мастеров <span class="tag n">НАУКА</span></h2></div><p>302 карты, которые разобрали сами классики: Жэнь Тецяо, Сюй Лэу, Чжу Цзуся, Вэй Цяньли, Дай Юнчан. Рядом — полезный бог (用神) мастера и тот, что выбрала наша программа. Ни один сайт не показывает, где он ошибается; мы показываем.</p></div>
+    <div class="card pane"><button class="ghost" id="ms-go" type="button">Показать 302 карты</button><div id="ms-out"></div></div></section>`;
+}
+const EL_ZH5 = '木火土金水';
+function mastersHtml(rows: MasterRow[], only: string, miss: boolean) {
+  const by = new Map<string, MasterRow[]>();
+  for (const r of rows) by.set(r.book, [...(by.get(r.book) ?? []), r]);
+  const pct = (xs: MasterRow[], f: (r: MasterRow) => boolean) => `${Math.round((100 * xs.filter(f).length) / xs.length)}%`;
+  const sum = [...by.entries()].map(([b, xs]) => `<tr><td>${esc(BOOK_RU[b] ?? b)}</td><td>${xs.length}</td><td>${pct(xs, (r) => r.hit === 'yes')}</td><td>${pct(xs, (r) => r.hit !== 'no')}</td></tr>`).join('')
+    + `<tr class="tot"><td>Всего</td><td>${rows.length}</td><td>${pct(rows, (r) => r.hit === 'yes')}</td><td>${pct(rows, (r) => r.hit !== 'no')}</td></tr>`;
+  const list = rows.filter((r) => (only ? r.book === only : true) && (miss ? r.hit !== 'yes' : true));
+  const HIT = { yes: '✓ совпал', xi: '≈ у нас второй', no: '✗ иначе' };
+  const tr = list.map((r) => `<tr class="h-${r.hit}"><td>${r.pillars.join(' ')}</td><td>${EL[r.yong]} ${EL_ZH5[r.yong]}<small> ${esc(r.phrase)}</small></td><td>${EL[r.ours]}</td><td>${HIT[r.hit]}</td></tr>`).join('');
+  return `<table class="vt ms-sum"><thead><tr><th>Книга</th><th>Карт</th><th>用神 совпал</th><th>Совпал главный или второй</th></tr></thead><tbody>${sum}</tbody></table>
+    <p class="dhint">Случайный выбор стихии угадывает в 20% случаев. Главная причина расхождений — по-разному оценённая сила господина дня.</p>
+    <div class="ms-f"><select id="ms-book"><option value="">Все книги</option>${[...by.keys()].map((b) => `<option value="${esc(b)}"${b === only ? ' selected' : ''}>${esc(BOOK_RU[b] ?? b)}</option>`).join('')}</select>
+    <label><input type="checkbox" id="ms-miss"${miss ? ' checked' : ''} /> только расхождения</label> <span class="dhint">${list.length} карт</span></div>
+    <div class="vt-wrap"><table class="vt ms-t"><thead><tr><th>Столпы (год месяц день час)</th><th>Мастер</th><th>Мы</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 
 function secAsk() {
@@ -535,6 +599,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
 
 // ——— Старт: из адреса ———
 (() => {
+  document.getElementById('f')!.insertAdjacentHTML('afterend', '<div class="saved" id="saved-top" hidden></div>');
+  renderSaved();
   let q = new URLSearchParams(location.search);
   const me = localStorage.getItem(ME_KEY);
   if (me) document.getElementById('melink')?.removeAttribute('hidden');
