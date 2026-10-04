@@ -203,7 +203,7 @@ function secPillars(c: Chart, a: Analysis) {
     const g = isDm ? '<b>Вы</b>' : `<b>${godOf(a.dm, p.stem).ru}</b>`;
     const hid = hiddenOf(p.branch).map((h) => {
       const hs = STEMS[h.stem];
-      return `<span style="--rgb:${rgb(hs.el)}" title="${hs.ru} (${EL[hs.el]}) — ${godOf(a.dm, h.stem).ru}, доля ${Math.round(h.w * 100)}%"><b class="hh">${elIcon(hs.el, EL_COLOR[hs.el], 18)}${hs.ru}</b><small>${godOf(a.dm, h.stem).short}</small><i style="width:${Math.round(h.w * 36)}px"></i></span>`;
+      return `<span style="--rgb:${rgb(hs.el)}" title="${hs.ru} (${EL[hs.el]}) — ${godOf(a.dm, h.stem).ru}"><b class="hh">${elIcon(hs.el, EL_COLOR[hs.el], 18)}${hs.ru}</b><small>${godOf(a.dm, h.stem).short}</small><i style="width:${Math.round(h.w * 36)}px"></i></span>`;
     }).join('');
     const [ny] = nayinOf(p.idx);
     const st = a.stars.filter((x) => x.pos.includes(p.pos)).map((x) => `<span class="${x.name === 'Пустота' ? 'void' : ''}">${x.name}</span>`).join('');
