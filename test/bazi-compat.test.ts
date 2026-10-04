@@ -28,7 +28,7 @@ describe("совместимость двух карт", () => {
       const d = new Date(Date.UTC(1992, 0, 1 + i)).toISOString().slice(0, 10);
       const [c2, a2] = ch(d, "12:00", false);
       if (c2.pillars.find((p) => p.pos === "day")!.branch === 5) {
-        expect(compat(c1, a1, c2, a2).items.map((x) => x.title)).toContain("Дворцы партнёра в союзе");
+        expect(compat(c1, a1, c2, a2).items.map((x) => x.title)).toContain("Знаки дома в союзе");
         return;
       }
     }

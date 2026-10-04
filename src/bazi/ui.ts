@@ -253,7 +253,7 @@ function drawLinks(c: Chart, a: Analysis, anim = true) {
     const len = Math.round(Math.abs(x2 - x1) + depth * 2);
     const mid = pts.length === 3 ? `<circle cx="${pts[1]}" cy="${depth * 0.75}" r="3" fill="${col}"/>` : '';
     return `<g style="--len:${len};--dl:${1.6 + k * 0.25}s"><path d="${d}" stroke="${col}" ${it.tone === 'harm' ? 'stroke-dasharray="6 5"' : ''} style="--len:${len}"/>${mid}
-      <text x="${Math.min(Math.max((x1 + x2) / 2, 80), box.width - 80)}" y="${depth * 0.75 + 14}" text-anchor="middle" fill="${col}">${esc(it.label)}${it.stems && !/ствол/.test(it.label) ? ' (стволы)' : ''}</text></g>`;
+      <text x="${Math.min(Math.max((x1 + x2) / 2, 80), box.width - 80)}" y="${depth * 0.75 + 14}" text-anchor="middle" fill="${col}">${esc(it.label)}</text></g>`;
   }).join('');
 }
 
@@ -427,14 +427,13 @@ const INTER_SENSE: Record<string, string> = {
 };
 
 function dayCard(d: DayInfo, big = false) {
-  const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], m = BRANCHES[d.monthIdx % 12], ms = STEMS[d.monthIdx % 10];
+  const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
     <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru}</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
     <p><b>Что делать:</b> ${d.act}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
     ${d.notes.length ? `<p class="dnote">Осторожно: ${d.notes.map(esc).join('; ')}.</p>` : ''}
-    ${big ? `<p class="dhint">Месяц: ${EL[ms.el]} · ${m.animal} (${EL[m.el]}).</p>` : ''}
   </div></div>`;
 }
 
@@ -452,12 +451,12 @@ function secDays(c: Chart, a: Analysis) {
   const pairs = showThenClose(days).slice(0, 5);
   const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
-  const fav = a.consensus.map((e) => EL[e]).join(' и '), bad = a.avoid.map((e) => EL[e]).join(' и ');
+  const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
     <h3 style="margin-top:26px">8 недель</h3>
-    <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный с ударом</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
+    <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
     <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}

@@ -9,7 +9,7 @@ export interface DayInfo { iso: string; idx: number; monthIdx: number; type: Day
 
 export const DAY_TYPE: Record<DayType, { ru: string; hint: string }> = {
   peak: { ru: 'Сильный', hint: 'главные шаги: переговоры, запуски, оплаты, публикации' },
-  'peak-hit': { ru: 'Сильный с ударом', hint: 'работать можно, решения — после проверки' },
+  'peak-hit': { ru: 'Сильный, но с риском', hint: 'работать можно, решения — после проверки' },
   calm: { ru: 'Ровный', hint: 'обычная работа, доводить начатое' },
   heavy: { ru: 'Нагрузка', hint: 'рутина, учёба, отдых; важного не начинать, крупно не тратить' },
 };
@@ -28,7 +28,6 @@ export const GOD_ACT: Record<string, string> = {
 };
 
 const POS_AREA: Record<Pos, string> = { day: 'дом, близкие, тело', hour: 'дети, планы, сон', month: 'работа, родители', year: 'род, корни, старшие' };
-const POS_OF: Record<Pos, string> = { day: 'ветвь дня', hour: 'час', month: 'месяц', year: 'год' };
 const PUNISH: number[][] = [[2, 5, 8], [1, 10, 7], [0, 3]];
 const HARM: [number, number][] = [[0, 7], [1, 6], [2, 5], [3, 4], [8, 11], [9, 10]];
 const norm = (x: number) => ((x % 360) + 360) % 360;
@@ -58,13 +57,13 @@ export function dayInfo(c: Chart, a: Analysis, y: number, m: number, d: number):
   let hit = false;
   for (const p of c.pillars) {
     const pb = p.branch;
-    if (Math.abs(pb - b) === 6) { notes.push(`${BRANCHES[b].animal} бьёт ${BRANCHES[pb].animal} (${POS_OF[p.pos]}): ${POS_AREA[p.pos]}`); if (p.pos === 'day' || p.pos === 'hour') hit = true; }
+    if (Math.abs(pb - b) === 6) { notes.push(`встряска в сфере «${POS_AREA[p.pos]}»`); if (p.pos === 'day' || p.pos === 'hour') hit = true; }
     if (p.pos === 'day') {
-      if (Math.abs(pb - b) !== 6 && PUNISH.some((set) => set.includes(pb) && set.includes(b) && pb !== b)) { notes.push('трение с ветвью дня: документы, закон, близкие — без конфликтов'); hit = true; }
-      if (HARM.some(([x, z]) => (x === pb && z === b) || (x === b && z === pb))) notes.push('скрытое трение: перепроверять договорённости');
+      if (Math.abs(pb - b) !== 6 && PUNISH.some((set) => set.includes(pb) && set.includes(b) && pb !== b)) { notes.push('трения с документами, законом и близкими — без конфликтов'); hit = true; }
+      if (HARM.some(([x, z]) => (x === pb && z === b) || (x === b && z === pb))) notes.push('возможны недопонимания — перепроверяйте договорённости');
     }
   }
-  if (a.voids.includes(b)) notes.push('пустой знак карты: результат может прийти неполным');
+  if (a.voids.includes(b)) notes.push('результат может прийти неполным');
   if (hit && type === 'peak') type = 'peak-hit';
   const god = godOf(a.dm, s);
   const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;

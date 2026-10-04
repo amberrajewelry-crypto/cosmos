@@ -17,7 +17,7 @@ describe('bazi days', () => {
     expect(dayInfo(c, a, 2026, 10, 20).type).toBe('peak');
     const d19 = dayInfo(c, a, 2026, 10, 19);
     expect(d19.type).toBe('peak-hit');
-    expect(d19.notes.join()).toMatch(/Тигр бьёт Обезьяна/);
+    expect(d19.notes.join()).toMatch(/встряска в сфере «дом/);
     expect(dayInfo(c, a, 2026, 10, 5).type).toBe('heavy');
   });
   it('связка покажи→закрой: 20→21.10.2026', () => {
