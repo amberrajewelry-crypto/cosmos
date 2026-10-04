@@ -43,7 +43,7 @@ export function brain(c: Chart, a: Analysis): Brain {
   const key = score >= 3 ? 'strong' : score <= -1 ? 'weak' : 'balanced';
   const ru = STRENGTH_RU(score);
   steps.push({ title: 'Сила', src: 'ЦПЦЦ гл.3, гл.6; ДТС 衰旺; 命理约言 卷一 看日主法',
-    text: `Сезон: ${['процветает', 'крепнет', 'отдыхает', 'заперт', 'мёртв'][season]}; корни в ветвях: ${roots || 'нет'}; опора своих ${friend}, Печати ${resSup}, против ${against} → ${ru} (${score > 0 ? '+' : ''}${score}).` });
+    text: `В сезон рождения стихия дня ${['в расцвете', 'крепнет', 'отдыхает', 'заперта', 'без сил'][season]}; ${roots >= 5 ? 'корни в ветвях крепкие' : roots ? 'корни в ветвях есть' : 'корней в ветвях нет'}; поддержки ${friend + resSup > against ? 'больше, чем давления' : friend + resSup < against ? 'меньше, чем давления' : 'столько же, сколько давления'} → ${ru}.` });
 
   const done = (frame: Brain['frame'], yong: El, xi: El[], ji: El[]): Brain => {
     const fav = uniq([yong, ...xi]);
