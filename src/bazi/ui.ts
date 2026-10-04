@@ -13,6 +13,12 @@ import {
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
+import { spheres } from './spheres';
+import { compat } from './compat';
+import { daysIcs } from './ics';
+import { taiyuan, minggong, xiaoyun } from './oldschool';
+import { masterRows, BOOK_RU, type MasterRow } from './masters';
+import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -120,6 +126,19 @@ $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
 let current: { input: BirthInput; variant: Variant } | null = null;
 let lastQuery = '';
 const ME_KEY = 'bazi-me';
+// Несколько карт в этом браузере: [{ q, label }]. Хранилище может быть недоступно (приватный режим) — тогда просто пусто.
+const LIST_KEY = 'bazi-list';
+type Saved = { q: string; label: string };
+const loadSaved = (): Saved[] => { try { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); } catch { return []; } };
+const storeSaved = (xs: Saved[]) => { try { localStorage.setItem(LIST_KEY, JSON.stringify(xs)); } catch { /* storage off */ } };
+function renderSaved() {
+  const xs = loadSaved(), cur = new URLSearchParams(location.search).toString();
+  document.querySelectorAll<HTMLElement>('.saved').forEach((el) => {
+    el.hidden = !xs.length;
+    el.innerHTML = xs.length ? `<span class="eyebrow">Мои карты</span>${xs.map((x, i) => `<span class="sv${x.q === cur ? ' cur' : ''}"><a href="?${esc(x.q)}">${esc(x.label)}</a><button type="button" data-del="${i}" aria-label="Удалить ${esc(x.label)}">×</button></span>`).join('')}` : '';
+  });
+  document.querySelectorAll<HTMLButtonElement>('.saved [data-del]').forEach((b) => (b.onclick = () => { const xs2 = loadSaved(); xs2.splice(+b.dataset.del!, 1); storeSaved(xs2); renderSaved(); }));
+}
 function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   current = { input, variant };
   const variants = allVariants(input);
@@ -128,7 +147,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secMasters(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -196,6 +215,11 @@ function secPillars(c: Chart, a: Analysis) {
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
     <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · расчётное время ${pad(L.h)}:${pad(L.min)} (${c.variant.solar ? `истинное солнечное, уравнение времени ${eot}` : 'поясное'})</p>
+    <details class="old"><summary>Старая школа (справочно): эмбрион, дворец судьбы, малые такты</summary>
+      <p>Школа Цзы пин («Цзы пин чжэнь цюань», «Ди тянь суй») этими столпами не пользуется, поэтому в разборе и прогнозе их нет. Их считала годовая школа («Сань мин тун хуэй», т.2) — даём для сверки с другими сайтами.</p>
+      <ul class="list"><li><b>Эмбрион 胎元</b> — ${pillarZh(taiyuan(c))} (${pillarRuHtml(taiyuan(c))}): ствол месяца +1, ветвь +3 — «胎月是四柱之根苗».</li>
+      <li><b>Дворец судьбы 命宫</b> — ${(() => { const m = minggong(c); return m === null ? 'нужен час рождения' : `${pillarZh(m)} (${pillarRuHtml(m)})`; })()}: «天轮转出地轮上，卯上分明是命宫».</li>
+      <li><b>Малые такты 小运</b> до первого большого (${c.startAge.toFixed(1)} лет): ${xiaoyun(c).map((x) => `${x.age}-й год — ${pillarZh(x.idx)}`).join(', ')}.</li></ul></details>
   </section>`;
 }
 
@@ -339,10 +363,32 @@ function secLuck(c: Chart, a: Analysis) {
 
 const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p>${n.quote || n.src ? `<p class="q">${n.quote ? `「${n.quote}」 ` : ''}${n.src ? `<span class="src">${esc(n.src)}</span>` : ''}</p>` : ''}</div>`;
 
+function secForecast(c: Chart, a: Analysis) {
+  const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
+  const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const pill = (idx: number) => `${pillarZh(idx)} · ${BRANCHES[idx % 12].animal}`;
+  const months = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
+  const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
+    <br><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></li>`).join('');
+  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Год бацзы начинается в Личунь (около 4 февраля), месяц — в день сезона «цзе». Тон каждого периода — по вашему полезному богу: ствол и ветвь вместе, как учит 命理约言; дело месяца — по богу его ствола.</p></div>
+    <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
+      <div class="fm-grid">${months}</div></div>
+    <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3><ul class="list fy-list">${years}</ul></div></section>`;
+}
+
+function secSpheres(c: Chart, a: Analysis) {
+  const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
+    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>${x.how ? `<p class="dhint">${esc(x.how)}</p>` : ''}
+    <details><summary>Откуда это — классика</summary>${x.notes.map(noteHtml).join('')}</details></div>`).join('');
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p><p class="acc">Точность ядра проверена: полезный бог совпадает с разбором мастеров (Жэнь Тецяо, Сюй Лэу и др.) в 44% из 302 карт, случайный выбор даёт 20%. <button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button><button class="ghost" id="share" type="button">Поделиться ссылкой</button></p></div>
+    <div class="sph-grid">${cards}</div></section>`;
+}
+
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
-  const stars = a.stars.map((s) => `<li><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
+  const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}${s.folk ? ` <small>· народная звезда, классика не опирается: ${esc(s.folk)}</small>` : ''}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, w]) => `<li><b>${GODS[k].ru}</b> · ${w.toFixed(1)} — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><div class="bhead"><div><h2>Разбор <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Каждый вывод — из фактов вашей карты и правил классики: цитата и источник под ним (ДТС — «Ди тянь суй», ЦПЦЦ — «Цзы пин чжэнь цюань», ЮХ — «Юань хай цзы пин», СМ — «Сань мин тун хуэй»). Где школы спорят — сказано. Это язык самоанализа, а не приговор.</p></div>
@@ -360,7 +406,7 @@ function secRazbor(c: Chart, a: Analysis) {
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
         ${bonds.map(noteHtml).join('')}
         <p class="q"><span class="src">刑/害 показываются, но веса не имеют — «刑害不足論» (Жэнь); снятие: союз снимает удар (ЦПЦЦ гл.7)</span></p>
-        ${stars ? `<h3 style="margin-top:18px">Звёзды-символы</h3><ul class="list">${stars}</ul>` : ''}</div>
+        <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}<p class="dhint">На других сайтах звёзд до тридцати. Классика большинство из них отвергает — «吉凶神煞之多端，何如生克制化之一理» (ДТС): судьбу решают стихии, а не звёзды. Мы показываем признанные «Мин ли юэ янь» (благородный помощник, небесная и лунная добродетели, почтовая лошадь, пустота) как смягчение, а не прогноз, и помечаем народные.</p></div>
     </div></section>`;
 }
 
@@ -434,7 +480,8 @@ function secDays(c: Chart, a: Analysis) {
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
     <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
-    <div class="acts" style="margin-top:20px"><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить «Мою карту»' : 'Сохранить как мою карту'}</button><span class="dhint" id="savemsg"></span></div>
+    <div class="saved" hidden></div>
+    <div class="acts dacts" style="margin-top:20px"><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
   </section>`;
 }
 function wireDays(c: Chart, a: Analysis) {
@@ -445,8 +492,87 @@ function wireDays(c: Chart, a: Analysis) {
     const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
+  const msGo = document.getElementById('ms-go');
+  if (msGo) msGo.onclick = async () => {
+    msGo.textContent = 'Считаю…';
+    const rows = await masterRows(), out = document.getElementById('ms-out')!;
+    const draw = (only: string, miss: boolean) => {
+      out.innerHTML = mastersHtml(rows, only, miss);
+      const bk = document.getElementById('ms-book') as HTMLSelectElement, ms = document.getElementById('ms-miss') as HTMLInputElement;
+      bk.onchange = ms.onchange = () => draw(bk.value, ms.checked);
+    };
+    msGo.remove(); draw('', false);
+  };
+  const sh = document.getElementById('share');
+  if (sh) sh.onclick = async () => {
+    const url = location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: document.title, url });
+      else { await navigator.clipboard.writeText(url); sh.textContent = 'Ссылка скопирована'; }
+    } catch { /* пользователь закрыл окно — ничего не делаем */ }
+  };
+  const pdf = document.getElementById('pdf');
+  if (pdf) pdf.onclick = () => { document.querySelectorAll('details').forEach((d) => (d.open = true)); print(); };
+  const cf = document.getElementById('cf') as HTMLFormElement | null;
+  if (cf) cf.onsubmit = async (e) => {
+    e.preventDefault();
+    const o = document.getElementById('cf-out')!, val = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
+    const q = val('cf-p').trim(), pl = q ? (await findPlaces(q, 1))[0] : null;
+    if (q && !pl) { o.textContent = 'Не нашёл такой город — уточните название.'; return; }
+    const inp: BirthInput = { date: val('cf-d'), time: val('cf-t') || '12:00', timeKnown: !!val('cf-t'), tz: pl?.tz ?? c.input.tz, lat: pl?.lat ?? c.input.lat, lon: pl?.lon ?? c.input.lon, male: val('cf-g') === 'm' };
+    const c2 = computeChart(inp, DEFAULT_VARIANT), r = compat(c, a, c2, analyze(c2));
+    const TONE: Record<string, string> = { good: 'легче', bad: 'труднее', mixed: 'смешанно' };
+    o.innerHTML = `<h3>${esc(r.summary)}</h3><div class="cf-sph">${r.spheres.map((x) => `<span class="fm-t ${x.tone}">${x.title}: ${TONE[x.tone]}</span>`).join('')}</div>${r.spheres.map((x) => `<h4 class="sub">${x.title}</h4>${r.items.filter((i) => i.sphere === x.key).map((i) => noteHtml({ title: i.title, text: i.text, quote: i.quote, src: i.src, tone: i.tone })).join('')}`).join('')}`;
+  };
+  const icsB = document.getElementById('ics');
+  if (icsB) icsB.onclick = () => {
+    const t = new Date(), ds = daysFrom(c, a, new Date(t.getFullYear(), t.getMonth(), t.getDate()), 90).filter((d) => d.type === 'peak');
+    const url = URL.createObjectURL(new Blob([daysIcs(ds, c.input.place ? `${c.input.date}, ${c.input.place}` : c.input.date)], { type: 'text/calendar' }));
+    const link = Object.assign(document.createElement('a'), { href: url, download: 'bazi-silnye-dni.ics' });
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    document.getElementById('savemsg')!.textContent = `Файл с ${ds.length} сильными днями на 90 дней: откройте его — телефон добавит события в календарь.`;
+  };
+  const al = document.getElementById('addlist');
+  if (al) al.onclick = () => {
+    const q = lastQuery || location.search.slice(1), xs = loadSaved();
+    const def = `${c.input.date.split('-').reverse().join('.')} · ${c.input.place ?? ''}`.trim();
+    const label = (prompt('Как подписать карту?', def) ?? '').trim();
+    if (!label) return;
+    storeSaved([...xs.filter((x) => x.q !== q), { q, label }].slice(-30));
+    document.getElementById('savemsg')!.textContent = 'Добавлено в «Мои карты» — список вверху страницы и здесь.';
+    renderSaved();
+  };
+  renderSaved();
   const sv = document.getElementById('saveme');
-  if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить «Мою карту»'; document.getElementById('melink')?.removeAttribute('hidden'); };
+  if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить главную карту'; document.getElementById('melink')?.removeAttribute('hidden'); };
+}
+
+function secCompat() {
+  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает («其谬甚矣», Шэнь Фэн). Итог — легче или труднее, не «можно/нельзя».</p></div>
+    <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
+      <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
+      <div class="ans" id="cf-out"></div></div></section>`;
+}
+
+function secMasters() {
+  return `<section class="block" id="s-masters"><div class="bhead"><div><h2>Проверка на картах мастеров <span class="tag n">НАУКА</span></h2></div><p>302 карты, которые разобрали сами классики: Жэнь Тецяо, Сюй Лэу, Чжу Цзуся, Вэй Цяньли, Дай Юнчан. Рядом — полезный бог (用神) мастера и тот, что выбрала наша программа. Ни один сайт не показывает, где он ошибается; мы показываем.</p></div>
+    <div class="card pane"><button class="ghost" id="ms-go" type="button">Показать 302 карты</button><div id="ms-out"></div></div></section>`;
+}
+const EL_ZH5 = '木火土金水';
+function mastersHtml(rows: MasterRow[], only: string, miss: boolean) {
+  const by = new Map<string, MasterRow[]>();
+  for (const r of rows) by.set(r.book, [...(by.get(r.book) ?? []), r]);
+  const pct = (xs: MasterRow[], f: (r: MasterRow) => boolean) => `${Math.round((100 * xs.filter(f).length) / xs.length)}%`;
+  const sum = [...by.entries()].map(([b, xs]) => `<tr><td>${esc(BOOK_RU[b] ?? b)}</td><td>${xs.length}</td><td>${pct(xs, (r) => r.hit === 'yes')}</td><td>${pct(xs, (r) => r.hit !== 'no')}</td></tr>`).join('')
+    + `<tr class="tot"><td>Всего</td><td>${rows.length}</td><td>${pct(rows, (r) => r.hit === 'yes')}</td><td>${pct(rows, (r) => r.hit !== 'no')}</td></tr>`;
+  const list = rows.filter((r) => (only ? r.book === only : true) && (miss ? r.hit !== 'yes' : true));
+  const HIT = { yes: '✓ совпал', xi: '≈ у нас второй', no: '✗ иначе' };
+  const tr = list.map((r) => `<tr class="h-${r.hit}"><td>${r.pillars.join(' ')}</td><td>${EL[r.yong]} ${EL_ZH5[r.yong]}<small> ${esc(r.phrase)}</small></td><td>${EL[r.ours]}</td><td>${HIT[r.hit]}</td></tr>`).join('');
+  return `<table class="vt ms-sum"><thead><tr><th>Книга</th><th>Карт</th><th>用神 совпал</th><th>Совпал главный или второй</th></tr></thead><tbody>${sum}</tbody></table>
+    <p class="dhint">Случайный выбор стихии угадывает в 20% случаев. Главная причина расхождений — по-разному оценённая сила господина дня.</p>
+    <div class="ms-f"><select id="ms-book"><option value="">Все книги</option>${[...by.keys()].map((b) => `<option value="${esc(b)}"${b === only ? ' selected' : ''}>${esc(BOOK_RU[b] ?? b)}</option>`).join('')}</select>
+    <label><input type="checkbox" id="ms-miss"${miss ? ' checked' : ''} /> только расхождения</label> <span class="dhint">${list.length} карт</span></div>
+    <div class="vt-wrap"><table class="vt ms-t"><thead><tr><th>Столпы (год месяц день час)</th><th>Мастер</th><th>Мы</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 
 function secAsk() {
@@ -456,6 +582,7 @@ function secAsk() {
 function secHonest() {
   return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы <span class="tag n">НАУКА</span></h3>
     <p>Календарная часть — точная астрономия: моменты сезонов по долготе Солнца (astronomy-engine), истинное солнечное время по долготе места и уравнению времени, 60-ричный цикл дней без пропусков с древности.</p>
+    <p>Как мы меряем свою точность: полезный бог (用神), который выбирает программа, сверен с 302 картами, разобранными мастерами в классических книгах (任铁樵, 徐乐吾, 朱祖夏, 韦千里, 戴永长). Совпадение — 44% (случайный выбор — 20%, с учётом второй полезной стихии — 67%). Расхождения в основном там, где по-разному оценена сила господина дня — над этим работаем и публикуем цифру после каждой правки.</p>
     <p>Толкования — традиция двух тысяч лет. Контролируемых исследований, которые подтверждали бы связь момента рождения с судьбой, нет; проверки «временных близнецов» и слепые тесты астрологии эффекта не находят. Используйте карту как язык самоанализа и планирования циклами — и проверяйте её на своей жизни, записывая прогнозы заранее.</p></div></section>`;
 }
 
@@ -473,7 +600,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     sessionStorage.removeItem('bazi-scrolled');
   }));
   const notes = [natureNote(a), strengthNote(c, a), axisNote(c, a), climateNote(c, a), ...comboNotes(c, a), ...bondNotes(c, a)];
-  const ctx = chartSummary(c, a) + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
+  const fy = yearForecast(c, a, baziYear());
+  const ctx = chartSummary(c, a) + '\n' + `Год ${fy.year} ${pillarZh(fy.idx)}: ${toneRu(fy.tone)}, ${fy.text}. Месяцы: ${fy.months.map((m) => `с ${m.start.toISOString().slice(0, 10)} ${pillarZh(m.idx)} ${toneRu(m.tone)}`).join('; ')}.` + '\n' + spheres(c, a).map((x) => `${x.title}: ${x.lead} ${x.points.join(' ')} Что делать: ${x.todo}`).join('\n') + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
   document.getElementById('askf')!.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;
@@ -488,6 +616,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
 
 // ——— Старт: из адреса ———
 (() => {
+  document.getElementById('f')!.insertAdjacentHTML('afterend', '<div class="saved" id="saved-top" hidden></div>');
+  renderSaved();
   let q = new URLSearchParams(location.search);
   const me = localStorage.getItem(ME_KEY);
   if (me) document.getElementById('melink')?.removeAttribute('hidden');

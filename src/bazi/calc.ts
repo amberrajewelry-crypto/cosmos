@@ -108,7 +108,7 @@ export interface Analysis {
   strength: string; strengthKey: 'vweak' | 'weak' | 'sweak' | 'sstrong' | 'strong' | 'vstrong';
   season: number; monthEl: El;
   useful: { method: string; fav: El[]; unfav: El[]; why: string }[]; consensus: El[]; avoid: El[];
-  gods: Record<string, number>; interactions: Interaction[]; stars: { name: string; pos: Pos[]; sense: string }[];
+  gods: Record<string, number>; interactions: Interaction[]; stars: { name: string; pos: Pos[]; sense: string; folk?: string }[];
   voids: number[]; brain: Brain;
 }
 
@@ -197,17 +197,26 @@ export function analyze(c: Chart): Analysis {
   const stars: Analysis['stars'] = [];
   const NOBLE: Record<number, number[]> = { 0: [1, 7], 4: [1, 7], 1: [0, 8], 5: [0, 8], 2: [11, 9], 3: [11, 9], 8: [3, 5], 9: [3, 5], 6: [2, 6], 7: [2, 6] };
   const at = (bs: number[]) => P.filter((p) => bs.includes(p.branch)).map((p) => p.pos);
-  const push = (name: string, bs: number[], sense: string) => { const pos = at(bs); if (pos.length) stars.push({ name, pos, sense }); };
+  const push = (name: string, bs: number[], sense: string, folk?: string) => { const pos = at(bs); if (pos.length) stars.push({ name, pos, sense, ...(folk ? { folk } : {}) }); };
   push('Благородный помощник', NOBLE[dm], 'люди приходят на помощь в трудный момент');
-  push('Звезда учёности', [[5, 6, 8, 9, 8, 9, 11, 0, 2, 3][dm]], 'ум, учёба, экзамены, письмо');
+  push('Звезда учёности', [[5, 6, 8, 9, 8, 9, 11, 0, 2, 3][dm]], 'ум, учёба, экзамены, письмо', 'без механики в классике (KB 16)');
   const tri = (b: number) => TRINE.find(([s]) => s.includes(b))![0];
   const peach = (b: number) => ({ 8: 9, 2: 3, 5: 6, 11: 0 } as Record<number, number>)[tri(b)[0]];
   const horse = (b: number) => ({ 8: 2, 2: 8, 5: 11, 11: 5 } as Record<number, number>)[tri(b)[0]];
   const canopy = (b: number) => tri(b)[2];
   const yb = P.find((p) => p.pos === 'year')!.branch, dbr = day.branch;
-  push('Цветок персика', [peach(yb), peach(dbr)], 'обаяние, романы, популярность');
+  push('Цветок персика', [peach(yb), peach(dbr)], 'обаяние, популярность', 'ДТС: «咸池驿马，是后人之谬言»');
   push('Почтовая лошадь', [horse(yb), horse(dbr)], 'переезды, дорога, перемены');
-  push('Цветной балдахин', [canopy(yb), canopy(dbr)], 'искусство, мистика, уединение');
+  push('Цветной балдахин', [canopy(yb), canopy(dbr)], 'искусство, мистика, уединение', 'МЛЮЯ не включает в признанные');
+  // 天德/月德 по месяцу рождения (五行精纪 «正丁二坤宫…庚居丑月内»; 千里命稿 月德): смягчают трудное (МЛЮЯ «助吉解凶»).
+  const mi = (mb + 10) % 12;
+  const TIANDE: [kind: 's' | 'b', v: number][] = [['s', 3], ['b', 8], ['s', 8], ['s', 7], ['b', 11], ['s', 0], ['s', 9], ['b', 2], ['s', 2], ['s', 1], ['b', 5], ['s', 6]];
+  const YUEDE = [2, 8, 6, 0][[2, 6, 10].includes(mb) ? 0 : [8, 0, 4].includes(mb) ? 1 : [5, 9, 1].includes(mb) ? 2 : 3];
+  const [tk, tv] = TIANDE[mi], byStem = (st: number) => P.filter((p) => p.stem === st).map((p) => p.pos);
+  const td = tk === 's' ? byStem(tv) : at([tv]);
+  if (td.length) stars.push({ name: 'Небесная добродетель', pos: td, sense: 'трудное смягчается, помощь приходит вовремя' });
+  const yd = byStem(YUEDE);
+  if (yd.length) stars.push({ name: 'Лунная добродетель', pos: yd, sense: 'смягчение бед, доброе имя' });
   if (STEMS[dm].yang) push('Клинок Ян', [[3, -1, 6, -1, 6, -1, 9, -1, 0, -1][dm]], 'резкая сила, решимость, риск травм и ссор');
   const voids = voidOf(day.idx);
   push('Пустота', voids, 'столп «в пустоте» — его тема ощущается нереальной или приходит с задержкой');
