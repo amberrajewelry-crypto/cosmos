@@ -5,9 +5,11 @@ import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, type El } from './core';
 import type { Analysis, Chart, Pillar } from './calc';
 import { yearIdx } from './calc';
 import { DM_TEXT, EL_NEED } from './interp';
+import { periodVerdict } from './brain';
+import { GOD_ACT } from './days';
 import type { Note } from './reading';
 
-export interface Sphere { key: string; title: string; lead: string; points: string[]; todo: string; notes: Note[] }
+export interface Sphere { key: string; title: string; lead: string; points: string[]; todo: string; notes: Note[]; how?: string }
 
 type Role = 'yong' | 'xi' | 'ji' | 'neutral';
 const role = (a: Analysis, e: El): Role =>
@@ -32,6 +34,13 @@ const clash = (x: number, y: number) => Math.abs(x - y) === 6;
 const ORGANS = ['печень и желчный пузырь, сухожилия и суставы', 'сердце, кровообращение, глаза', 'желудок и селезёнка, пищеварение',
   'лёгкие, толстая кишка, кожа', 'почки, мочевой пузырь, нижняя часть тела'];
 const HIT_QUOTE = ['筋骨疼痛，盖因木被金伤', '眼暗目昏，多是火遭水剋', '土虚乘木旺之乡，脾伤', '金弱遇火炎之地，血疾', '下元冷疾，只缘水值土伤'];
+
+const POS_FACE: Record<string, string> = { year: 'в обществе и среди старших', month: 'в работе и среде', hour: 'в замыслах, с детьми и во второй половине жизни' };
+const SEASON = ['весной', 'летом', 'на стыках сезонов (середина и конец каждого)', 'осенью', 'зимой'];
+/** Проступившие боги по столпам: «как вас видят». */
+const faces = (c: Chart, a: Analysis) => c.pillars.filter((p) => p.pos !== 'day').reverse().map((p) => ({ pos: p.pos, g: godOf(a.dm, p.stem) }));
+const currentLuck = (c: Chart, now: number) => [...c.luck].reverse().find((l) => l.year <= now);
+const span = (y: number) => `${y}–${y + 9}`;
 
 const PROF: Record<string, string> = {
   'Опора': 'самостоятельная работа, своё дело, спорт, команда равных',
@@ -62,6 +71,10 @@ function character(c: Chart, a: Analysis): Sphere {
         : 'Сила в равновесии: вы гибко подстраиваетесь — характер раскрывается по обстоятельствам и периодам жизни.',
     `Ярче всего в карте — «${GODS[godTop].ru}»: ${GODS[godTop].sense}.`,
   ];
+  const fs = faces(c, a);
+  if (fs.length) points.push(`Как вас видят: ${fs.map((f) => `${POS_FACE[f.pos]} — «${f.g.ru}» (${f.g.sense.split(',')[0]})`).join('; ')}.`);
+  const inner = godOf(a.dm, BRANCHES[P(c, 'day')!.branch].hidden[0]);
+  points.push(`Наедине и дома (ветвь дня) — «${inner.ru}»: ${inner.sense}.`);
   if (cold) points.push('Карта рождена в холод почти без Огня: внутри бывает зябко и одиноко — нужны тепло, люди, движение.');
   if (hot) points.push('Карта рождена в жару почти без Воды: много напора, мало остывания — нужны паузы и тишина.');
   return {
@@ -75,7 +88,7 @@ function character(c: Chart, a: Analysis): Sphere {
   };
 }
 
-function career(a: Analysis): Sphere {
+function career(c: Chart, a: Analysis, now: number): Sphere {
   const r = rel(a), groups = groupOf(a), y = a.brain.yong;
   const yGroup = GROUP_BY_REL[(y - a.dmEl + 5) % 5];
   const outStrong = a.pct[r.out] >= 0.2, offRole = role(a, r.officer);
@@ -87,10 +100,18 @@ function career(a: Analysis): Sphere {
       : good(offRole) ? 'Система и должность вам на пользу: дисциплина и ответственность поднимают, а не давят.'
         : 'Иерархия нейтральна: важнее, чем вы заняты, чем то, кто над вами.',
   ];
+  const L = currentLuck(c, now);
+  if (L) {
+    const g = godOf(a.dm, L.idx % 10), v = periodVerdict(a.brain, L.idx, c);
+    points.push(`Сейчас идёт такт ${span(L.year)}: его ствол — «${g.ru}», для дела это значит ${GOD_ACT[g.key]}. Фон такта — ${v.tone === 'good' ? 'попутный' : v.tone === 'bad' ? 'встречный: время укреплять базу' : 'смешанный'}.`);
+  }
+  const best = c.luck.filter((l) => l.year + 9 >= now && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
+  if (best.length) points.push(`Самые попутные десятилетия для рывка: ${best.slice(0, 3).join(', ')}.`);
   if (outStrong) points.push(`Выражение (${EL[r.out]}) сильно — ${pc(a.pct[r.out])}: талант просится наружу, ему нужен продукт, сцена, ученики.`);
   return {
     key: 'career', title: 'Призвание и работа',
-    lead: `Дело, в котором вам легче всего, — то, что приносит в жизнь ${EL[y].toLowerCase()}. Классика не называет профессию напрямую — она даёт стихию и роль; ниже — куда это ведёт сегодня.`,
+    lead: `Ваше дело — там, где много ${EL_GEN[y].toLowerCase()}, а сильнее всего в вас «${groups[0][0].toLowerCase()}» (${pc(groups[0][1])}): ${PROF[groups[0][0]].split(',').slice(0, 2).join(',')}.${outStrong ? ' Талант просится наружу.' : ''}`,
+    how: 'Классика не называет профессию напрямую — она даёт стихию и роль богов; профессии ниже — сегодняшний перевод этих образов.',
     points,
     todo: `Ищите работу, где много ${EL_GEN[y].toLowerCase()}, и сверяйте решения с тактами: рывки — в периоды, когда приходит ${EL[y].toLowerCase()}.`,
     notes: [
@@ -100,7 +121,7 @@ function career(a: Analysis): Sphere {
   };
 }
 
-function money(c: Chart, a: Analysis): Sphere {
+function money(c: Chart, a: Analysis, now: number): Sphere {
   const r = rel(a), k = a.brain.power.key, w = a.pct[r.wealth], wr = role(a, r.wealth), pres = presence(c, r.wealth);
   const outW = a.pct[r.out];
   let lead: string, quote: string, src: string;
@@ -123,6 +144,11 @@ function money(c: Chart, a: Analysis): Sphere {
         : 'Своего Богатства в карте нет — деньги приносят такты и годы, где оно приходит.',
     outW >= 0.15 && w >= 0.1 ? 'Цепочка «талант → деньги» работает: продукт, услуга, ремесло прямо переходят в доход.' : '',
     a.gods.JC && a.gods.JC > 0.6 ? 'В карте заметен «Соперник»: траты, азарт, конкуренция за деньги — держите отдельный резерв.' : '',
+    (() => {
+      const ys: number[] = [];
+      for (let y = now; y < now + 10; y++) { const i = yearIdx(y); if (STEMS[i % 10].el === r.wealth && periodVerdict(a.brain, i, c).tone !== 'bad') ys.push(y); }
+      return ys.length ? `Денежные годы ближайшего десятилетия (Богатство приходит и не во вред): ${ys.join(', ')}.` : '';
+    })(),
   ].filter(Boolean);
   return {
     key: 'money', title: 'Деньги', lead, points,
@@ -157,7 +183,8 @@ function love(c: Chart, a: Analysis, now: number): Sphere {
   if (change.length) points.push(`Годы перемен в доме и паре (удар по ветви дня): ${change.join(', ')} — не разрыв, а перестройка.`);
   return {
     key: 'love', title: 'Любовь и партнёрство',
-    lead: `Партнёра в карте показывают звезда (${male ? 'для мужчины — Богатство' : 'для женщины — Чиновник'}, у вас это ${EL[star]}) и дворец — ветвь дня. Женская карта читается так же, как мужская.`,
+    lead: `Ваша звезда партнёра — ${EL[star]}, ${pres === 'shown' ? 'на виду' : pres === 'hidden' ? 'спрятана' : 'приходит извне'}, и для вас она ${ROLE_RU[sr]}; дворец партнёра — ${db.animal}, ${good(pr) ? 'опора' : pr === 'ji' ? 'с трением' : 'ровный'}.${meet.length ? ` Ближайший год сближения — ${meet[0]}.` : ''}`,
+    how: `Партнёра показывают звезда (${male ? 'для мужчины — Богатство' : 'для женщины — Чиновник'}) и дворец — ветвь дня. Женская карта читается так же, как мужская.`,
     points,
     todo: good(sr) ? 'Ищите партнёра, рядом с которым вас становится больше: это и есть ваша звезда.' : 'В паре держите собственную опору: свои дела, свои деньги, своё время.',
     notes: [
@@ -180,10 +207,13 @@ function health(c: Chart, a: Analysis): Sphere {
   if (summer && a.pct[4] < 0.08) points.push('Жаркая карта без Воды: берегите влагу — сон, жидкость, перегрев, нервное истощение.');
   const max = a.pct.indexOf(Math.max(...a.pct)) as El;
   if (a.pct[max] >= 0.45) points.push(`${EL[max]} в избытке (${pc(a.pct[max])}): перекос сам по себе — зона внимания (${ORGANS[max]}).`);
+  if (zones.length) points.push(`Особенно берегите себя ${SEASON[zones[0].att]}: в этот сезон давящая стихия (${EL[zones[0].att].toLowerCase()}) в силе.`);
   if (!points.length) points.push('Резких перекосов стихий нет — классика называет такую карту ровной: «五行和者，一世无灾».');
   return {
     key: 'health', title: 'Здоровье',
-    lead: 'Классика смотрит на здоровье как на равновесие стихий: где одна давит другую без защиты, там тонкое место. Это традиционное соответствие, а не медицинский совет.',
+    lead: zones.length ? `Тонкое место карты — ${EL[zones[0].e].toLowerCase()} под давлением ${EL_GEN[zones[0].att].toLowerCase()}: ${ORGANS[zones[0].e]}.${zones.length > 1 ? ` Второе — ${EL[zones[1].e].toLowerCase()}.` : ''}`
+      : `Стихии без резкого давления одна на другую${a.pct[max] >= 0.45 ? `, но ${EL[max].toLowerCase()} в избытке (${pc(a.pct[max])})` : ''} — карта по здоровью скорее ровная.`,
+    how: 'Классика смотрит на здоровье как на равновесие стихий: где одна давит другую без защиты, там тонкое место. Это традиционное соответствие, а не медицинский совет.',
     points,
     todo: zones.length ? `Профилактика по зонам выше и регулярные обследования; всё, что усиливает ${EL[a.brain.yong].toLowerCase()} (ваша полезная стихия), выравнивает карту. С жалобами — к врачу.`
       : 'Держите режим, который поддерживает вашу полезную стихию; с жалобами — к врачу, не к карте.',
@@ -205,7 +235,8 @@ function family(c: Chart, a: Analysis): Sphere {
   ];
   return {
     key: 'family', title: 'Родные',
-    lead: 'Родных показывают боги (кем человек приходится вам) и дворцы столпов (год — род, месяц — родители, день — партнёр, час — дети). Чем ближе человек, тем точнее карта.',
+    lead: (() => { const R = [['родители', resR], ['братья и друзья', selfR], ['дети', outR]] as [string, Role][]; const up = R.filter(([, x]) => good(x)).map(([n]) => n), down = R.filter(([, x]) => x === 'ji').map(([n]) => n); return `${up.length ? `Опора — ${up.join(' и ')}.` : 'Опоры в родне карта не выделяет — вы строите её сами.'}${down.length ? ` Труднее с темой «${down.join(', ')}»: там нужна дистанция и ясные границы.` : ''}`; })(),
+    how: 'Родных показывают боги (кем человек приходится вам) и дворцы столпов (год — род, месяц — родители, день — партнёр, час — дети). Чем ближе человек, тем точнее карта.',
     points,
     todo: 'Опирайтесь на тех, чья стихия вам полезна, и держите дистанцию там, где стихия — нагрузка. Карта показывает отношения, а не судьбу родственника.',
     notes: [
@@ -216,5 +247,5 @@ function family(c: Chart, a: Analysis): Sphere {
 }
 
 export function spheres(c: Chart, a: Analysis, now = new Date().getFullYear()): Sphere[] {
-  return [character(c, a), career(a), money(c, a), love(c, a, now), health(c, a), family(c, a)];
+  return [character(c, a), career(c, a, now), money(c, a, now), love(c, a, now), health(c, a), family(c, a)];
 }

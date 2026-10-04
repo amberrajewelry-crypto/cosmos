@@ -20,7 +20,8 @@ describe("сферы жизни", () => {
   });
   it("женская карта — звезда Чиновник, цитата о равенстве карт", () => {
     const love = run("1975-03-20", "15:30", false).find((x) => x.key === "love")!;
-    expect(love.lead).toMatch(/для женщины — Чиновник/);
+    expect(love.how).toMatch(/для женщины — Чиновник/);
+    expect(love.lead).toMatch(/звезда партнёра — Металл/);
     expect(love.notes.map((n) => n.quote)).toContain("女命生克之理，与男命同");
   });
   it("200 карт: без запретных тем, у каждой сферы есть вывод, совет и источник", () => {
@@ -28,7 +29,7 @@ describe("сферы жизни", () => {
       const d = new Date(Date.UTC(1940, 0, 1) + i * 137 * 864e5 + i * 3.7e6);
       const s = run(d.toISOString().slice(0, 10), `${String(i % 24).padStart(2, "0")}:${String((i * 7) % 60).padStart(2, "0")}`, i % 2 === 0);
       for (const x of s) {
-        expect(x.lead.length).toBeGreaterThan(40);
+        expect(x.lead.length).toBeGreaterThan(25);
         expect(x.points.length).toBeGreaterThan(0);
         expect(x.todo.length).toBeGreaterThan(20);
         expect(x.notes.every((n) => n.quote && n.src)).toBe(true);

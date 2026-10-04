@@ -1,14 +1,14 @@
 // Год по месяцам (流月) и десятилетие по годам: тон — periodVerdict мозга (KB 11), дело месяца — бог ствола (GOD_ACT),
 // удары по ветви дня и месяца (СМ т.10; ЦЛ). Месяц начинается в «цзе» (节), год — в 立春.
 import { SearchSunLongitude } from 'astronomy-engine';
-import { STEMS, BRANCHES, godOf } from './core';
+import { STEMS, BRANCHES, EL, godOf, type El } from './core';
 import { lichun, yearIdx, type Analysis, type Chart } from './calc';
 import { periodVerdict } from './brain';
 import { GOD_ACT } from './days';
 import { luckDetail } from './reading';
 
 export type Tone = 'good' | 'bad' | 'mixed' | 'calm';
-export interface Period { idx: number; tone: Tone; text: string; act: string; hits: string[] }
+export interface Period { idx: number; tone: Tone; text: string; why: string; act: string; hits: string[] }
 export interface MonthF extends Period { start: Date }
 export interface YearF extends Period { year: number; start: Date; end: Date; luck?: { idx: number; tone: Tone; from: number } ; months: MonthF[] }
 
@@ -22,7 +22,10 @@ function period(c: Chart, a: Analysis, idx: number): Period {
   const hits: string[] = [];
   if (clash(idx % 12, day.branch)) hits.push('удар по ветви дня: дом, партнёр, тело — перемены');
   if (clash(idx % 12, month.branch)) hits.push('удар по ветви месяца: работа и опора карты под нагрузкой');
-  return { idx, tone: v.tone, text: v.text, act: `«${g.ru}» — ${GOD_ACT[g.key]}`, hits };
+  const r = (e: El) => (a.brain.yong === e ? 'главное полезное' : a.brain.xi.includes(e) ? 'полезно' : a.brain.ji.includes(e) ? 'нагрузка' : 'нейтрально');
+  const se = STEMS[idx % 10].el, be = BRANCHES[idx % 12].el;
+  const why = se === be ? `${EL[se]} и в стволе, и в ветви — ${r(se)}` : `ствол ${EL[se].toLowerCase()} — ${r(se)}, ветвь ${EL[be].toLowerCase()} — ${r(be)}`;
+  return { idx, tone: v.tone, text: v.text, why, act: `«${g.ru}» — ${GOD_ACT[g.key]}`, hits };
 }
 
 /** Год бацзы (от 立春) с двенадцатью месяцами. */

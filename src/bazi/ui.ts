@@ -367,8 +367,8 @@ function secForecast(c: Chart, a: Analysis) {
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const pill = (idx: number) => `${pillarZh(idx)} · ${BRANCHES[idx % 12].animal}`;
   const months = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
-  const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.text)}.
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
+  const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
     <br><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></li>`).join('');
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Год бацзы начинается в Личунь (около 4 февраля), месяц — в день сезона «цзе». Тон каждого периода — по вашему полезному богу: ствол и ветвь вместе, как учит 命理约言; дело месяца — по богу его ствола.</p></div>
     <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
@@ -378,7 +378,7 @@ function secForecast(c: Chart, a: Analysis) {
 
 function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
-    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>
+    <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>${x.how ? `<p class="dhint">${esc(x.how)}</p>` : ''}
     <details><summary>Откуда это — классика</summary>${x.notes.map(noteHtml).join('')}</details></div>`).join('');
   return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p><p class="acc">Точность ядра проверена: полезный бог совпадает с разбором мастеров (Жэнь Тецяо, Сюй Лэу и др.) в 44% из 302 карт, случайный выбор даёт 20%. <button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button></p></div>
     <div class="sph-grid">${cards}</div></section>`;
