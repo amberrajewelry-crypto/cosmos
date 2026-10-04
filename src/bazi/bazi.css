@@ -378,3 +378,9 @@ li.folk { opacity: .8; } li.folk small { color: var(--ink-3); }
 .ms-t .h-yes td:last-child { color: #5fc98a; } .ms-t .h-no td:last-child { color: #ef5a3c; } .ms-t .h-xi td:last-child { color: var(--gold); }
 @media print { #s-masters { display: none !important; } }
 .fm .fm-w { font-size: 12px; color: var(--ink-3); }
+.cf-sph { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; } .cf-sph .good { background: rgba(95,201,138,.18); } .cf-sph .bad { background: rgba(239,90,60,.18); }
+#cf-out h4.sub { margin: 18px 0 8px; color: var(--gold); }
+.dacts { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 560px) { .dacts button { flex: 1 1 100%; } .acc .ghost { margin: 8px 8px 0 0; } }
+.askf input { min-width: 0; }
+@media (max-width: 560px) { .askf { flex-wrap: wrap; } .askf .go { flex: 1 1 100%; } .cf input, .cf select { flex: 1 1 100%; min-width: 0; } }

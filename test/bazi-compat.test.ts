@@ -13,10 +13,12 @@ describe("совместимость двух карт", () => {
     expect(r.items[1].title).toBe("Что вы приносите партнёру");
     expect(["good", "bad", "mixed"]).toContain(r.tone);
     expect(r.summary).not.toMatch(/нельзя|запрещ|克/);
+    expect(r.spheres.map((x) => x.key)).toEqual(["home", "growth", "money"]);
+    for (const k of ["home", "growth", "money"]) expect(r.items.some((i) => i.sphere === k)).toBe(true);
   });
   it("симметрия: поменять местами — те же находки по столпам дня", () => {
     const [c1, a1] = ch("1991-11-10", "00:37", true), [c2, a2] = ch("1990-02-20", "09:00", false);
-    const t = (r: ReturnType<typeof compat>) => r.items.slice(2).map((i) => i.title).sort();
+    const t = (r: ReturnType<typeof compat>) => r.items.filter((i) => i.sphere === "home").map((i) => i.title).sort();
     expect(t(compat(c1, a1, c2, a2))).toEqual(t(compat(c2, a2, c1, a1)).map((x) => x));
   });
   it("союз ветвей дня 申+巳 даёт «в союзе»", () => {

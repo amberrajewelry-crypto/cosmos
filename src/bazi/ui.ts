@@ -15,6 +15,7 @@ import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './inter
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
+import { daysIcs } from './ics';
 import { taiyuan, minggong, xiaoyun } from './oldschool';
 import { masterRows, BOOK_RU, type MasterRow } from './masters';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
@@ -380,7 +381,7 @@ function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
     <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>${x.how ? `<p class="dhint">${esc(x.how)}</p>` : ''}
     <details><summary>Откуда это — классика</summary>${x.notes.map(noteHtml).join('')}</details></div>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p><p class="acc">Точность ядра проверена: полезный бог совпадает с разбором мастеров (Жэнь Тецяо, Сюй Лэу и др.) в 44% из 302 карт, случайный выбор даёт 20%. <button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button></p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты. Под каждым выводом — правило классики; где правило спорное, мы его не используем.</p><p class="acc">Точность ядра проверена: полезный бог совпадает с разбором мастеров (Жэнь Тецяо, Сюй Лэу и др.) в 44% из 302 карт, случайный выбор даёт 20%. <button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button><button class="ghost" id="share" type="button">Поделиться ссылкой</button></p></div>
     <div class="sph-grid">${cards}</div></section>`;
 }
 
@@ -480,7 +481,7 @@ function secDays(c: Chart, a: Analysis) {
     <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
-    <div class="acts" style="margin-top:20px"><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить «Мою карту»' : 'Сохранить как мою карту'}</button><span class="dhint" id="savemsg"></span></div>
+    <div class="acts dacts" style="margin-top:20px"><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
   </section>`;
 }
 function wireDays(c: Chart, a: Analysis) {
@@ -502,6 +503,14 @@ function wireDays(c: Chart, a: Analysis) {
     };
     msGo.remove(); draw('', false);
   };
+  const sh = document.getElementById('share');
+  if (sh) sh.onclick = async () => {
+    const url = location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: document.title, url });
+      else { await navigator.clipboard.writeText(url); sh.textContent = 'Ссылка скопирована'; }
+    } catch { /* пользователь закрыл окно — ничего не делаем */ }
+  };
   const pdf = document.getElementById('pdf');
   if (pdf) pdf.onclick = () => { document.querySelectorAll('details').forEach((d) => (d.open = true)); print(); };
   const cf = document.getElementById('cf') as HTMLFormElement | null;
@@ -513,7 +522,15 @@ function wireDays(c: Chart, a: Analysis) {
     const inp: BirthInput = { date: val('cf-d'), time: val('cf-t') || '12:00', timeKnown: !!val('cf-t'), tz: pl?.tz ?? c.input.tz, lat: pl?.lat ?? c.input.lat, lon: pl?.lon ?? c.input.lon, male: val('cf-g') === 'm' };
     const c2 = computeChart(inp, DEFAULT_VARIANT), r = compat(c, a, c2, analyze(c2));
     const TONE: Record<string, string> = { good: 'легче', bad: 'труднее', mixed: 'смешанно' };
-    o.innerHTML = `<h3>${esc(r.summary)}</h3>${r.items.map((i) => noteHtml({ title: `${i.title} — ${TONE[i.tone]}`, text: i.text, quote: i.quote, src: i.src, tone: i.tone })).join('')}`;
+    o.innerHTML = `<h3>${esc(r.summary)}</h3><div class="cf-sph">${r.spheres.map((x) => `<span class="fm-t ${x.tone}">${x.title}: ${TONE[x.tone]}</span>`).join('')}</div>${r.spheres.map((x) => `<h4 class="sub">${x.title}</h4>${r.items.filter((i) => i.sphere === x.key).map((i) => noteHtml({ title: i.title, text: i.text, quote: i.quote, src: i.src, tone: i.tone })).join('')}`).join('')}`;
+  };
+  const icsB = document.getElementById('ics');
+  if (icsB) icsB.onclick = () => {
+    const t = new Date(), ds = daysFrom(c, a, new Date(t.getFullYear(), t.getMonth(), t.getDate()), 90).filter((d) => d.type === 'peak');
+    const url = URL.createObjectURL(new Blob([daysIcs(ds, c.input.place ? `${c.input.date}, ${c.input.place}` : c.input.date)], { type: 'text/calendar' }));
+    const link = Object.assign(document.createElement('a'), { href: url, download: 'bazi-silnye-dni.ics' });
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    document.getElementById('savemsg')!.textContent = `Файл с ${ds.length} сильными днями на 90 дней: откройте его — телефон добавит события в календарь.`;
   };
   const al = document.getElementById('addlist');
   if (al) al.onclick = () => {
@@ -527,12 +544,12 @@ function wireDays(c: Chart, a: Analysis) {
   };
   renderSaved();
   const sv = document.getElementById('saveme');
-  if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить «Мою карту»'; document.getElementById('melink')?.removeAttribute('hidden'); };
+  if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить главную карту'; document.getElementById('melink')?.removeAttribute('hidden'); };
 }
 
 function secCompat() {
   return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает («其谬甚矣», Шэнь Фэн). Итог — легче или труднее, не «можно/нельзя».</p></div>
-    <div class="card pane"><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
+    <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
 }
