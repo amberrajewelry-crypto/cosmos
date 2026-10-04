@@ -174,7 +174,7 @@ export function analyze(c: Chart): Analysis {
     for (const [x, y, el] of SIX) if ((a.branch === x && b.branch === y) || (a.branch === y && b.branch === x))
       I.push({ kind: 'six', label: `Союз ${BRANCHES[a.branch].animal}–${BRANCHES[b.branch].animal} → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: a.pos, b: b.pos, el, tone: 'join' });
     for (const [x, y] of HARM) if ((a.branch === x && b.branch === y) || (a.branch === y && b.branch === x))
-      I.push({ kind: 'harm', label: `Вредность ${BRANCHES[a.branch].animal}–${BRANCHES[b.branch].animal}`, a: a.pos, b: b.pos, tone: 'harm' });
+      I.push({ kind: 'harm', label: `Скрытое трение ${BRANCHES[a.branch].animal}–${BRANCHES[b.branch].animal}`, a: a.pos, b: b.pos, tone: 'harm' });
     for (const [set, name] of PUNISH) if (set.includes(a.branch) && set.includes(b.branch) && a.branch !== b.branch)
       I.push({ kind: 'punish', label: `${name[0].toUpperCase() + name.slice(1)}`, a: a.pos, b: b.pos, tone: 'harm' });
     if (a.branch === b.branch && [4, 6, 9, 11].includes(a.branch))
@@ -188,7 +188,7 @@ export function analyze(c: Chart): Analysis {
   for (const [set, el] of TRINE) {
     const got = set.filter((b) => has(b).length);
     if (got.length === 3) I.push({ kind: 'trine', label: `Тройной союз → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: has(set[0])[0], b: has(set[1])[0], c: has(set[2])[0], el, tone: 'join' });
-    else if (got.length === 2 && got.includes(set[1])) I.push({ kind: 'half', label: `Полусоюз → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: has(got[0])[0], b: has(got[1])[0], el, tone: 'join' });
+    else if (got.length === 2 && got.includes(set[1])) I.push({ kind: 'half', label: `Неполный союз → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: has(got[0])[0], b: has(got[1])[0], el, tone: 'join' });
   }
   for (const [set, el] of DIRS) if (set.every((b) => has(b).length))
     I.push({ kind: 'dir', label: `Сезонный союз → ${['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'][el]}`, a: has(set[0])[0], b: has(set[1])[0], c: has(set[2])[0], el, tone: 'join' });
