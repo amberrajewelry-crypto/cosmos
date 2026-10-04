@@ -43,6 +43,17 @@
   ],
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.astropro.tech"
+        }
+      ],
+      "destination": "https://astropro.tech/:path*",
+      "permanent": true
+    },
+    {
       "source": "/",
       "has": [
         {
