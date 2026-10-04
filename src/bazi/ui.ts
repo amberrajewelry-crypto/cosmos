@@ -14,6 +14,7 @@ import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
+import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -129,7 +130,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -340,6 +341,20 @@ function secLuck(c: Chart, a: Analysis) {
 
 const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p>${n.quote || n.src ? `<p class="q">${n.quote ? `「${n.quote}」 ` : ''}${n.src ? `<span class="src">${esc(n.src)}</span>` : ''}</p>` : ''}</div>`;
 
+function secForecast(c: Chart, a: Analysis) {
+  const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
+  const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const pill = (idx: number) => `${pillarZh(idx)} · ${BRANCHES[idx % 12].animal}`;
+  const months = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
+  const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.text)}.
+    <br><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></li>`).join('');
+  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Год бацзы начинается в Личунь (около 4 февраля), месяц — в день сезона «цзе». Тон каждого периода — по вашему полезному богу: ствол и ветвь вместе, как учит 命理约言; дело месяца — по богу его ствола.</p></div>
+    <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
+      <div class="fm-grid">${months}</div></div>
+    <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3><ul class="list fy-list">${years}</ul></div></section>`;
+}
+
 function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
     <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p>
@@ -482,7 +497,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     sessionStorage.removeItem('bazi-scrolled');
   }));
   const notes = [natureNote(a), strengthNote(c, a), axisNote(c, a), climateNote(c, a), ...comboNotes(c, a), ...bondNotes(c, a)];
-  const ctx = chartSummary(c, a) + '\n' + spheres(c, a).map((x) => `${x.title}: ${x.lead} ${x.points.join(' ')} Что делать: ${x.todo}`).join('\n') + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
+  const fy = yearForecast(c, a, baziYear());
+  const ctx = chartSummary(c, a) + '\n' + `Год ${fy.year} ${pillarZh(fy.idx)}: ${toneRu(fy.tone)}, ${fy.text}. Месяцы: ${fy.months.map((m) => `с ${m.start.toISOString().slice(0, 10)} ${pillarZh(m.idx)} ${toneRu(m.tone)}`).join('; ')}.` + '\n' + spheres(c, a).map((x) => `${x.title}: ${x.lead} ${x.points.join(' ')} Что делать: ${x.todo}`).join('\n') + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
   document.getElementById('askf')!.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;

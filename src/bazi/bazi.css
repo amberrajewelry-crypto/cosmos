@@ -321,3 +321,17 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 .sph details { margin-top: 14px; }
 .sph summary { cursor: pointer; color: var(--gold); font-size: 14px; margin-bottom: 10px; }
 @media (max-width: 760px) { .sph-grid { grid-template-columns: 1fr; } }
+
+/* Год по месяцам и десятилетие */
+.fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-top: 16px; }
+.fm { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--gold-3); border-top: 3px solid var(--gold-2); font-size: 14px; }
+.fm p { margin: 6px 0 0; color: var(--ink-2); }
+.fm .fm-d { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); }
+.fm .fm-h, .fy small { color: var(--ink-2); }
+.fm .fm-h { color: rgba(239,90,60,.85); }
+.fm-t { display: inline-block; margin-left: 6px; font-size: 12px; padding: 1px 8px; border-radius: 9px; background: var(--gold-3); }
+.fm.good, .fy.good .fm-t { border-top-color: rgba(95,201,138,.7); }
+.fm.bad { border-top-color: rgba(239,90,60,.7); }
+.fy.good .fm-t { background: rgba(95,201,138,.18); }
+.fy.bad .fm-t { background: rgba(239,90,60,.18); }
+.fy-list li { margin-bottom: 12px; }
