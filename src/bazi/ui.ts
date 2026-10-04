@@ -14,6 +14,7 @@ import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
+import { compat } from './compat';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 
@@ -130,7 +131,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secAsk(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secSchools(charts, variant), secCompat(), secAsk(), secHonest()].join('');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
@@ -469,8 +470,26 @@ function wireDays(c: Chart, a: Analysis) {
     const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
+  const cf = document.getElementById('cf') as HTMLFormElement | null;
+  if (cf) cf.onsubmit = async (e) => {
+    e.preventDefault();
+    const o = document.getElementById('cf-out')!, val = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
+    const q = val('cf-p').trim(), pl = q ? (await findPlaces(q, 1))[0] : null;
+    if (q && !pl) { o.textContent = 'Не нашёл такой город — уточните название.'; return; }
+    const inp: BirthInput = { date: val('cf-d'), time: val('cf-t') || '12:00', timeKnown: !!val('cf-t'), tz: pl?.tz ?? c.input.tz, lat: pl?.lat ?? c.input.lat, lon: pl?.lon ?? c.input.lon, male: val('cf-g') === 'm' };
+    const c2 = computeChart(inp, DEFAULT_VARIANT), r = compat(c, a, c2, analyze(c2));
+    const TONE: Record<string, string> = { good: 'легче', bad: 'труднее', mixed: 'смешанно' };
+    o.innerHTML = `<h3>${esc(r.summary)}</h3>${r.items.map((i) => noteHtml({ title: `${i.title} — ${TONE[i.tone]}`, text: i.text, quote: i.quote, src: i.src, tone: i.tone })).join('')}`;
+  };
   const sv = document.getElementById('saveme');
   if (sv) sv.onclick = () => { localStorage.setItem(ME_KEY, lastQuery || location.search.slice(1)); document.getElementById('savemsg')!.textContent = 'Сохранено в этом браузере. Ссылка «Моя карта» вверху откроет её сразу.'; sv.textContent = 'Обновить «Мою карту»'; document.getElementById('melink')?.removeAttribute('hidden'); };
+}
+
+function secCompat() {
+  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость <span class="tag d">ТРАДИЦИЯ</span></h2></div><p>Сравниваем две карты целиком — полезные стихии друг друга и столпы дня, а не год рождения: таблицы «по годам» классика отвергает («其谬甚矣», Шэнь Фэн). Итог — легче или труднее, не «можно/нельзя».</p></div>
+    <div class="card pane"><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
+      <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
+      <div class="ans" id="cf-out"></div></div></section>`;
 }
 
 function secAsk() {

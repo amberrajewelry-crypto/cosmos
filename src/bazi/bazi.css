@@ -335,3 +335,9 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 .fy.good .fm-t { background: rgba(95,201,138,.18); }
 .fy.bad .fm-t { background: rgba(239,90,60,.18); }
 .fy-list li { margin-bottom: 12px; }
+
+/* Совместимость */
+.cf { flex-wrap: wrap; }
+.cf input, .cf select { min-width: 140px; }
+.cf select { background: rgba(255,255,255,.04); border: 1px solid rgba(var(--ink-rgb),.14); border-radius: 12px; color: var(--ink); padding: 13px 14px; font: 500 16px var(--sans); }
+#cf-out h3 { margin: 18px 0 12px; }
