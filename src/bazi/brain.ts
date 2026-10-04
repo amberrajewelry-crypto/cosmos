@@ -13,6 +13,8 @@ export interface Brain {
   frame: { kind: 'normal' | 'follow' | 'vibrant' | 'transform' | 'two' | 'hidden'; name: string; zh: string };
   power: { score: number; key: 'weak' | 'balanced' | 'strong'; ru: string };
   yong: El; xi: El[]; ji: El[]; steps: Step[];
+  /** Сила «на грани»: набор для противоположного перевеса — такт решает, какой работает (朱祖夏 八字与用神 гл.2 中和). */
+  alt?: { lean: 'weak' | 'strong'; yong: El; xi: El[]; ji: El[] };
 }
 
 const SEASON_PTS = [3, 2, -1, -2, -3];  // 旺相休囚死
@@ -50,12 +52,14 @@ export function brain(c: Chart, a: Analysis): Brain {
 
   // 2. Внешние структуры (命理约言 卷二 从局赋 / 化局赋 / 一行得气赋).
   const helpStems = vis.some((p) => elOf(p.stem) === d || elOf(p.stem) === res);
-  if (roots === 0 && !helpStems && season >= 2) {
+  // 五阳从气不从势，五阴从势无情义 (ДТС; 徐乐吾 评注 гл.1): инь-ствол следует и при одном лёгком корне.
+  const rootCap = STEMS[dm].yang ? 0 : 1;
+  if (roots <= rootCap && !helpStems && season >= 2) {
     const dom = [out, wealth, officer].sort((x, y) => a.scores[y] - a.scores[x])[0];
     if (a.scores[res] < a.scores[dom]) {
       const g = dom === out ? 'Выражение' : dom === wealth ? 'Богатство' : 'Власть';
       steps.push({ title: `Следование за ${g} (从格)`, src: '命理约言 卷二 从局赋; ДТС 从象',
-        text: `Корней нет, поддержки в стволах нет — «日主无根…舍弱以从强». Полезно то, за чем следуем, и что его питает; вредны Печать и «свои»: «已弃之命，逢根即属不祥».` });
+        text: `${roots ? 'Корень один и лёгкий, ствол инь — «五阴从势无情义»' : 'Корней нет'}, поддержки в стволах нет — «日主无根…舍弱以从强». Полезно то, за чем следуем, и что его питает; вредны Печать и «свои»: «已弃之命，逢根即属不祥».` });
       return done({ kind: 'follow', name: `Следование за ${g}`, zh: '从格' }, dom, dom === wealth ? [out, officer] : [wealth], [res, d]);
     }
     steps.push({ title: 'Следования нет', src: '命理约言 卷二 从局赋', text: 'Корней нет, но Печати много — «印多则无从理»: остаёмся в обычной структуре.' });
@@ -114,18 +118,23 @@ export function brain(c: Chart, a: Analysis): Brain {
     text: elOf(axis) === d ? 'Месяц — своя стихия: структуру дают Чиновник, Богатство или Выражение в стволах («禄刃…用官煞财食»).' : `Бог ветви месяца ${vs.includes(axis) ? 'проступил — структура явная' : 'не проступил — структура по главной ци, слабее'}.` });
 
   // 4. 扶抑 — что именно давит / что именно усиливает (ДТС 衰旺; 命理约言 比劫赋).
-  let yong: El, xi: El[], ji: El[], why: string;
-  const lean = key === 'balanced' ? (score >= 1 ? 'strong' : 'weak') : key;
+  const pick = (lean: 'weak' | 'strong'): [El, El[], El[], string] => {
   if (lean === 'strong') {
-    if (a.scores[res] > a.scores[d]) { yong = wealth; xi = [out]; ji = [res, d]; why = 'силён за счёт Печати — нужно Богатство, «贪财坏印» здесь лекарство (ЦПЦЦ, 印格 «印多逢财»)'; }
-    else if (a.scores[wealth] >= 1) { yong = officer; xi = [wealth]; ji = [d, res]; why = 'силён за счёт «своих» при наличии Богатства — Чиновник/Убийство: «惟有正官偏官，可除其孽» (命理约言 比劫赋)'; }
-    else { yong = out; xi = [wealth]; ji = [res, d]; why = 'силён за счёт «своих», Богатства нет — выпускать силу через Выражение: «旺者宜泄»'; }
-  } else {
-    const top = [wealth, officer, out].sort((x, y) => a.scores[y] - a.scores[x])[0];
-    if (top === wealth) { yong = d; xi = [res]; ji = [wealth, out]; why = 'давит Богатство — «свои», а не Печать (Печать Богатство разобьёт): ДТС 衰旺'; }
-    else if (top === officer) { yong = res; xi = [d]; ji = [officer, wealth]; why = 'давит Чиновник/Убийство — Печать переводит давление в поддержку: «煞重用印»'; }
-    else { yong = res; xi = [d]; ji = [out, wealth]; why = 'силы уходят в Выражение — Печать обуздывает его и питает господина'; }
+    // 真神得用 (ДТС 真神): из трёх «ослабителей» берётся проступивший в стволах и самый сильный.
+    // Сверка с мастерами (bench/gold.json, 302 карты): 用神 совпадает в 43% против 29% у прежнего правила.
+    const drains = [out, wealth, officer], shown = drains.filter((e) => vis.some((p) => elOf(p.stem) === e));
+    const y = [...(shown.length ? shown : drains)].sort((x, z) => a.scores[z] - a.scores[x])[0];
+    if (y === out) return [out, [wealth], [res, d], 'силу выпускать через Выражение — оно проступило и сильнее прочих: «旺者宜泄» (ДТС «真神得用»)'];
+    if (y === wealth) return [wealth, [out, officer], [res, d], 'силу забирает Богатство — оно проступило и сильнее прочих; при сильной Печати это и лекарство «印多逢财» (ДТС «真神得用»)'];
+    return [officer, [wealth], [d, res], 'силу сдерживает Власть — она проступила и сильнее прочих: «惟有正官偏官，可除其孽» (命理约言 比劫赋)'];
   }
+    const top = [wealth, officer, out].sort((x, y) => a.scores[y] - a.scores[x])[0];
+    if (top === wealth) return [d, [res], [wealth, out], 'давит Богатство — «свои», а не Печать (Печать Богатство разобьёт): ДТС 衰旺'];
+    if (top === officer) return [res, [d], [officer, wealth], 'давит Чиновник/Убийство — Печать переводит давление в поддержку: «煞重用印»'];
+    return [res, [d], [out, wealth], 'силы уходят в Выражение — Печать обуздывает его и питает господина'];
+  };
+  const lean = key === 'balanced' ? (score >= 1 ? 'strong' : 'weak') : key;
+  let [yong, xi, ji, why] = pick(lean);
   steps.push({ title: 'Поддержать или ослабить (扶抑)', src: 'ДТС 衰旺; ЦПЦЦ гл.6; 命理约言 卷一 看用神法',
     text: `${key === 'balanced' ? 'Сила на грани — вывод слабее обычного. ' : ''}${why[0].toUpperCase()}${why.slice(1)}. Полезный бог — ${EL[yong]}.` });
 
@@ -134,10 +143,12 @@ export function brain(c: Chart, a: Analysis): Brain {
   const need: number = winter ? 1 : summer ? 4 : -1;
   // Тепло зимой и влага летом во вред не записываются никогда (ЦТБЦ: зимой 丙丁, летом 壬癸 — у всех стволов).
   if (need >= 0) ji = ji.filter((e) => e !== need);
-  if (need >= 0 && a.pct[need] < 0.1 && yong !== need) {
-    xi = [yong, ...xi]; yong = need as El;
-    steps.push({ title: `Климат: ${winter ? 'холодно' : 'жарко'} (调候)`, src: '穷通宝鉴; 命理约言 卷四 «寒则喜温…炎则喜润»; ДТС 寒暖',
-      text: `${winter ? 'Зимняя' : 'Летняя'} карта, ${EL[need]} почти нет (${Math.round(a.pct[need] * 100)}%) — климат первым: ${EL[need]} становится полезным богом, баланс — вторым. Нужные стволы по 穷通宝鉴: ${[...TIAOHOU[dm][month.branch]].join(' ')}.` });
+  // Климат — первый помощник (喜), но не 用神: «先保身，然后才能再谈调候» (朱祖夏 八字与用神 гл.2).
+  // Сверка bench/gold.json: в 38 холодных/жарких картах без нужной стихии мастера берут её в 用神 лишь 5 раз.
+  if (need >= 0 && yong !== need) {
+    xi = [need as El, ...xi.filter((e) => e !== need)];
+    steps.push({ title: `Климат: ${winter ? 'холодно' : 'жарко'} (调候)`, src: '穷通宝鉴; 命理约言 卷四 «寒则喜温…炎则喜润»; 朱祖夏 八字与用神 гл.2',
+      text: `${winter ? 'Зимняя' : 'Летняя'} карта (${EL[need]} ${Math.round(a.pct[need] * 100)}%): ${EL[need]} — первый помощник, полезный бог остаётся по силе («先保身，然后才能再谈调候»). Нужные стволы по 穷通宝鉴: ${[...TIAOHOU[dm][month.branch]].join(' ')}.` });
   }
 
   // 6. 通关: две враждующие сильные стихии — нужен посредник.
@@ -156,7 +167,18 @@ export function brain(c: Chart, a: Analysis): Brain {
       text: `${EL[ill]} в избытке (${Math.round(a.pct[ill] * 100)}%) — это «болезнь»; ${EL[med]} её сдерживает${ji.includes(med) ? ', но для этой карты вредна — лекарство только через полезного бога' : ' — «лекарство»'}.` });
     if (!ji.includes(med)) xi = [...xi, med];
   }
-  return done(frame, yong, xi, ji);
+  const b = done(frame, yong, xi, ji);
+  // 中和: при силе «на грани» 用神 по наталу не окончательный — такт ломает баланс (朱祖夏 八字与用神 гл.2 §3).
+  if (key === 'balanced') {
+    const other = lean === 'strong' ? 'weak' : 'strong';
+    let [y2, x2, j2] = pick(other);
+    if (need >= 0) { j2 = j2.filter((e) => e !== need); if (y2 !== need) x2 = [need as El, ...x2.filter((e) => e !== need)]; }
+    const fav = uniq([y2, ...x2]);
+    b.alt = { lean: other, yong: y2, xi: fav.slice(1, 3), ji: uniq(j2).filter((e) => !fav.includes(e)).slice(0, 2) };
+    steps.push({ title: 'Баланс решает такт (中和)', src: '朱祖夏 八字与用神 гл.2 §3',
+      text: `Сила на грани: в тактах, где ${other === 'strong' ? 'приходят «свои» и Печать' : 'приходит давление (Богатство, Власть, Выражение)'}, полезным становится ${EL[y2]}, а не ${EL[yong]}.` });
+  }
+  return b;
 }
 
 /** Такт или год целиком: ствол и ветвь вместе, «上下俱喜则十年全吉…一喜一忌则吉凶参半»; кто кого бьёт, тот весит больше
@@ -164,7 +186,16 @@ export function brain(c: Chart, a: Analysis): Brain {
 export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   let se: El = STEMS[idx % 10].el;
   const be = BRANCHES[idx % 12].el;
-  const v = (e: El) => (e === b.yong ? 2 : b.xi.includes(e) ? 1 : b.ji.includes(e) ? -1.5 : 0);
+  // Сила на грани: ствол и ветвь периода оба «свои/Печать» или оба против — перевес меняется, берём другой набор.
+  let set: Pick<Brain, 'yong' | 'xi' | 'ji'> = b, swing = '';
+  if (b.alt && c) {
+    const d = STEMS[c.pillars.find((p) => p.pos === 'day')!.stem].el, up = (e: El) => (e === d || e === (d + 4) % 5 ? 1 : -1);
+    const tip = up(se) + up(be);
+    if ((tip > 0 ? 'strong' : tip < 0 ? 'weak' : '') === b.alt.lean) {
+      set = b.alt; swing = ` Сила на грани, период её ${b.alt.lean === 'strong' ? 'поднимает' : 'опускает'} — полезный здесь ${EL[b.alt.yong]} (朱祖夏 中和)`;
+    }
+  }
+  const v = (e: El) => (e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0);
   // Союз ствола периода со стволом натала (命理约言 干合论; ЦПЦЦ гл.5): связанный ствол «贪合» — работает вполсилы;
   // если ветвь месяца карты — стихия союза, он превращается (丙辛 зимой → Вода; ДТС «丙辛生於冬月»).
   let bond = '', k = 1;
@@ -185,7 +216,7 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
   if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
   const t = s + r;
   const res0 = verdictOf(s, r, t);
-  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') };
+  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') };
 }
 
 function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
