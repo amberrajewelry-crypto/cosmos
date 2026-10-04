@@ -58,6 +58,17 @@
       "has": [
         {
           "type": "host",
+          "value": "astropro.tech"
+        }
+      ],
+      "destination": "https://astropro.tech/bazi",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
           "value": "georgia-tour.com"
         }
       ],
