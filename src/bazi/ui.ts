@@ -24,7 +24,12 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
 // Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
 const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
-const esc = (s: string) => plain(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+// Классические имена богов звучат пугающе — на странице мягкие («Давление», «Соперник», «Бунтарь»).
+const RANG: Record<string, string> = { 'ий': 'Бунтарь', 'его': 'Бунтаря', 'ему': 'Бунтарю', 'им': 'Бунтарём' };
+const UBI: Record<string, string> = { 'о': 'Давление', 'а': 'Давления', 'у': 'Давлению', 'ом': 'Давлением' };
+const soften = (s: string) => s.replace(/Семь убийств/g, 'Давление').replace(/Грабител[а-я]* богатства/g, 'Соперник')
+  .replace(/Ранящ(ий|его|ему|им)( чиновника)?/g, (_, e: string) => RANG[e]).replace(/Убийств(ом|о|а|у)/g, (_, e: string) => UBI[e]);
+const esc = (s: string) => plain(soften(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const rgb = (e: number) => EL_RGB[e];
 const pol = (yang: boolean) => (yang ? 'ян' : 'инь');
 const lbl = (p: Place) => (p.cc ? placeLabel(p) : p.ru);
@@ -239,17 +244,18 @@ function drawLinks(c: Chart, a: Analysis, anim = true) {
   const span = (it: (typeof a.interactions)[number]) => { const v = [it.a, it.b, it.c].filter(Boolean).map((p) => xs[p as Pos]); return Math.max(...v) - Math.min(...v); };
   const I = [...a.interactions].sort((x, y) => span(x) - span(y));
   if (!I.length) { svg.outerHTML = '<p class="inter-empty">Между столпами нет столкновений и союзов — карта «тихая», её события приходят извне, через такты удачи.</p>'; return; }
-  const h = Math.max(110, 34 + I.length * 30);
+  const gap = box.width < 500 ? 40 : 28; // narrow screens: room for a label between arcs
+  const h = Math.max(110, Math.round((24 + (I.length - 1) * gap) * 0.75 + 30)); // lowest label + margin
   svg.setAttribute('height', String(h)); svg.style.height = h + 'px';
   svg.innerHTML = I.map((it, k) => {
     const pts = [it.a, it.b, it.c].filter(Boolean).map((p) => xs[p as Pos]).sort((x, y) => x - y);
-    const x1 = pts[0], x2 = pts[pts.length - 1], depth = 24 + k * 28;
+    const x1 = pts[0], x2 = pts[pts.length - 1], depth = 24 + k * gap;
     const col = it.tone === 'harm' ? '#ef6a4c' : it.el != null ? EL_COLOR[it.el] : '#c9a85c';
     const d = `M${x1},4 C${x1},${depth} ${x2},${depth} ${x2},4`;
     const len = Math.round(Math.abs(x2 - x1) + depth * 2);
     const mid = pts.length === 3 ? `<circle cx="${pts[1]}" cy="${depth * 0.75}" r="3" fill="${col}"/>` : '';
     return `<g style="--len:${len};--dl:${1.6 + k * 0.25}s"><path d="${d}" stroke="${col}" ${it.tone === 'harm' ? 'stroke-dasharray="6 5"' : ''} style="--len:${len}"/>${mid}
-      <text x="${Math.min(Math.max((x1 + x2) / 2, 80), box.width - 80)}" y="${depth * 0.75 + 14}" text-anchor="middle" fill="${col}">${esc(it.label)}${it.stems ? ' (стволы)' : ''}</text></g>`;
+      <text x="${Math.min(Math.max((x1 + x2) / 2, 80), box.width - 80)}" y="${depth * 0.75 + 14}" text-anchor="middle" fill="${col}">${esc(it.label)}${it.stems && !/ствол/.test(it.label) ? ' (стволы)' : ''}</text></g>`;
   }).join('');
 }
 
@@ -367,14 +373,18 @@ function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const pill = (idx: number) => pillarRuHtml(idx);
-  const months = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`).join('');
-  const years = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
-    <br><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></li>`).join('');
+  const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
+  const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`);
+  const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
+  const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
+  const yHtml = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
+    <details><summary>Подробнее</summary><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></details></li>`);
+  const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
     <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
-      <div class="fm-grid">${months}</div></div>
-    <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3><ul class="list fy-list">${years}</ul></div></section>`;
+      ${months}</div>
+    <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
 }
 
 function secSpheres(c: Chart, a: Analysis) {
@@ -390,7 +400,7 @@ function secRazbor(c: Chart, a: Analysis) {
   const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => `<li><b>${GODS[k].ru}</b> — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
-  return `<section class="block"><div class="bhead"><div><h2>Разбор</h2></div><p>Подробный разбор вашей карты: из чего она сложена и как это проявляется. Это язык самоанализа, а не приговор.</p></div>
+  return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
         ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
@@ -405,7 +415,7 @@ function secRazbor(c: Chart, a: Analysis) {
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
         ${bonds.map(noteHtml).join('')}
         <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}</div>
-    </div></section>`;
+    </div></details></section>`;
 }
 
 const INTER_SENSE: Record<string, string> = {
@@ -442,7 +452,7 @@ const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b
 function secDays(c: Chart, a: Analysis) {
   const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = daysFrom(c, a, start, 120), today = days[0];
-  const best = days.slice(0, 45).filter((d) => d.type === 'peak').slice(0, 8);
+  const best = days.slice(0, 45).filter((d) => d.type === 'peak').slice(0, 5);
   const pairs = showThenClose(days).slice(0, 5);
   const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
@@ -520,12 +530,12 @@ function secCompat() {
 
 function secAsk() {
   return `<section class="block"><div class="bhead"><div><h2>Спросить карту</h2></div><p>Ответ строится только из вашего разбора выше — без выдуманных чисел.</p></div>
-    <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Например: какая профессия мне подходит?" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
+    <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Ваш вопрос о карте" aria-label="Ваш вопрос о карте" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
 }
 function secFeedback() {
   return `<section class="block" id="s-fb"><div class="bhead"><div><h2>Разбор попал?</h2></div><p>Нам важно, где непонятно или мимо — читаем каждое сообщение. Дата рождения не отправляется.</p></div>
-    <div class="card pane"><div class="acts dacts" id="fbv"><button class="ghost" type="button" data-ok="1">Да, узнаю себя</button><button class="ghost" type="button" data-ok="0">Скорее мимо</button></div>
-    <form class="askf" id="fbf"><input id="fbq" maxlength="1500" placeholder="Что было непонятно или неточно?" aria-label="Что было непонятно или неточно" /><button class="go" type="submit">Отправить</button></form><div class="ans" id="fbmsg"></div></div></section>`;
+    <div class="card pane"><div class="dacts fbv" id="fbv"><button class="ghost" type="button" data-ok="1">Да, это я</button><button class="ghost" type="button" data-ok="0">Мимо</button></div>
+    <form class="askf" id="fbf"><input id="fbq" maxlength="1500" placeholder="Что было неточно?" aria-label="Что было непонятно или неточно" /><button class="go" type="submit">Отправить</button></form><div class="ans" id="fbmsg"></div></div></section>`;
 }
 function secHonest() {
   return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы</h3>

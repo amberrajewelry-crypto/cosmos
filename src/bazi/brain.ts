@@ -207,8 +207,8 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
       if (!pair) continue;
       if (p.pos === 'day') { bond = ` Ствол ${STEMS[st].zh} в союзе с господином дня — «合必日之正配…正喜相逢» (流年赋), сам по себе не вред`; break; }
       // На собственном сильном корне (禄/刃/长生) ствол не превращается, только связан (ЦПЦЦ гл.5 «合而不化»).
-      if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].zh} связан с натальным ${STEMS[p.stem].zh} и превращается: работает как ${EL[pair[2]]} (месяц карты — эта стихия)`; }
-      else { k = 0.5; bond = ` ${STEMS[st].zh} связан с натальным ${STEMS[p.stem].zh} — «贪合», действует вполсилы`; }
+      if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты и превращается: работает как ${EL[pair[2]]}`; }
+      else { k = 0.5; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты — действует вполсилы`; }
       break;
     }
   }
@@ -222,6 +222,6 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
 function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   if (s > 0 && r > 0) return { tone: 'good', text: 'ствол и ветвь оба полезны — период хорош целиком' };
   if (s < 0 && r < 0) return { tone: 'bad', text: 'ствол и ветвь оба вредны — период тяжёлый целиком' };
-  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одно полезно, другое вредно — «吉凶参半»; перевешивает ${Math.abs(s) > Math.abs(r) ? 'ствол' : 'ветвь'}` };
+  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одно полезно, другое вредно; перевешивает ${Math.abs(s) > Math.abs(r) ? 'ствол' : 'ветвь'}` };
   return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'нейтрально' };
 }

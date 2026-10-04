@@ -115,7 +115,7 @@ function character(c: Chart, a: Analysis): Sphere {
   if (hot) points.push('Карта рождена в жару почти без Воды: много напора, мало остывания — нужны паузы и тишина.');
   return {
     key: 'character', title: 'Характер',
-    lead: `${t.core} ${STEMS[a.dm].ru} — это «${STEMS[a.dm].image}»: так классика описывает ваш способ быть. Главная группа сил в карте — «${top[0].toLowerCase()}» (${pc(top[1])}).`,
+    lead: `${t.core} ${STEMS[a.dm].ru} — это «${STEMS[a.dm].image}»: так описывают ваш способ быть. Главная группа сил в карте — «${top[0].toLowerCase()}» (${pc(top[1])}).`,
     points, todo: t.way,
     notes: [
       { title: 'Сила и нрав', quote: '日干弱，则退缩怕羞；日干强，则妄诞，执一自傲', src: 'ЮХ (KB 13 §1)', text: 'Слабый господин дня — сдержанность, сильный — уверенность до упрямства.' },
@@ -266,7 +266,7 @@ function health(c: Chart, a: Analysis, now: number): Sphere {
   const care: number[] = [];
   for (let y = now; y < now + 10; y++) { const i = yearIdx(y); if (periodVerdict(a.brain, i, c).tone === 'bad' && STEMS[i % 10].el !== a.brain.yong) care.push(y); }
   if (care.length) points.push(`Годы бережного режима (приходит нагрузка, полезная стихия под давлением): ${care.join(', ')} — сон, нагрузки по силам, плановые обследования.`);
-  if (!points.length) points.push('Резких перекосов стихий нет — классика называет такую карту ровной: «五行和者，一世无灾».');
+  if (!points.length) points.push('Резких перекосов стихий нет — карта по здоровью ровная.');
   return {
     key: 'health', title: 'Здоровье',
     lead: zones.length ? `Тонкое место карты — ${EL[zones[0].e].toLowerCase()} под давлением ${EL_GEN[zones[0].att].toLowerCase()}: ${ORGANS[zones[0].e]}.${zones.length > 1 ? ` Второе — ${EL[zones[1].e].toLowerCase()}.` : ''}`
