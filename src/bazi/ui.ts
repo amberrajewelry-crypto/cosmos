@@ -23,7 +23,7 @@ import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
 // Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
-const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
+const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\(\s*—\s*/g, '(').replace(/\s*—\s*(?=[.,;:)]|$)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
 // Классические имена богов звучат пугающе — на странице мягкие («Давление», «Соперник», «Бунтарь»).
 const RANG: Record<string, string> = { 'ий': 'Бунтарь', 'его': 'Бунтаря', 'ему': 'Бунтарю', 'им': 'Бунтарём' };
 const UBI: Record<string, string> = { 'о': 'Давление', 'а': 'Давления', 'у': 'Давлению', 'ом': 'Давлением' };
@@ -211,7 +211,6 @@ function secPillars(c: Chart, a: Analysis) {
       return `<span style="--rgb:${rgb(hs.el)}" title="${hs.ru} (${EL[hs.el]}) — ${godOf(a.dm, h.stem).ru}"><b class="hh">${elIcon(hs.el, EL_COLOR[hs.el], 18)}${hs.ru}</b><small>${godOf(a.dm, h.stem).short}</small><i style="width:${Math.round(h.w * 36)}px"></i></span>`;
     }).join('');
     const [ny] = nayinOf(p.idx);
-    const st = a.stars.filter((x) => x.pos.includes(p.pos)).map((x) => `<span class="${x.name === 'Пустота' ? 'void' : ''}">${x.name}</span>`).join('');
     return `<article class="pillar${isDm ? ' dm' : ''}" style="--c1:${EL_COLOR[s.el]};--c2:${EL_COLOR[b.el]}">
       <div class="pl-pos">${POS_RU[p.pos]}</div><div class="pl-sense">${POS_SENSE[p.pos]}</div>
       <div class="god">${g}</div>
@@ -221,7 +220,6 @@ function secPillars(c: Chart, a: Analysis) {
       <div class="hid">${hid}</div>
       <div class="pl-row"><em>Стадия ци</em>${STAGES[stageOf(a.dm, p.branch)]}</div>
       <div class="pl-row"><em>На Инь</em>${ny}</div>
-      ${st ? `<div class="badges">${st}</div>` : ''}
     </article>`;
   }).join('');
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
@@ -397,7 +395,6 @@ function secSpheres(c: Chart, a: Analysis) {
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
-  const stars = a.stars.map((s) => `<li${s.folk ? ' class="folk"' : ''}><b>${s.name}</b> (${s.pos.map((p) => POS_RU[p].toLowerCase()).join(', ')}) — ${s.sense}</li>`).join('');
   const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => `<li><b>${GODS[k].ru}</b> — ${GODS[k].sense}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
@@ -413,8 +410,7 @@ function secRazbor(c: Chart, a: Analysis) {
         ${godNatureNotes(a).map(noteHtml).join('')}
         ${combos.length ? `<h4 class="sub">Классические формулы в стволах</h4>${combos.map(noteHtml).join('')}` : ''}</div>
       <div class="card pane"><h3>Связи в карте</h3><ul class="list">${inter || '<li>Столкновений и союзов нет — карта спокойная.</li>'}</ul>
-        ${bonds.map(noteHtml).join('')}
-        <h3 style="margin-top:18px">Звёзды-символы</h3>${stars ? `<ul class="list">${stars}</ul>` : ''}</div>
+        ${bonds.map(noteHtml).join('')}</div>
     </div></details></section>`;
 }
 
