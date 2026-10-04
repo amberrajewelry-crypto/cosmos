@@ -102,15 +102,15 @@ function character(c: Chart, a: Analysis): Sphere {
   const points = [
     `Сильные стороны: ${t.gift}.`,
     `Тень, за которой стоит следить: ${t.shadow}.`,
-    k === 'weak' ? 'Сил у господина дня немного: в новом месте вы сначала присматриваетесь и раскрываетесь, когда чувствуете поддержку.'
-      : k === 'strong' ? 'Сил у господина дня много: вы уверены в себе и держитесь своего — сила, которой нужен выход, иначе она становится упрямством.'
+    k === 'weak' ? 'Сил у вас немного: в новом месте вы сначала присматриваетесь и раскрываетесь, когда чувствуете поддержку.'
+      : k === 'strong' ? 'Сил у вас много: вы уверены в себе и держитесь своего — сила, которой нужен выход, иначе она становится упрямством.'
         : 'Сила в равновесии: вы гибко подстраиваетесь — характер раскрывается по обстоятельствам и периодам жизни.',
     `Ярче всего в карте — «${GODS[godTop].ru}»: ${GODS[godTop].sense}.`,
   ];
   const fs = faces(c, a);
   if (fs.length) points.push(`Как вас видят: ${fs.map((f) => `${POS_FACE[f.pos]} — «${f.g.ru}» (${f.g.sense.split(',')[0]})`).join('; ')}.`);
   const inner = godOf(a.dm, BRANCHES[P(c, 'day')!.branch].hidden[0]);
-  points.push(`Наедине и дома (ветвь дня) — «${inner.ru}»: ${inner.sense}.`);
+  points.push(`Наедине и дома — «${inner.ru}»: ${inner.sense}.`);
   if (cold) points.push('Карта рождена в холод почти без Огня: внутри бывает зябко и одиноко — нужны тепло, люди, движение.');
   if (hot) points.push('Карта рождена в жару почти без Воды: много напора, мало остывания — нужны паузы и тишина.');
   return {
@@ -139,7 +139,7 @@ function career(c: Chart, a: Analysis, now: number): Sphere {
   const L = currentLuck(c, now);
   if (L) {
     const g = godOf(a.dm, L.idx % 10), v = periodVerdict(a.brain, L.idx, c);
-    points.push(`Сейчас идёт такт ${span(L.year)}: его ствол — «${g.ru}», для дела это значит ${GOD_ACT[g.key]}. Фон такта — ${v.tone === 'good' ? 'попутный' : v.tone === 'bad' ? 'встречный: время укреплять базу' : 'смешанный'}.`);
+    points.push(`Сейчас идёт десятилетие ${span(L.year)} под знаком «${g.ru}»: для дела это значит ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'попутный' : v.tone === 'bad' ? 'встречный: время укреплять базу' : 'смешанный'}.`);
   }
   const best = c.luck.filter((l) => l.year + 9 >= now && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
   if (best.length) points.push(`Самые попутные десятилетия для рывка: ${best.slice(0, 3).join(', ')}.`);
@@ -175,7 +175,7 @@ function money(c: Chart, a: Analysis, now: number): Sphere {
     quote = '財喜根深，不宜太露'; src = 'ЦПЦЦ гл.8';
   }
   const points = [
-    pres === 'shown' ? 'Богатство проступило в стволах — деньги на виду: доход заметен, его же легче потерять.'
+    pres === 'shown' ? 'Богатство на виду в карте — деньги заметны: доход заметен, его же легче потерять.'
       : pres === 'hidden' ? 'Богатство спрятано в ветвях — деньги копятся тихо: запасы, недвижимость, то, что не на виду.'
         : 'Своего Богатства в карте нет — деньги приносят такты и годы, где оно приходит.',
     outW >= 0.15 && w >= 0.1 ? 'Цепочка «талант → деньги» работает: продукт, услуга, ремесло прямо переходят в доход.' : '',
@@ -211,11 +211,11 @@ function love(c: Chart, a: Analysis, now: number): Sphere {
   const day = P(c, 'day')!, db = BRANCHES[day.branch];
   const palaceEl = STEMS[db.hidden[0]].el, pr = role(a, palaceEl), pGod = godOf(a.dm, db.hidden[0]);
   const points: string[] = [];
-  points.push(pres === 'shown' ? `Звезда партнёра (${EL[star]}) видна в стволах — отношения занимают заметное место в жизни.`
+  points.push(pres === 'shown' ? `Звезда партнёра (${EL[star]}) на виду в карте — отношения занимают заметное место в жизни.`
     : pres === 'hidden' ? `Звезда партнёра (${EL[star]}) спрятана в ветвях — чувства глубже, чем видно со стороны; человек приходит не сразу.`
       : `Звезды партнёра (${EL[star]}) в карте нет — встречи приносят такты и годы с ${EL_GEN[star].toLowerCase()}; это не «одиночество», а другой путь.`);
   points.push(`Для вас ${EL[star].toLowerCase()} — ${ROLE_RU[sr]}: ${good(sr) ? 'партнёр поддерживает и усиливает вас.' : sr === 'ji' ? 'в отношениях легко раствориться или перегрузиться — нужен баланс «я и мы».' : 'союз держится на выборе, а не на судьбе.'}`);
-  points.push(`Дворец партнёра (ветвь дня, ${db.animal}) несёт «${pGod.ru}» — ${good(pr) ? 'опора: дома и в паре вам хорошо' : pr === 'ji' ? 'трение: дома нужно больше договорённостей' : 'ровный фон'}.`);
+  points.push(`Знак дома и пары (${db.animal}) несёт «${pGod.ru}» — ${good(pr) ? 'опора: дома и в паре вам хорошо' : pr === 'ji' ? 'трение: дома нужно больше договорённостей' : 'ровный фон'}.`);
   if (pGod.key === 'BJ' || pGod.key === 'JC') points.push('На ветви дня — ваша же стихия: в паре соперничество за лидерство и общие деньги; помогает ясный раздел ролей.');
   if (!male && visibleEls(c).filter((e) => e === r.officer).length && c.pillars.some((p) => p.pos !== 'day' && godOf(a.dm, p.stem).key === 'QS')
     && c.pillars.some((p) => p.pos !== 'day' && godOf(a.dm, p.stem).key === 'ZG')) points.push('Две разные звезды партнёра сразу — выбор между разными типами людей; яснее, когда один тип выбран.');
@@ -226,8 +226,8 @@ function love(c: Chart, a: Analysis, now: number): Sphere {
     if (STEMS[i % 10].el === star || sixCombo(i % 12, day.branch)) meet.push(y);
     if (clash(i % 12, day.branch)) change.push(y);
   }
-  if (meet.length) points.push(`Годы встреч и сближения (звезда партнёра или союз с ветвью дня), для пары — годы укрепления союза: ${meet.join(', ')}.`);
-  if (change.length) points.push(`Годы перемен в доме и паре (удар по ветви дня): ${change.join(', ')} — не разрыв, а перестройка.`);
+  if (meet.length) points.push(`Годы встреч и сближения (приходит звезда партнёра или союз со знаком дома), для пары — годы укрепления союза: ${meet.join(', ')}.`);
+  if (change.length) points.push(`Годы перемен в доме и паре: ${change.join(', ')} — не разрыв, а перестройка.`);
   return {
     key: 'love', title: 'Любовь и партнёрство',
     lead: `Ваша звезда партнёра — ${EL[star]}, ${pres === 'shown' ? 'на виду' : pres === 'hidden' ? 'спрятана' : 'приходит извне'}, и для вас она ${ROLE_RU[sr]}; дворец партнёра — ${db.animal}, ${good(pr) ? 'опора' : pr === 'ji' ? 'с трением' : 'ровный'}.${meet.length ? ` Ближайший год сближения — ${meet[0]}.` : ''}`,
@@ -256,12 +256,12 @@ function health(c: Chart, a: Analysis, now: number): Sphere {
   if (a.pct[max] >= 0.45) points.push(`${EL[max]} в избытке (${pc(a.pct[max])}): перекос сам по себе — зона внимания (${ORGANS[max]}).`);
   if (zones.length) points.push(`Особенно берегите себя ${SEASON[zones[0].att]}: в этот сезон давящая стихия (${EL[zones[0].att].toLowerCase()}) в силе.`);
   const DM_ORGAN = ['желчный пузырь', 'печень', 'тонкий кишечник', 'сердце', 'желудок', 'селезёнка', 'толстый кишечник', 'лёгкие', 'мочевой пузырь', 'почки'];
-  points.push(`Ваш ствол дня — ${STEMS[a.dm].ru}; по «Дао тянь суй» ему соответствует ${DM_ORGAN[a.dm]} — это первое место, которое отзывается на перегрузки.`);
+  points.push(`Ваша стихия — ${EL[a.dmEl].toLowerCase()} ${STEMS[a.dm].ru}; ей соответствует ${DM_ORGAN[a.dm]} — это первое место, которое отзывается на перегрузки.`);
   const ji = a.brain.ji[0];
   if (ji !== undefined) {
     const inStems = visibleEls(c).includes(ji), inBranches = hiddenEls(c).includes(ji);
-    if (inBranches && !inStems) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) спрятана в ветвях — действует исподволь и долго: регулярная профилактика важнее разовых мер.`);
-    else if (inStems && !inBranches) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) только в стволах, без корня — её влияние поверхностное и проходит быстро.`);
+    if (inBranches && !inStems) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) скрыта в карте — действует исподволь и долго: регулярная профилактика важнее разовых мер.`);
+    else if (inStems && !inBranches) points.push(`Стихия-нагрузка (${EL[ji].toLowerCase()}) на поверхности, без корня — её влияние поверхностное и проходит быстро.`);
   }
   const care: number[] = [];
   for (let y = now; y < now + 10; y++) { const i = yearIdx(y); if (periodVerdict(a.brain, i, c).tone === 'bad' && STEMS[i % 10].el !== a.brain.yong) care.push(y); }

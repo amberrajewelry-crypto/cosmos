@@ -32,7 +32,7 @@ describe("такт и год с союзами натала", () => {
   const b = analyze(c).brain;
   it("2026 丙午: 丙 на своём корне 午 не превращается, только связан с 辛 — год хороший", () => {
     const v = periodVerdict(b, yearIdx(2026), c);
-    expect(v.tone).toBe("good"); expect(v.text).toMatch(/в союзе.*вполсилы/);
+    expect(v.tone).toBe("good"); expect(v.text).toMatch(/союз.*вполсилы/);
   });
   it("такт 丙申: 丙 без корня, месяц 亥 — 丙辛 работает как Вода, такт тяжёлый", () => {
     const l = c.luck.find((x) => x.idx % 10 === 2 && x.idx % 12 === 8)!;
@@ -40,7 +40,7 @@ describe("такт и год с союзами натала", () => {
     expect(v.tone).toBe("bad"); expect(v.text).toMatch(/Вода/);
   });
   it("2029 己: союз с господином дня — не вред", () => {
-    expect(periodVerdict(b, yearIdx(2029), c).text).toMatch(/господином дня/);
+    expect(periodVerdict(b, yearIdx(2029), c).text).toMatch(/в союзе с вами/);
   });
   it("сила Владимира по шкале классики — «слегка сильный», как в my-chart.md", () => {
     expect(analyze(c).strength).toBe("слегка сильный");

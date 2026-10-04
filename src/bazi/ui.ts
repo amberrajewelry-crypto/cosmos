@@ -192,7 +192,7 @@ function secWho(c: Chart, a: Analysis) {
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
     <div class="who-txt"><p class="eyebrow">Ваш Господин дня</p>
       <h2>${d.ru} — ${t.title.toLowerCase()}</h2>
-      <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(' и ')}</p>
+      <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
@@ -303,7 +303,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
-      <div class="gauge"><h3>Сила Господина дня: ${a.strength}</h3>
+      <div class="gauge"><h3>Ваша сила: ${a.strength}</h3>
         <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${a.ratio * 100}%"></div></div>
         <div class="lbl"><span>слабый</span><span>баланс</span><span>сильный</span></div>
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
@@ -359,7 +359,7 @@ function secLuck(c: Chart, a: Analysis) {
   }).join('');
   const sel = cur >= 0 ? cur : 0, rd = luckReading(a, c.luck[sel].idx);
   return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>
-    <p>Десятилетия идут от столпа месяца ${c.forward ? 'вперёд' : 'назад'} по циклу из 60. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
+    <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="luck">${cards}</div>
     <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;

@@ -111,7 +111,7 @@ export function axisNote(c: Chart, a: Analysis): Note & { godKey: string } {
   const shown = vis.includes(s);
   const head = STEMS[s].el === a.dmEl
     ? `Месяц ${BRANCHES[month.branch].animal} — ваша собственная стихия: «${g.ru}». Своего бога месяц не даёт, структуру берут из стволов.`
-    : `Ось карты — ветвь месяца ${BRANCHES[month.branch].animal}, её бог «${g.ru}» (${g.zh}) ${shown ? 'проступил в стволах — ось явная, работает в полную силу' : 'в стволах не проступил — ось скрытая, проявляется через такты и годы, где этот ствол выходит наружу'}.`;
+    : `Ось карты — ветвь месяца ${BRANCHES[month.branch].animal}, её бог «${g.ru}» (${g.zh}) ${shown ? 'на виду — тема явная, работает в полную силу' : 'скрыт — тема проявляется в годы и такты, когда эта сила приходит'}.`;
   return { title: 'Ось карты (月令)', text: `${head} ${kb.care}.`, quote: kb.careZh, src: 'ЦПЦЦ гл.8, гл.10; ЮХ «欲知贵贱，先观月令»', godKey: g.key };
 }
 
@@ -204,15 +204,14 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   const st = stageOf(a.dm, b);
   out.push(`Ваша стихия в этот период: ${['силы прибывают', 'силы неустойчивы', 'силы растут', 'силы в рабочей форме', 'силы на пике', 'силы понемногу убывают', 'сил меньше обычного', 'сил мало', 'силы уходят внутрь, копятся', 'силы на нуле — время перезагрузки', 'зреет новое начало', 'силы набираются'][st]}.`);
   const day = pillars(c).find((p) => p.pos === 'day')!, month = pillars(c).find((p) => p.pos === 'month')!;
-  if (Math.abs(b - month.branch) === 6) out.push('Бьёт ветвь месяца — ось карты: «大運及歲君來衝月支則禍» (СМ т.10).');
-  if (Math.abs(b - day.branch) === 6 && Math.abs(s - day.stem) === 6) out.push('Ствол и ветвь бьют столп дня разом («天克地冲», ДТС 岁运) — самый резкий тип периода.');
-  else if (Math.abs(b - day.branch) === 6) out.push('Удар по ветви дня: дом, супруг(а), тело — перемены.');
-  if (idx === day.idx) out.push('Повтор столпа дня (伏吟, СМ т.2) — застой и повтор старых тем.');
+  if (Math.abs(b - month.branch) === 6) out.push('Встряска в работе и основе жизни.');
+  if (Math.abs(b - day.branch) === 6 && Math.abs(s - day.stem) === 6) out.push('Сильная встряска в доме, паре и здоровье — самый резкий тип периода.');
+  if (idx === day.idx) out.push('Период повторяет ваш знак дня — застой и возврат старых тем.');
   const month2 = pillars(c).find((p) => p.pos === 'month')!;
   const need = [...TIAOHOU[a.dm][month2.branch]].map((z) => SZ.indexOf(z));
-  if (need.includes(s)) out.push(`Ствол такта ${STEMS[s].ru} — ${need.indexOf(s) + 1}-й нужный по климату (穷通宝鉴): выводит его наружу.`);
-  if (BRANCHES[month2.branch].hidden[0] === s && STEMS[s].el !== a.dmEl) out.push(`Выводит наружу ось карты — «${godOf(a.dm, s).ru}».`);
-  if ((s + 5) % 10 === a.dm) out.push(`Ствол в союзе с господином дня — «${godOf(a.dm, s).ru}» притягивается к вам.`);
+  if (need.includes(s)) out.push('Приходит стихия, которой карте не хватает для равновесия.');
+  if (BRANCHES[month2.branch].hidden[0] === s && STEMS[s].el !== a.dmEl) out.push(`Проявляется главная тема карты — «${godOf(a.dm, s).ru}».`);
+  if ((s + 5) % 10 === a.dm) out.push(`Период в союзе с вами — «${godOf(a.dm, s).ru}» притягивается к вам.`);
   return out;
 }
 
@@ -222,14 +221,14 @@ export function portrait(c: Chart, a: Analysis): string[] {
   const ss = seasonState(a.dmEl, BRANCHES[month.branch].el);
   const roots = pillars(c).map((p) => rootOf(a.dm, p.branch)).filter(Boolean).length;
   const ax = axisNote(c, a), g = GODS[ax.godKey];
-  const need = [...TIAOHOU[a.dm][month.branch]].slice(0, 2).map((z) => `${STEMS[SZ.indexOf(z)].ru} (${EL[STEMS[SZ.indexOf(z)].el].toLowerCase()})`);
+  const need = [...new Set([...TIAOHOU[a.dm][month.branch]].slice(0, 2).map((z) => EL[STEMS[SZ.indexOf(z)].el].toLowerCase()))];
   return [
     STEM_VERSE[a.dm].ru,
-    `Рождены, когда ${EL[a.dmEl].toLowerCase()} «${SEASON_STATE[ss].toLowerCase()}»; корней в ветвях: ${roots || 'нет'} — отсюда сила «${a.strength}».`,
+    `Вы родились ${ss <= 1 ? 'в сезон своей стихии' : 'не в свой сезон'} и ${roots >= 2 ? 'хорошо укоренены' : roots === 1 ? 'имеете опору' : 'опоры в карте мало'} — ${a.brain.power.key === 'strong' ? 'сил хватает, важно направить их в дело' : a.brain.power.key === 'weak' ? 'силы стоит беречь и опираться на поддержку' : 'силы в равновесии'}.`,
     ax.godKey === 'BJ' || ax.godKey === 'JC'
       ? 'Месяц рождения — ваша же стихия: опора внутри, направление задают стволы.'
-      : `Главная тема жизни (ось месяца) — «${g.ru}»: ${g.sense}.`,
-    need.length ? `По климату карте прежде всего нужны ${need.join(' и ')}.` : '',
+      : `Главная тема жизни — «${g.ru}»: ${g.sense}.`,
+    need.length ? `Для равновесия карте прежде всего нужны ${need.join(' и ')}.` : '',
   ].filter(Boolean);
 }
 

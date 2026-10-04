@@ -20,11 +20,11 @@ function period(c: Chart, a: Analysis, idx: number): Period {
   const v = periodVerdict(a.brain, idx, c), g = godOf(a.dm, idx % 10);
   const day = c.pillars.find((p) => p.pos === 'day')!, month = c.pillars.find((p) => p.pos === 'month')!;
   const hits: string[] = [];
-  if (clash(idx % 12, day.branch)) hits.push('удар по ветви дня: дом, партнёр, тело — перемены');
-  if (clash(idx % 12, month.branch)) hits.push('удар по ветви месяца: работа и опора карты под нагрузкой');
+  if (clash(idx % 12, day.branch)) hits.push('перемены в доме, паре, здоровье');
+  if (clash(idx % 12, month.branch)) hits.push('встряска в работе и основе жизни');
   const r = (e: El) => (a.brain.yong === e ? 'главное полезное' : a.brain.xi.includes(e) ? 'полезно' : a.brain.ji.includes(e) ? 'нагрузка' : 'нейтрально');
   const se = STEMS[idx % 10].el, be = BRANCHES[idx % 12].el;
-  const why = se === be ? `${EL[se]} и в стволе, и в ветви — ${r(se)}` : `ствол ${EL[se].toLowerCase()} — ${r(se)}, ветвь ${EL[be].toLowerCase()} — ${r(be)}`;
+  const why = se === be ? `${EL[se]} — ${r(se)}` : `${EL[se]} — ${r(se)}, ${EL[be].toLowerCase()} — ${r(be)}`;
   return { idx, tone: v.tone, text: v.text, why, act: `«${g.ru}» — ${GOD_ACT[g.key]}`, hits };
 }
 
