@@ -12,13 +12,22 @@ import { dossier } from './dossier';
 import { readingHtml, transitHtml, synastryHtml, solarHtml, directionsHtml } from './interp';
 import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
-export interface Place { lat: number; lon: number; }
+export interface Place { lat: number; lon: number; tz?: string; }
 
 // Второе лицо (§2.1): застывшая карта рождения. Ключевой момент — поворот прецессии (§4.8):
 // не переключатель, а поворот — круг знаков садится на реальные созвездия.
 // Выход (§2.1): ссылка ?birth=YYYY-MM-DD и PNG — оба без сервера, дата остаётся в URL/браузере (§3.7).
 // Параметры режимов астропроцессора (/karta/): какую вкладку открыть сразу и с какими датами.
 export interface NatalOpts { view?: string; at?: Date; second?: Date; year?: number; outer?: boolean; }
+// Заголовок карты: местное время рождения, если известен пояс; иначе — UTC.
+function natalTitle(when: Date, place?: Place): string {
+  if (!place) return `${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })} · без времени`;
+  const tz = place.tz;
+  const d = when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz ?? 'UTC' });
+  const t = when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: tz ?? 'UTC' });
+  return `${d} · ${t}${tz ? '' : ' UTC'} <span class="natal-coord">${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°</span>`;
+}
+
 export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?: string, opts: NatalOpts = {}): void {
   const sunLon = SunPosition(when).elon;
   // ASC/MC (§4.7) — только при известных времени и месте; иначе честно не рисуем.
@@ -33,7 +42,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
   overlay.innerHTML = `
     <div class="natal-box">
       <button class="natal-close" aria-label="Закрыть">✕</button>
-      <h2 class="natal-title">${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}${place ? ` · ${when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC · ${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°` : ' · полдень UTC, без места'}</h2>
+      <h2 class="natal-title">${natalTitle(when, place)}</h2>
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
       <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
       <nav class="natal-tabs" aria-label="Виды карты">

@@ -1,3 +1,4 @@
+import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
 import { canListen, listen } from '../ui/listen';
@@ -18,7 +19,7 @@ import { spheres } from './spheres';
 import { compat } from './compat';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
-import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
+import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
@@ -165,7 +166,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
-    out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
+    reveal(out); wireMotion();
     drawLinks(c, a);
     out.querySelectorAll<HTMLCanvasElement>('canvas.fxc').forEach((cv) => mountFx(cv, +cv.dataset.stem!));
     wire(c, a, charts);
@@ -426,15 +427,40 @@ const INTER_SENSE: Record<string, string> = {
   dir: 'сезонный союз — вся сторона света в карте, стихия доминирует',
 };
 
-function dayCard(d: DayInfo, big = false) {
+function dayCard(d: DayInfo, big = false, extra = '') {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
-    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru}</p>
+    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru} · ${d.score} из 5</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
     <p><b>Что делать:</b> ${d.act}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
-    ${d.notes.length ? `<p class="dnote">Осторожно: ${d.notes.map(esc).join('; ')}.</p>` : ''}
+    ${d.notes.length || (big && d.warn.length) ? `<p class="dnote">Осторожно: ${[...d.notes, ...(big ? d.warn : [])].map(esc).join('; ')}.</p>` : ''}
+    ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
+    ${big && extra ? extra : ''}
   </div></div>`;
+}
+
+// Часы на руке = солнечное время + сдвиг. Если человек в том же поясе, что при рождении, — по долготе места рождения,
+// иначе — по середине своего пояса (точность ±30 мин).
+function clockShift(c: Chart): number {
+  const off = -new Date().getTimezoneOffset() / 60;
+  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* нет Intl */ }
+  return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
+}
+const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
+function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
+  const hh = bestHours(a, d, clockShift(c));
+  const k = days.findIndex((x) => x.iso === d.iso), next = days[k + 1], week = days.slice(k + 1, k + 8);
+  const top = week.reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
+  return `<div class="dmore">
+    <p><b>${d.heal ? 'Чем выровнять день' : 'На что опереться'}:</b> ${EL[d.med]} — ${esc(d.why)}.</p>
+    ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
+    <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
+    <ul class="list"><li>${esc(d.add.theory)} <span class="dhint">— по теории пяти стихий</span></li>
+      <li>${esc(d.add.folk)} <span class="dhint">— народная практика, в старых книгах этого нет</span></li></ul>
+    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${DAY_TYPE[next.type].ru.toLowerCase()}, ${next.score} из 5.${top ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5, «${top.god.ru}»).` : ''}</p>` : ''}
+    <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
+  </div>`;
 }
 
 // ——— Мои дни: календарь по карте ———
@@ -454,7 +480,7 @@ function secDays(c: Chart, a: Analysis) {
   const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
-    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
+    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
     <h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
@@ -462,16 +488,30 @@ function secDays(c: Chart, a: Analysis) {
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
     <div class="acts dacts" style="margin-top:20px"><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
+    <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
+      <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
+      <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>
+      <ol class="list"><li>iPhone: «Команды» → «Автоматизация» → «+» → «Время суток»: 6:00, ежедневно, «Запускать сразу».</li>
+        <li>Действие «Получить содержимое URL» — вставить скопированную ссылку.</li>
+        <li>Действие «Установить обои» — экран блокировки; «Показать предпросмотр» выключить.</li>
+        <li>Готово: каждое утро заставка обновится сама. Разово — откройте картинку, «Поделиться» → «Сделать обоями».</li></ol>
+    </details>
   </section>`;
 }
 function wireDays(c: Chart, a: Analysis) {
   const sel = document.getElementById('dsel'); if (!sel) return;
-  const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 56);
+  const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 64);
   document.querySelectorAll<HTMLButtonElement>('.dc').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.dc.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
-    const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
+    const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true, dayMore(c, a, d, days));
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
+  const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
+  for (const k of ['d', 't', 'p', 'g']) { const v = wq.get(k); if (v) wp.set(k, v); }
+  try { wp.set('z', Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* нет Intl — день по поясу рождения */ }
+  const wurl = `${location.origin}/bazi/zastavka.png?${wp}`, wo = document.getElementById('wpopen') as HTMLAnchorElement | null, wc = document.getElementById('wpcopy');
+  if (wo) wo.href = wurl;
+  if (wc) wc.onclick = async () => { try { await navigator.clipboard.writeText(wurl); wc.textContent = 'Ссылка скопирована'; } catch { prompt('Ссылка на заставку', wurl); } };
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;

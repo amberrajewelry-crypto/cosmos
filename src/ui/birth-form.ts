@@ -60,12 +60,12 @@ export function initBirthForm() {
     const t = birthTime.value || '12:00';
     const when = birth.value ? localToUtc(birth.value, t, birthTz.value || undefined) : new Date();
     const lat = parseFloat(birthLat.value), lon = parseFloat(birthLon.value);
-    const place = birthTime.value && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : undefined;
+    const place = birthTime.value && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon, tz: birthTz.value || undefined } : undefined;
     return { when, place };
   };
   // Ссылка шеринга — в тех же терминах, что ввод: местное время + tz + координаты; без времени — только дата.
   const link = (m: BirthMoment): string =>
-    `${location.origin}/?birth=${birth.value}${m.place ? `&t=${birthTime.value}&lat=${m.place.lat.toFixed(3)}&lon=${m.place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
+    `${location.origin}${location.pathname.startsWith('/karta') ? '/karta/' : '/'}?birth=${birth.value}${m.place ? `&t=${birthTime.value}&lat=${m.place.lat.toFixed(3)}&lon=${m.place.lon.toFixed(3)}${birthTz.value ? `&tz=${encodeURIComponent(birthTz.value)}` : ''}` : ''}`;
   // Входные данные для формы «число неверно» — только по явному согласию (§7.1).
   const inputsText = (): string | undefined => birthLat.value ? `lat ${birthLat.value}, lon ${birthLon.value}, birth ${birth.value} ${birthTime.value} ${birthTz.value}` : undefined;
   // Ссылка /?birth=YYYY-MM-DD[&t=HH:MM&lat=..&lon=..&tz=..] заполняет форму; true — карту надо открыть сразу.
