@@ -18,7 +18,7 @@ import { spheres } from './spheres';
 import { compat } from './compat';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
-import { daysFrom, showThenClose, DAY_TYPE, type DayInfo } from './days';
+import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
@@ -426,15 +426,40 @@ const INTER_SENSE: Record<string, string> = {
   dir: 'сезонный союз — вся сторона света в карте, стихия доминирует',
 };
 
-function dayCard(d: DayInfo, big = false) {
+function dayCard(d: DayInfo, big = false, extra = '') {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
-    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru}</p>
+    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru} · ${d.score} из 5</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
     <p><b>Что делать:</b> ${d.act}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
-    ${d.notes.length ? `<p class="dnote">Осторожно: ${d.notes.map(esc).join('; ')}.</p>` : ''}
+    ${d.notes.length || (big && d.warn.length) ? `<p class="dnote">Осторожно: ${[...d.notes, ...(big ? d.warn : [])].map(esc).join('; ')}.</p>` : ''}
+    ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
+    ${big && extra ? extra : ''}
   </div></div>`;
+}
+
+// Часы на руке = солнечное время + сдвиг. Если человек в том же поясе, что при рождении, — по долготе места рождения,
+// иначе — по середине своего пояса (точность ±30 мин).
+function clockShift(c: Chart): number {
+  const off = -new Date().getTimezoneOffset() / 60;
+  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* нет Intl */ }
+  return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
+}
+const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
+function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
+  const hh = bestHours(a, d, clockShift(c));
+  const k = days.findIndex((x) => x.iso === d.iso), next = days[k + 1], week = days.slice(k + 1, k + 8);
+  const top = week.reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
+  return `<div class="dmore">
+    <p><b>${d.heal ? 'Чем выровнять день' : 'На что опереться'}:</b> ${EL[d.med]} — ${esc(d.why)}.</p>
+    ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
+    <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
+    <ul class="list"><li>${esc(d.add.theory)} <span class="dhint">— по теории пяти стихий</span></li>
+      <li>${esc(d.add.folk)} <span class="dhint">— народная практика, в старых книгах этого нет</span></li></ul>
+    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${DAY_TYPE[next.type].ru.toLowerCase()}, ${next.score} из 5.${top ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5, «${top.god.ru}»).` : ''}</p>` : ''}
+    <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
+  </div>`;
 }
 
 // ——— Мои дни: календарь по карте ———
@@ -454,7 +479,7 @@ function secDays(c: Chart, a: Analysis) {
   const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
-    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true)}</div></div>
+    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
     <h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
@@ -466,10 +491,10 @@ function secDays(c: Chart, a: Analysis) {
 }
 function wireDays(c: Chart, a: Analysis) {
   const sel = document.getElementById('dsel'); if (!sel) return;
-  const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 56);
+  const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 64);
   document.querySelectorAll<HTMLButtonElement>('.dc').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.dc.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
-    const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true);
+    const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true, dayMore(c, a, d, days));
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
   const sh = document.getElementById('share');

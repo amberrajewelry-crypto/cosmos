@@ -286,6 +286,10 @@ canvas.wfx { position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-ev
 .dcard.peak { border-left-color: #5fc98a; } .dcard.peak-hit { border-left-color: #e2c47c; } .dcard.heavy { border-left-color: #4f8ef0; }
 .dhint { font-size: 14px; color: var(--ink-3); }
 .dnote { font-size: 14px; color: #f0a48f !important; }
+.dgood { font-size: 14px; color: #8fd9a8 !important; }
+.dmore { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(var(--ink-rgb),.12); }
+.dmore h4 { margin: 10px 0 4px; font-size: 15px; }
+.dmore .list { margin: 4px 0 8px; padding-left: 18px; font-size: 15px; color: var(--ink-2); }
 .dlist { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 .dlegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-3); margin: 8px 0 10px; }
 .dlegend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: rgba(255,255,255,.12); }
