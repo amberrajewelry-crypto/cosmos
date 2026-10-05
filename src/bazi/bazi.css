@@ -392,3 +392,21 @@ details.more-in { margin-top: 14px; }
 details.more-in > summary { color: var(--gold); font-size: 15px; padding: 8px 0; }
 .fy details summary { cursor: pointer; color: var(--gold); font-size: 13px; margin-top: 4px; }
 @media (max-width: 560px) { .dacts.fbv button { flex: 1 1 0; } }
+/* Мобилка: карточка выбранного дня — без лишних рамок, картинка в обтекание, текст на всю ширину */
+@media (max-width: 560px) {
+  .pane:has(> #dsel) { padding: 14px 12px; }
+  #dsel .dcard.big { display: block; padding: 12px 12px 12px 14px; }
+  #dsel .dcard.big > img.thumb { float: left; width: 44px; height: 44px; margin: 0 10px 4px 0; }
+  #dsel .dcard.big ul { padding-left: 18px; }
+}
+/* Мобилка: пальцем попадать легче — зоны нажатия не меньше ~40px */
+@media (max-width: 560px) {
+  nav.top .links a, nav.top .brand { padding-block: 10px; }
+  #out summary { padding-block: 9px; }
+  .chk { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+  .chk input { width: 20px; height: 20px; }
+}
+/* поля даты/времени в iOS/Chrome имеют свою мин. ширину — не даём им вылезать из колонки */
+.form > label { min-width: 0; }
+.form input[type=date], .form input[type=time], .form input[type=text] { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 560px) { .form { gap: 14px 10px; padding: 18px 16px; } .form input[type=date], .form input[type=time] { padding-inline: 10px; } }

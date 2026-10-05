@@ -21,6 +21,9 @@
       .kp, .kform, .kfaq { font-family: var(--serif); }
       #nav { position: sticky; top: 14px; margin: 14px auto 0; left: auto; transform: none; width: fit-content; }
       .kp { max-width: 1120px; margin: 0 auto; padding: 40px 22px 96px; }
+      /* стиль главной на мобилке делает main display:contents — у /karta/ это съедает поля */
+      main.kp { display: block; width: 100%; box-sizing: border-box; }
+      @media (max-width: 760px) { main.kp { padding: 24px 16px 72px; } #natal.shell { padding: 0; border-color: transparent; background: none; box-shadow: none; } #natal .natal-box { padding: 12px 2px; } }
       /* Single column: copy, then the wide illustration below (no side-by-side text) */
       .hero { display: grid; grid-template-columns: 1fr; gap: 28px; margin: 24px 0 40px; }
       .hero > div { max-width: none; }
@@ -43,7 +46,7 @@
       .modes button:hover { color: var(--ink); background: rgba(var(--ink-rgb),.05); }
       .modes button:active { transform: scale(.97); }
       .modes button.on { color: #120f2a; background: var(--gold); box-shadow: 0 8px 20px -10px rgba(201,168,92,.7); }
-      @media (max-width: 640px) { .modes { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: auto; } .modes::-webkit-scrollbar { display: none; } .modes button { flex: 0 0 auto; } }
+      @media (max-width: 640px) { .modes { display: grid; grid-template-columns: 1fr 1fr; width: auto; border-radius: 22px; } .modes button { white-space: normal; line-height: 1.2; min-height: 44px; padding: 8px 10px; border-radius: 16px; } }
       /* Double-bezel shells: outer tray + inner core */
       .shell { padding: 6px; border-radius: 30px; background: rgba(var(--ink-rgb),.04); border: 1px solid rgba(var(--ink-rgb),.08); box-shadow: 0 40px 80px -40px rgba(3,2,14,.9); }
       .core { border-radius: 24px; background: var(--card); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
