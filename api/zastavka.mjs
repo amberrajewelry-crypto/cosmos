@@ -2385,6 +2385,7 @@ var DIRS = [[[2, 3, 4], 0], [[5, 6, 7], 1], [[8, 9, 10], 3], [[11, 0, 1], 4]];
 var TRINE = [[[11, 3, 7], 0], [[2, 6, 10], 1], [[5, 9, 1], 3], [[8, 0, 4], 4]];
 var COMBO = [[0, 5, 2], [1, 6, 3], [2, 7, 4], [3, 8, 0], [4, 9, 1]];
 var VIBRANT = [["\u66F2\u76F4", "\u041F\u0440\u044F\u043C\u043E\u0435-\u043A\u0440\u0438\u0432\u043E\u0435"], ["\u708E\u4E0A", "\u041F\u043B\u0430\u043C\u044F \u0432\u0432\u0435\u0440\u0445"], ["\u7A3C\u7A51", "\u041F\u043E\u0441\u0435\u0432 \u0438 \u0436\u0430\u0442\u0432\u0430"], ["\u4ECE\u9769", "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u0430\u043C"], ["\u6DA6\u4E0B", "\u0412\u043B\u0430\u0433\u0430 \u0432\u043D\u0438\u0437"]];
+var SIX_HE = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]];
 var uniq = (xs) => xs.filter((x, i) => xs.indexOf(x) === i);
 function brain(c, a) {
   const P = c.pillars, dm = a.dm, d = a.dmEl;
@@ -2571,6 +2572,71 @@ function brain(c, a) {
     });
   }
   return b;
+}
+function activeSet(b, idx, c) {
+  if (!b.alt || !c) return { set: b, swung: false };
+  const d = STEMS[c.pillars.find((p) => p.pos === "day").stem].el, up = (e) => e === d || e === (d + 4) % 5 ? 1 : -1;
+  const tip = up(STEMS[idx % 10].el) + up(BRANCHES[idx % 12].el);
+  return (tip > 0 ? "strong" : tip < 0 ? "weak" : "") === b.alt.lean ? { set: b.alt, swung: true } : { set: b, swung: false };
+}
+var tianKeDiChong = (x, y) => Math.abs(x % 10 - y % 10) === 6 && Math.min(x % 10, y % 10) < 4 && Math.abs(x % 12 - y % 12) === 6;
+function periodVerdict(b, idx, c, partner) {
+  let se = STEMS[idx % 10].el;
+  const be = BRANCHES[idx % 12].el;
+  const { set, swung } = activeSet(b, idx, c);
+  const swing = swung && b.alt ? ` \u0421\u0438\u043B\u0430 \u043D\u0430 \u0433\u0440\u0430\u043D\u0438, \u043F\u0435\u0440\u0438\u043E\u0434 \u0435\u0451 ${b.alt.lean === "strong" ? "\u043F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442" : "\u043E\u043F\u0443\u0441\u043A\u0430\u0435\u0442"} \u2014 \u043F\u043E\u043B\u0435\u0437\u043D\u044B\u0439 \u0437\u0434\u0435\u0441\u044C ${EL[b.alt.yong]} (\u6731\u7956\u590F \u4E2D\u548C)` : "";
+  const v = (e) => e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0;
+  let bond = "", k = 1;
+  if (c) {
+    const st = idx % 10, month = c.pillars.find((p) => p.pos === "month");
+    const order = [...c.pillars].sort((x, y) => (y.pos === "day" ? 1 : 0) - (x.pos === "day" ? 1 : 0));
+    for (const p of order) {
+      const pair = COMBO.find(([x, y]) => x === st && y === p.stem || y === st && x === p.stem);
+      if (!pair) continue;
+      if (p.pos === "day") {
+        bond = " \u041F\u0435\u0440\u0438\u043E\u0434 \u0432 \u0441\u043E\u044E\u0437\u0435 \u0441 \u0432\u0430\u043C\u0438 \u2014 \u0441\u0430\u043C \u043F\u043E \u0441\u0435\u0431\u0435 \u043D\u0435 \u0432\u0440\u0435\u0434";
+        break;
+      }
+      if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) {
+        se = pair[2];
+        bond = ` ${STEMS[st].ru} \u0432 \u0441\u043E\u044E\u0437\u0435 \u0441 ${STEMS[p.stem].ru} \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u044B \u0438 \u043F\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044F: \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043A\u0430\u043A ${EL[pair[2]]}`;
+      } else {
+        k = 0.5;
+        bond = " \u0427\u0430\u0441\u0442\u044C \u0441\u0438\u043B\u044B \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0443\u0445\u043E\u0434\u0438\u0442 \u0432 \u0441\u043E\u044E\u0437 \u0441 \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u043E\u0439 \u2014 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0432\u043F\u043E\u043B\u0441\u0438\u043B\u044B";
+      }
+      break;
+    }
+  }
+  let s = v(se) * k, r = v(be);
+  if ((se + 2) % 5 === be) s *= 1.5;
+  else if ((be + 2) % 5 === se) r *= 1.5;
+  let extra = "";
+  if (c) {
+    const day = c.pillars.find((p) => p.pos === "day"), month = c.pillars.find((p) => p.pos === "month");
+    if (voidOf(day.idx).includes(idx % 12)) {
+      const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
+      r *= half ? 0.7 : 0.3;
+      extra += ` \u0412\u0435\u0442\u0432\u044C \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \xAB\u0432 \u043F\u0443\u0441\u0442\u043E\u0442\u0435\xBB \u2014 \u0435\u0451 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 ${half ? "\u043E\u0441\u043B\u0430\u0431\u043B\u0435\u043D\u043E \u043D\u0430 \u0442\u0440\u0435\u0442\u044C" : "\u043F\u043E\u0447\u0442\u0438 \u043D\u0435 \u0447\u0443\u0432\u0441\u0442\u0432\u0443\u0435\u0442\u0441\u044F"} (\u547D\u7406\u7EA6\u8A00 \u7A7A\u4EA1\u8BBA)`;
+    }
+    if (tianKeDiChong(idx, day.idx)) {
+      const freed = partner !== void 0 && (Math.abs(partner % 10 - idx % 10) === 5 || SIX_HE.some(([x, y]) => x === partner % 12 && y === idx % 12 || y === partner % 12 && x === idx % 12));
+      if (freed) extra += " \u0414\u0432\u043E\u0439\u043D\u043E\u0439 \u0443\u0434\u0430\u0440 \u043F\u043E \u0441\u0442\u043E\u043B\u043F\u0443 \u0434\u043D\u044F \u0441\u043D\u044F\u0442 \u0441\u043E\u044E\u0437\u043E\u043C \u0442\u0430\u043A\u0442\u0430 \u0438 \u0433\u043E\u0434\u0430 (\u6731\u7956\u590F \u516B\u5B57\u4E0E\u7528\u795E \u0433\u043B.8)";
+      else {
+        s -= 0.75;
+        r -= 0.75;
+        extra += " \u0414\u0432\u043E\u0439\u043D\u043E\u0439 \u0443\u0434\u0430\u0440 \u043F\u043E \u0441\u0442\u043E\u043B\u043F\u0443 \u0434\u043D\u044F (\u5929\u514B\u5730\u51B2): \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u044B \u0432 \u0434\u043E\u043C\u0435, \u043F\u0430\u0440\u0435, \u0437\u0434\u043E\u0440\u043E\u0432\u044C\u0435 \u2014 \xAB\u95F4\u6709\u4E0D\u5229\xBB (\u547D\u7406\u7EA6\u8A00 \u592A\u5C81\u8BBA)";
+      }
+    }
+  }
+  const t = s + r;
+  const res0 = verdictOf(s, r, t);
+  return { tone: res0.tone, text: res0.text + (bond ? "." + bond : "") + (swing ? "." + swing : "") + (extra ? "." + extra : "") };
+}
+function verdictOf(s, r, t) {
+  if (s > 0 && r > 0) return { tone: "good", text: "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u044B \u2014 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
+  if (s < 0 && r < 0) return { tone: "bad", text: "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
+  if (s * r < 0) return { tone: t > 0 ? "good" : t < 0 ? "bad" : "mixed", text: `\u043E\u0434\u043D\u0430 \u0441\u0442\u0438\u0445\u0438\u044F \u043F\u043E\u043B\u0435\u0437\u043D\u0430, \u0434\u0440\u0443\u0433\u0430\u044F \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430; \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442 ${Math.abs(s) > Math.abs(r) === s > 0 ? "\u043F\u043E\u043B\u044C\u0437\u0430" : "\u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430"}` };
+  return { tone: t > 0 ? "good" : t < 0 ? "bad" : "calm", text: t > 0 ? "\u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0435 \u0431\u0435\u0437 \u0432\u0440\u0435\u0434\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0445\u043E\u0440\u043E\u0448\u043E" : t < 0 ? "\u0432\u0440\u0435\u0434\u043D\u043E\u0435 \u0431\u0435\u0437 \u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0442\u044F\u0436\u0435\u043B\u043E" : "\u043D\u0435\u0439\u0442\u0440\u0430\u043B\u044C\u043D\u043E" };
 }
 
 // src/bazi/calc.ts
@@ -2792,7 +2858,25 @@ function monthIdxAt(t) {
   const yi = yearIdx(Y), m = Math.floor(norm2(SunPosition(t).elon - 315) / 30);
   return cyc((yi % 10 % 5 * 2 + 2 + m) % 10, (2 + m) % 12);
 }
-function dayInfo(c, a, y, m, d) {
+var TV = { good: 1, bad: -1, mixed: 0, calm: 0 };
+var bgCache = /* @__PURE__ */ new WeakMap();
+function background(c, a, t) {
+  const Y = t.getTime() < lc(t.getUTCFullYear()) ? t.getUTCFullYear() - 1 : t.getUTCFullYear();
+  let m = bgCache.get(a);
+  if (!m) bgCache.set(a, m = /* @__PURE__ */ new Map());
+  const hit = m.get(Y);
+  if (hit) return hit;
+  const L = [...c.luck].reverse().find((l) => l.year <= Y), yi = yearIdx(Y);
+  const { set, swung } = L ? activeSet(a.brain, L.idx, c) : { set: a.brain, swung: false };
+  const A = swung ? { ...a, consensus: [set.yong, ...set.xi], avoid: set.ji, brain: { ...a.brain, ...set } } : a;
+  const luck = L ? periodVerdict(a.brain, L.idx, c).tone : null, year = periodVerdict(a.brain, yi, c, L?.idx).tone;
+  const adj = 0.25 * ((luck ? TV[luck] : 0) + TV[year]) * (L && L.idx === yi ? 1.5 : 1);
+  const r = { A, bg: { luck, year, adj, swung }, yi };
+  m.set(Y, r);
+  return r;
+}
+function dayInfo(c, a0, y, m, d) {
+  const { A: a, bg, yi } = background(c, a0, new Date(Date.UTC(y, m - 1, d, 12)));
   const idx = dayIdx(y, m, d), s = idx % 10, b = idx % 12;
   const fav = (e) => a.consensus.includes(e), bad = (e) => a.avoid.includes(e);
   const se = STEMS[s].el, be = BRANCHES[b].el;
@@ -2815,11 +2899,17 @@ function dayInfo(c, a, y, m, d) {
     }
   }
   if (a.voids.includes(b)) notes.push("\u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043C\u043E\u0436\u0435\u0442 \u043F\u0440\u0438\u0439\u0442\u0438 \u043D\u0435\u043F\u043E\u043B\u043D\u044B\u043C");
+  const day = c.pillars.find((p) => p.pos === "day");
+  if (tianKeDiChong(idx, day.idx)) {
+    notes.push("\u0434\u0432\u043E\u0439\u043D\u043E\u0439 \u0443\u0434\u0430\u0440 \u043F\u043E \u0432\u0430\u043C \u043B\u0438\u0447\u043D\u043E \u2014 \u0434\u0435\u043D\u044C \u0434\u043B\u044F \u0442\u0438\u0448\u0438\u043D\u044B, \u043D\u0435 \u0434\u043B\u044F \u0440\u0435\u0448\u0435\u043D\u0438\u0439");
+    hit = true;
+  }
+  if (Math.abs(yi % 12 - b) === 6) notes.push("\u0434\u0435\u043D\u044C \u0431\u044C\u0451\u0442 \u0433\u043E\u0434 \u2014 \u043A\u0440\u0443\u043F\u043D\u043E\u0435 \u043D\u0435 \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C");
   if (hit && type === "peak") type = "peak-hit";
   const god = godOf(a.dm, s);
   const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const monthIdx = monthIdxAt(new Date(Date.UTC(y, m - 1, d, 12)));
-  return { iso, idx, monthIdx, type, god, act: GOD_ACT[god.key], notes, ...advice(c, a, idx, monthIdx, type) };
+  return { iso, idx, monthIdx, type, god, act: GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...advice(c, a, idx, monthIdx, type, yi, bg.adj) };
 }
 var BRANCH_POS_W = { day: 1, month: 0.5, year: 0.25, hour: 0.25 };
 var SIX2 = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]];
@@ -2837,7 +2927,7 @@ var roundEven = (x) => {
   return r > 0.5 ? f + 1 : r < 0.5 ? f : f % 2 ? f + 1 : f;
 };
 var ACC = ["\u0414\u0435\u0440\u0435\u0432\u043E", "\u041E\u0433\u043E\u043D\u044C", "\u0417\u0435\u043C\u043B\u044E", "\u041C\u0435\u0442\u0430\u043B\u043B", "\u0412\u043E\u0434\u0443"];
-function advice(c, a, idx, monthIdx, type) {
+function advice(c, a, idx, monthIdx, type, yi, bgAdj) {
   const s = idx % 10, b = idx % 12, se = STEMS[s].el, be = BRANCHES[b].el;
   const fav = (e) => a.consensus.includes(e), bad = (e) => a.avoid.includes(e);
   const ill = [se, be].filter(bad);
@@ -2895,6 +2985,8 @@ function advice(c, a, idx, monthIdx, type) {
     warn.push("\u0434\u0435\u043D\u044C \u0431\u044C\u0451\u0442 \u043C\u0435\u0441\u044F\u0446: \u043A\u0440\u0443\u043F\u043D\u043E \u043D\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044C, \u0432 \u0434\u043E\u043B\u0433 \u043D\u0435 \u0434\u0430\u0432\u0430\u0442\u044C, \u0434\u0430\u043B\u0435\u043A\u043E \u0437\u0430 \u0434\u0435\u043D\u044C\u0433\u0430\u043C\u0438 \u043D\u0435 \u0435\u0445\u0430\u0442\u044C");
   }
   if (a.voids.includes(b)) score -= 0.5;
+  if (Math.abs(yi % 12 - b) === 6) score -= 0.5;
+  score += bgAdj;
   if (WET.includes(b) && bad(4) && fav(2)) {
     score -= 0.5;
     warn.push("\u0437\u0435\u043C\u043B\u044F \u0434\u043D\u044F \u0432\u043B\u0430\u0436\u043D\u0430\u044F \u2014 \u0441\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0441\u043B\u0430\u0431\u0435\u0435");
@@ -2906,9 +2998,9 @@ function advice(c, a, idx, monthIdx, type) {
   }
   return { score: Math.max(1, Math.min(5, roundEven(score))), heal, med, why, warn, good, add: EL_ADD[med] };
 }
-function bestHours(a, d, shift = 0, from = 7, to = 23) {
+function bestHours(_a, d, shift = 0, from = 7, to = 23) {
   const ds = d.idx % 10, db = d.idx % 12, med = d.med;
-  const fav = (e) => a.consensus.includes(e), bad = (e) => a.avoid.includes(e);
+  const fav = (e) => d.fav.includes(e), bad = (e) => d.avoid.includes(e);
   const fm = (x) => {
     const m = Math.round(x * 12) * 5;
     return `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -2918,7 +3010,7 @@ function bestHours(a, d, shift = 0, from = 7, to = 23) {
     const hs = (ds % 5 * 2 + k) % 10, es = STEMS[hs].el, eb = BRANCHES[k].el;
     if (Math.abs(k - db) === 6 || bad(es) || bad(eb)) continue;
     if (med !== es && med !== eb && !(fav(es) && fav(eb))) continue;
-    if (med === 2 && WET.includes(k) && es !== 2 && a.avoid.includes(4)) continue;
+    if (med === 2 && WET.includes(k) && es !== 2 && d.avoid.includes(4)) continue;
     let st = mod2(k * 2 - 1 + shift, 24);
     if (st < from - 0.01) st += 24;
     if (st + 2 > to + 0.01) continue;
@@ -2995,13 +3087,19 @@ function wallpaperSvg(a, d, days, shift) {
     y += 38;
   };
   block("\u0414\u0435\u043B\u0430\u0442\u044C", cap(d.act));
-  block(d.heal ? "\u0412\u044B\u0440\u043E\u0432\u043D\u044F\u0442\u044C \u0434\u0435\u043D\u044C" : "\u041E\u043F\u043E\u0440\u0430 \u0434\u043D\u044F", cap(d.add.theory));
+  block(`${d.heal ? "\u0412\u044B\u0440\u043E\u0432\u043D\u044F\u0442\u044C \u0434\u0435\u043D\u044C" : "\u041E\u043F\u043E\u0440\u0430 \u0434\u043D\u044F"} \xB7 \u0442\u0435\u043E\u0440\u0438\u044F \u0441\u0442\u0438\u0445\u0438\u0439`, cap(d.add.theory));
   const hh = bestHours(a, d, shift);
   if (hh.length) block("\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B", hh.slice(0, 2).join(", "), "#ebecf0", 1);
   const risk = [...d.notes, ...d.warn][0];
   if (risk) block("\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", cap(risk), "#e6cdc8", 2);
   const k = days.findIndex((x) => x.iso === d.iso), week = days.slice(k + 1, k + 8);
   const top = week.reduce((m, x) => !m || x.score > m.score ? x : m, null);
+  const BG = { good: "\u0431\u043B\u0430\u0433\u043E\u043F\u0440\u0438\u044F\u0442\u043D\u044B\u0439", bad: "\u0442\u044F\u0436\u0451\u043B\u044B\u0439", mixed: "\u0441\u043C\u0435\u0448\u0430\u043D\u043D\u044B\u0439", calm: "\u0441\u043F\u043E\u043A\u043E\u0439\u043D\u044B\u0439" };
+  const BGN = { good: "\u0431\u043B\u0430\u0433\u043E\u043F\u0440\u0438\u044F\u0442\u043D\u043E\u0435", bad: "\u0442\u044F\u0436\u0451\u043B\u043E\u0435", mixed: "\u0441\u043C\u0435\u0448\u0430\u043D\u043D\u043E\u0435", calm: "\u0441\u043F\u043E\u043A\u043E\u0439\u043D\u043E\u0435" };
+  if (y < 2190) {
+    text(`\u0424\u043E\u043D: ${d.bg.luck ? `\u0434\u0435\u0441\u044F\u0442\u0438\u043B\u0435\u0442\u0438\u0435 ${BGN[d.bg.luck]}, ` : ""}\u0433\u043E\u0434 ${BG[d.bg.year]}`, 36, 600, "#a9aeb9");
+    y += 56;
+  }
   if (top && y < 2270) text(`\u041B\u0443\u0447\u0448\u0438\u0439 \u0434\u0435\u043D\u044C \u043D\u0435\u0434\u0435\u043B\u0438: ${label(top.iso)} \xB7 ${top.score} \u0438\u0437 5`, 38, 600, "#a9aeb9");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
 <defs><radialGradient id="g" cx="0.3" cy="0.62" r="0.85"><stop offset="0" stop-color="${acc}" stop-opacity="0.22"/><stop offset="1" stop-color="${acc}" stop-opacity="0"/></radialGradient>

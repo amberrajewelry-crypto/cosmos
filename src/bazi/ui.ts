@@ -1,3 +1,5 @@
+import { confidence } from './confidence';
+import { chartHash, answer, myAnswer, mySummary, globalSummary } from './journal';
 import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
@@ -19,7 +21,7 @@ import { spheres } from './spheres';
 import { compat } from './compat';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
-import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo } from './days';
+import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } from './days';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
@@ -310,6 +312,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
+      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}</p>`)(confidence(a))}
       <div class="methods">${methods}</div>
     </div></div></section>`;
 }
@@ -448,6 +451,13 @@ function clockShift(c: Chart): number {
   return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
 }
 const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
+const BG_RU = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
+const BG_RU_Y = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
+function bgRu(d: DayInfo): string {
+  const b = d.bg, parts = [`${b.luck ? `десятилетие ${BG_RU[b.luck]}, ` : ''}год ${BG_RU_Y[b.year]}`];
+  parts.push(b.adj > 0 ? 'фон приподнимает оценку дня' : b.adj < 0 ? 'фон снижает оценку дня' : 'на оценку дня не влияет');
+  return parts.join(' — ') + (b.swung ? '. В это десятилетие ваша сила меняет баланс, поэтому полезные стихии на нём другие, чем по рождению.' : '.');
+}
 function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
   const hh = bestHours(a, d, clockShift(c));
   const k = days.findIndex((x) => x.iso === d.iso), next = days[k + 1], week = days.slice(k + 1, k + 8);
@@ -455,6 +465,7 @@ function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
   return `<div class="dmore">
     <p><b>${d.heal ? 'Чем выровнять день' : 'На что опереться'}:</b> ${EL[d.med]} — ${esc(d.why)}.</p>
     ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
+    <p class="dhint"><b>Фон:</b> ${bgRu(d)}</p>
     <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
     <ul class="list"><li>${esc(d.add.theory)} <span class="dhint">— по теории пяти стихий</span></li>
       <li>${esc(d.add.folk)} <span class="dhint">— народная практика, в старых книгах этого нет</span></li></ul>
@@ -481,6 +492,9 @@ function secDays(c: Chart, a: Analysis) {
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
+    <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
+      <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
+      <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall"></p></div>
     <h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
@@ -498,6 +512,29 @@ function secDays(c: Chart, a: Analysis) {
     </details>
   </section>`;
 }
+const SPHERES: [string, string][] = [['-', 'сфера (необязательно)'], ['work', 'работа'], ['money', 'деньги'], ['love', 'отношения'], ['family', 'семья'], ['health', 'здоровье'], ['mood', 'настроение']];
+async function wireJournal(c: Chart, a: Analysis, today: DayInfo) {
+  const box = document.getElementById('jrows'); if (!box) return;
+  const q = new URLSearchParams(lastQuery || location.search.slice(1));
+  if (!q.get('d') || !q.get('p')) { document.getElementById('jr')?.remove(); return; }
+  const h = await chartHash(q), conf = confidence(a);
+  const [y, m, d] = today.iso.split('-').map(Number), yd = new Date(y, m - 1, d - 1);
+  const rows = [{ lbl: 'Сегодня', d: today }, { lbl: 'Вчера', d: dayInfo(c, a, yd.getFullYear(), yd.getMonth() + 1, yd.getDate()) }];
+  const draw = () => {
+    box.innerHTML = rows.map(({ lbl, d: x }, i) => { const my = myAnswer(h, x.iso);
+      return `<div class="jrow" data-i="${i}"><span><b>${lbl}</b> · ${dLabel(x, false)}</span>
+        <button class="ghost${my?.ans === 1 ? ' on' : ''}" data-a="1" type="button">Хорошо</button><button class="ghost${my?.ans === 0 ? ' on' : ''}" data-a="0" type="button">Тяжело</button>
+        <select aria-label="Сфера дня">${SPHERES.map(([k, t]) => `<option value="${k}"${my?.sphere === k ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`; }).join('');
+    box.querySelectorAll<HTMLButtonElement>('button[data-a]').forEach((b) => (b.onclick = async () => {
+      const row = b.closest<HTMLElement>('.jrow')!, x = rows[+row.dataset.i!].d, sp = row.querySelector('select')!.value;
+      const ok = await answer(h, x, +b.dataset.a! as 0 | 1, conf, sp); track('bazi:journal');
+      draw(); document.getElementById('jmy')!.textContent = mySummary(h) + (ok ? '' : ' (сохранено в браузере, отправить не удалось)');
+    }));
+  };
+  draw();
+  document.getElementById('jmy')!.textContent = mySummary(h);
+  document.getElementById('jall')!.textContent = await globalSummary();
+}
 function wireDays(c: Chart, a: Analysis) {
   const sel = document.getElementById('dsel'); if (!sel) return;
   const now = new Date(), days = daysFrom(c, a, new Date(now.getFullYear(), now.getMonth(), now.getDate()), 64);
@@ -512,6 +549,7 @@ function wireDays(c: Chart, a: Analysis) {
   const wurl = `${location.origin}/bazi/zastavka.png?${wp}`, wo = document.getElementById('wpopen') as HTMLAnchorElement | null, wc = document.getElementById('wpcopy');
   if (wo) wo.href = wurl;
   if (wc) wc.onclick = async () => { try { await navigator.clipboard.writeText(wurl); wc.textContent = 'Ссылка скопирована'; } catch { prompt('Ссылка на заставку', wurl); } };
+  void wireJournal(c, a, days[0]);
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;
