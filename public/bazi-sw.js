@@ -1,6 +1,6 @@
 // Service worker раздела /bazi/: офлайн-работа приложения «Бацзы».
 // Страница — сначала сеть, при отсутствии — кэш; ассеты с хэшем, шрифты, города — из кэша.
-const CACHE = 'bazi-v2';
+const CACHE = 'bazi-v3';
 const CORE = ['/bazi/', '/places/core.json', '/bazi.webmanifest', '/icons/bazi-192.png', '/icons/bazi-512.png', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -28,6 +28,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
+  if (url.pathname.endsWith('.png') && url.pathname.startsWith('/bazi/')) return; // заставка — всегда из сети
   if (req.mode === 'navigate' && url.pathname.startsWith('/bazi')) {
     e.respondWith((async () => {
       try {

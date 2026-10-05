@@ -487,6 +487,14 @@ function secDays(c: Chart, a: Analysis) {
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
     <div class="acts dacts" style="margin-top:20px"><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
+    <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
+      <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
+      <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>
+      <ol class="list"><li>iPhone: «Команды» → «Автоматизация» → «+» → «Время суток»: 6:00, ежедневно, «Запускать сразу».</li>
+        <li>Действие «Получить содержимое URL» — вставить скопированную ссылку.</li>
+        <li>Действие «Установить обои» — экран блокировки; «Показать предпросмотр» выключить.</li>
+        <li>Готово: каждое утро заставка обновится сама. Разово — откройте картинку, «Поделиться» → «Сделать обоями».</li></ol>
+    </details>
   </section>`;
 }
 function wireDays(c: Chart, a: Analysis) {
@@ -497,6 +505,12 @@ function wireDays(c: Chart, a: Analysis) {
     const d = days.find((x) => x.iso === b.dataset.iso); if (d) sel.innerHTML = dayCard(d, true, dayMore(c, a, d, days));
     sel.closest('.pane')!.querySelector('.eyebrow')!.textContent = b.classList.contains('now') ? 'Сегодня' : 'Выбранный день';
   }));
+  const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
+  for (const k of ['d', 't', 'p', 'g']) { const v = wq.get(k); if (v) wp.set(k, v); }
+  try { wp.set('z', Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* нет Intl — день по поясу рождения */ }
+  const wurl = `${location.origin}/bazi/zastavka.png?${wp}`, wo = document.getElementById('wpopen') as HTMLAnchorElement | null, wc = document.getElementById('wpcopy');
+  if (wo) wo.href = wurl;
+  if (wc) wc.onclick = async () => { try { await navigator.clipboard.writeText(wurl); wc.textContent = 'Ссылка скопирована'; } catch { prompt('Ссылка на заставку', wurl); } };
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;

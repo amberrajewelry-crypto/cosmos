@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/bazi/zastavka.png",
+      "destination": "/api/zastavka"
+    },
+    {
       "source": "/bazi/",
       "destination": "/bazi.html"
     },
