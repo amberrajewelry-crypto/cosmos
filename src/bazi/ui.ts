@@ -1,3 +1,4 @@
+import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
 import { canListen, listen } from '../ui/listen';
@@ -165,7 +166,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
-    out.querySelectorAll<HTMLElement>('.fill').forEach((el) => (el.style.width = el.dataset.w!));
+    reveal(out); wireMotion();
     drawLinks(c, a);
     out.querySelectorAll<HTMLCanvasElement>('canvas.fxc').forEach((cv) => mountFx(cv, +cv.dataset.stem!));
     wire(c, a, charts);

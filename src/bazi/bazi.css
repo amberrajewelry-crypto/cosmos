@@ -410,3 +410,49 @@ details.more-in > summary { color: var(--gold); font-size: 15px; padding: 8px 0;
 .form > label { min-width: 0; }
 .form input[type=date], .form input[type=time], .form input[type=text] { width: 100%; min-width: 0; box-sizing: border-box; }
 @media (max-width: 560px) { .form { gap: 14px 10px; padding: 18px 16px; } .form input[type=date], .form input[type=time] { padding-inline: 10px; } }
+
+/* ——— Живой слой (motion.ts): появление при прокрутке, подсветка за курсором, прогресс чтения ——— */
+.rv { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(6px);
+  transition: opacity .9s var(--ease) var(--d, 0ms), transform .9s var(--ease) var(--d, 0ms), filter .9s var(--ease) var(--d, 0ms); }
+.rv.in { opacity: 1; transform: none; filter: none; }
+.dc.rv { transform: scale(.55) translateY(10px); filter: none; transition: opacity .5s ease var(--d, 0ms), transform .6s cubic-bezier(.34,1.56,.64,1) var(--d, 0ms); }
+.dc.rv.in { transform: none; }
+.lk.rv { transform: translateY(18px) rotate(-2deg); filter: none; }
+.lk.rv.in { transform: none; }
+.lk.rv.in:hover { transform: translateY(-3px); }
+.dc { transition: transform .25s var(--ease), box-shadow .25s; }
+.dc:hover, .dc.rv.in:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 8px 20px rgba(0,0,0,.35); z-index: 1; }
+.dc.now::after { content: ''; position: absolute; inset: -2px; border-radius: 11px; box-shadow: 0 0 0 0 rgba(201,168,92,.55); animation: today 2.4s ease-out infinite; pointer-events: none; }
+@keyframes today { 70% { box-shadow: 0 0 0 9px rgba(201,168,92,0); } 100% { box-shadow: 0 0 0 0 rgba(201,168,92,0); } }
+
+/* подсветка карточек за курсором */
+.card, .dcard { position: relative; isolation: isolate; }
+.card::before, .dcard::before, .lk::before { content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .4s;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(201,168,92,.10), transparent 45%); }
+.lk { position: relative; isolation: isolate; }
+.card:hover::before, .dcard:hover::before, .lk:hover::before { opacity: 1; }
+.card { transition: border-color .4s, box-shadow .4s; }
+.card:hover { border-color: var(--gold-2); box-shadow: 0 18px 50px -20px rgba(201,168,92,.25); }
+.dcard { transition: transform .35s var(--ease), background .35s; }
+.dlist .dcard:hover { transform: translateX(4px); background: rgba(255,255,255,.05); }
+
+/* заголовки разделов: золотой отблеск при появлении */
+h2.shine { background: linear-gradient(100deg, var(--ink) 40%, #f3dc9c 50%, var(--ink) 60%) 0 0 / 250% 100% no-repeat; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 1.8s var(--ease) .2s both; }
+@keyframes shine { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+/* шкалы стихий: блик бежит после заполнения */
+.bar .fill { position: relative; }
+.bar .fill::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent) -100% 0 / 50% 100% no-repeat; animation: glint 3.5s ease-in-out 1.6s infinite; }
+@keyframes glint { 0% { background-position: -100% 0; } 40%, 100% { background-position: 250% 0; } }
+
+/* кнопки: отклик и блик */
+button, .ghost { transition: transform .2s var(--ease), box-shadow .3s, background-color .3s, border-color .3s; }
+button:active, .ghost:active { transform: scale(.97); }
+.ghost:hover { border-color: var(--gold-2); box-shadow: 0 6px 22px -10px rgba(201,168,92,.45); }
+
+/* полоса прогресса чтения */
+.readbar { position: fixed; left: 0; top: 0; height: 2px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); z-index: 50; pointer-events: none;
+  background: linear-gradient(90deg, #4f8ef0, #5fc98a, #c9a85c, #ef5a3c); box-shadow: 0 0 10px rgba(201,168,92,.6); }
+
+@media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; filter: none; } h2.shine { color: var(--ink); background: none; } }
+@media print { .rv { opacity: 1 !important; transform: none !important; filter: none !important; } .readbar { display: none; } h2.shine { color: #000; background: none; } }
