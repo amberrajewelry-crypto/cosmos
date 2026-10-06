@@ -18,6 +18,9 @@ export async function chartHash(q: URLSearchParams): Promise<string> {
   return [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** Отмеченные дни карты — для сверки с жизнью (calibrate.ts). */
+export const myDays = (h: string) => Object.entries(load()[h] ?? {}).map(([iso, e]) => ({ iso, good: e.ans === 1 }));
+
 export function myAnswer(h: string, iso: string): Entry | undefined { return load()[h]?.[iso]; }
 
 export async function answer(h: string, d: DayInfo, ans: Ans, conf: Confidence | null, sphere = '-'): Promise<boolean> {

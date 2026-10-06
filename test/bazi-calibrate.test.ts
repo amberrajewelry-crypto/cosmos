@@ -35,3 +35,21 @@ describe('сверка по прошлому', () => {
     expect(a.consensus[0]).toBe(r.best.yong);
   });
 });
+
+import { dayInfo } from '../src/bazi/days';
+import { encodeSet, decodeSet } from '../src/bazi/calibrate';
+describe('сверка: дни журнала и адрес', () => {
+  it('дни, совпадающие с прогнозом, засчитываются разбору', () => {
+    const c = computeChart(inp, DEFAULT_VARIANT), a = analyze(c);
+    const days = [];
+    for (let k = 1; k <= 28; k++) { const iso = `2026-02-${String(k).padStart(2, '0')}`, s = dayInfo(c, a, 2026, 2, k).score; if (s) days.push({ iso, good: s > 0 }); }
+    const r = calibrate(c, a, [], days);
+    expect(r.base.dHits).toBe(days.length);
+    expect(r.base.dMiss).toBe(0);
+  });
+  it('набор кодируется в адрес и обратно', () => {
+    const s = { yong: 4 as const, xi: [1 as const], ji: [2 as const, 3 as const] };
+    expect(decodeSet(encodeSet(s))).toMatchObject(s);
+    expect(decodeSet('x')).toBeNull();
+  });
+});

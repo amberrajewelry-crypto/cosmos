@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { computeChart, analyze, DEFAULT_VARIANT } from '../src/bazi/calc';
 import { daysFrom } from '../src/bazi/days';
+import { applyHypo, decodeSet } from '../src/bazi/calibrate';
 import { wallpaperSvg, tzOffsetH } from '../src/bazi/wallpaper';
 import f400 from '../src/bazi/fonts/Manrope-400.ttf';
 import f600 from '../src/bazi/fonts/Manrope-600.ttf';
@@ -28,6 +29,8 @@ export function render(q: Record<string, string>, now = new Date()): Buffer | nu
   const z = q.z && validTz(q.z) ? q.z : tz;
   const c = computeChart({ date: d, time: t === '-' ? '12:00' : t, timeKnown: t !== '-', tz, lat: +lat, lon: +lon, male: q.g !== 'f', place: name.join(',') }, DEFAULT_VARIANT);
   const a = analyze(c);
+  // u — расклад, перестроенный сверкой с жизнью на сайте (calibrate.ts).
+  const u = decodeSet(q.u); if (u) applyHypo(a, u);
   const [Y, M, D] = new Intl.DateTimeFormat('en-CA', { timeZone: z }).format(now).split('-').map(Number);
   const days = daysFrom(c, a, new Date(Y, M - 1, D), 9);
   const shift = z === tz ? tzOffsetH(z, now) - +lon / 15 : 0;
