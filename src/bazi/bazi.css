@@ -466,3 +466,10 @@ button:active, .ghost:active { transform: scale(.97); }
 .pf{flex-wrap:wrap}.cf select option{background:#15132b;color:#eee}
 .pev{list-style:none;padding:0;margin:12px 0 0}.pev li{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}.pev button{padding:0 8px;margin-left:6px}
 .recog{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.rc{text-align:left;cursor:pointer;color:inherit;font:inherit}.rc p{margin:0 0 8px;font-size:15px;line-height:1.5}.rc:hover{border-color:rgba(201,168,92,.6)}
+
+/* Расклад по 7 вопросам */
+.rk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.rk p { margin: 0 0 8px; color: var(--ink-2); font-size: 15px; overflow-wrap: anywhere; }
+.rk .rk-q { color: var(--ink-1, inherit); font-weight: 600; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+.rk .rk-q span { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--gold-3); display: inline-grid; place-items: center; font-size: 13px; }
+.rk .rk-b { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-3); }
