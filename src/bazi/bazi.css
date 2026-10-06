@@ -465,3 +465,4 @@ button:active, .ghost:active { transform: scale(.97); }
 .jrow select { background: rgba(255,255,255,.04); color: var(--ink-2); border: 1px solid rgba(var(--ink-rgb),.12); border-radius: 10px; padding: 7px 8px; font: inherit; font-size: 14px; max-width: 100%; }
 .pf{flex-wrap:wrap}.cf select option{background:#15132b;color:#eee}
 .pev{list-style:none;padding:0;margin:12px 0 0}.pev li{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}.pev button{padding:0 8px;margin-left:6px}
+.recog{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.rc{text-align:left;cursor:pointer;color:inherit;font:inherit}.rc p{margin:0 0 8px;font-size:15px;line-height:1.5}.rc:hover{border-color:rgba(201,168,92,.6)}

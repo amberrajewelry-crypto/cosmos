@@ -63,3 +63,16 @@ export async function globalSummary(): Promise<string> {
     return `Общая проверка: ${j.answers} ответов от ${j.people} человек. «Хорошо» в сильные дни — ${p(strong)} из 10, в дни нагрузки — ${p(heavy)} из 10.`;
   } catch { return ''; }
 }
+
+/** Слепой тест «узнаёте себя?» — ответ уходит один раз на карту. */
+export async function sendRecog(h: string, hit: boolean): Promise<boolean> {
+  try { const r = await fetch('/api/journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'recog', h, hit: hit ? 1 : 0 }) }); return r.ok; } catch { return false; }
+}
+export async function recogSummary(): Promise<string> {
+  try {
+    const r = await fetch('/api/journal'); if (!r.ok) return '';
+    const j = await r.json() as { recog?: { n: number; hit: number } }, x = j.recog;
+    if (!x || x.n < 30) return `Пока ответов ${x?.n ?? 0} — общий итог покажем после 30.`;
+    return `Всего ответили ${x.n}: узнали себя ${Math.round((10 * x.hit) / x.n)} из 10. Если бы описания подходили всем одинаково, было бы около 3 из 10.`;
+  } catch { return ''; }
+}

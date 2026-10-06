@@ -1,5 +1,5 @@
 import { confidence } from './confidence';
-import { chartHash, answer, myAnswer, mySummary, globalSummary, myDays } from './journal';
+import { chartHash, answer, myAnswer, mySummary, globalSummary, myDays, sendRecog, recogSummary } from './journal';
 import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
@@ -167,7 +167,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
+  out.innerHTML = [secRecog(c, a, input), secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
@@ -177,6 +177,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     wire(c, a, charts);
     wireDays(c, a);
     wirePast(c, a, input);
+    wireRecog(input);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -316,7 +317,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
-      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — это точнее формулы, если событий много.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(confidence(a))}
+      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(confidence(a))}
       <div class="methods">${methods}</div>
     </div></div></section>`;
 }
@@ -672,6 +673,43 @@ function wirePast(c: Chart, a: Analysis, input: BirthInput) {
     });
     track('bazi:past');
   };
+}
+
+// ——— Слепой тест «узнаёте себя?» (до чтения разбора): свой портрет против двух случайных чужих ———
+const recogKey = (i: BirthInput) => `bazi-recog:${i.date}:${i.timeKnown ? i.time : '-'}:${i.male ? 'm' : 'f'}`;
+let recogOwn = -1;
+function charText(c: Chart, a: Analysis) { return spheres(c, a)[0].points.slice(0, 3); }
+function secRecog(c: Chart, a: Analysis, input: BirthInput) {
+  if (localStorage.getItem(recogKey(input))) return '';
+  // псевдослучайно, но стабильно для карты: чужие карты с другим господином дня
+  let seed = [...(input.date + input.time)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 2 ** 32);
+  const texts: string[][] = [charText(c, a)], used = [a.dm];
+  for (let k = 0; texts.length < 3 && k < 40; k++) {
+    const t = new Date(Date.UTC(1955, 0, 1) + rnd() * 54 * 365.25 * 864e5).toISOString().slice(0, 10);
+    const c2 = computeChart({ ...input, date: t, time: '12:00', timeKnown: true }, DEFAULT_VARIANT), a2 = analyze(c2);
+    if (used.includes(a2.dm)) continue;
+    used.push(a2.dm); texts.push(charText(c2, a2));
+  }
+  const order = [0, 1, 2].sort(() => rnd() - 0.5);
+  recogOwn = order.indexOf(0);
+  return `<section class="block" id="s-recog"><div class="bhead"><div><h2>Сначала — короткий тест</h2></div>
+    <p>Прежде чем читать разбор: какое из трёх описаний больше про вас? Одно построено по вашей карте, два — по случайным чужим. Так мы честно проверяем, работает ли метод, а не «подходит всем».</p></div>
+    <div class="recog">${order.map((i, k) => `<button class="card pane rc" type="button" data-k="${k}">${texts[i].map((x) => `<p>${esc(x)}</p>`).join('')}</button>`).join('')}</div>
+    <p class="acc"><button class="ghost" id="rskip" type="button">Пропустить</button></p><div class="ans" id="rout"></div></section>`;
+}
+function wireRecog(input: BirthInput) {
+  const sec = document.getElementById('s-recog'); if (!sec) return;
+  const done = (msg: string) => { sec.querySelector('.recog')!.remove(); document.getElementById('rskip')?.remove(); document.getElementById('rout')!.textContent = msg; };
+  document.getElementById('rskip')!.onclick = () => { localStorage.setItem(recogKey(input), 'skip'); sec.remove(); };
+  sec.querySelectorAll<HTMLButtonElement>('.rc').forEach((b) => (b.onclick = async () => {
+    const hit = +b.dataset.k! === recogOwn;
+    localStorage.setItem(recogKey(input), hit ? '1' : '0');
+    done(hit ? 'Вы выбрали описание по своей карте. Ниже — полный разбор.' : 'Это было описание чужой карты. Ваше — ниже, в разборе; честно: один ответ ничего не доказывает, важна сумма по всем людям.');
+    try { await sendRecog(await chartHash(new URLSearchParams(lastQuery || location.search.slice(1))), hit); } catch { /* офлайн */ }
+    const g = await recogSummary(); if (g) document.getElementById('rout')!.textContent += ' ' + g;
+    track('bazi:recog');
+  }));
 }
 
 function secFeedback() {
