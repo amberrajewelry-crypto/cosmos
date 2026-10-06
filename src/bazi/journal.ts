@@ -66,12 +66,12 @@ export async function globalSummary(): Promise<string> {
 
 /** Слепой тест «узнаёте себя?» — ответ уходит один раз на карту. */
 export async function sendRecog(h: string, hit: boolean): Promise<boolean> {
-  try { const r = await fetch('/api/journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'recog', h, hit: hit ? 1 : 0 }) }); return r.ok; } catch { return false; }
+  try { const r = await fetch('/api/journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'recog', v: 2, h, hit: hit ? 1 : 0 }) }); return r.ok; } catch { return false; }
 }
 export async function recogSummary(): Promise<string> {
   try {
     const r = await fetch('/api/journal'); if (!r.ok) return '';
-    const j = await r.json() as { recog?: { n: number; hit: number } }, x = j.recog;
+    const j = await r.json() as { recog2?: { n: number; hit: number } }, x = j.recog2;
     if (!x || x.n < 30) return `Пока ответов ${x?.n ?? 0} — общий итог покажем после 30.`;
     return `Всего ответили ${x.n}: узнали себя ${Math.round((10 * x.hit) / x.n)} из 10. Если бы описания подходили всем одинаково, было бы около 3 из 10.`;
   } catch { return ''; }

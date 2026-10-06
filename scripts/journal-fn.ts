@@ -30,7 +30,8 @@ export function recordPath(r: Record<string, unknown>): string | null {
 export function recogPath(r: Record<string, unknown>, ip = '-'): string | null {
   if (r.kind !== 'recog' || !ok(/^[a-f0-9]{16}$/, r.h) || ![0, 1].includes(Number(r.hit))) return null;
   const ih = createHash('sha256').update('bazi-recog:' + ip).digest('hex').slice(0, 12);
-  return `r/${ih}/${r.h}_${Number(r.hit)}.txt`;
+  // v2 (06.10) — портрет по KB 18; статистика версий раздельна (r/ — старый тест по стиху ствола).
+  return `${Number(r.v) === 2 ? 'r2' : 'r'}/${ih}/${r.h}_${Number(r.hit)}.txt`;
 }
 
 export function aggregate(paths: string[]) {
@@ -53,9 +54,11 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     let cursor: string | undefined;
     do { const r = await list({ prefix: 'j/', cursor, limit: 1000 }); paths.push(...r.blobs.map((b) => b.pathname)); cursor = r.hasMore ? r.cursor : undefined; } while (cursor && paths.length < 20000);
     const rp = (await list({ prefix: 'r/', limit: 1000 })).blobs.map((b) => b.pathname);
+    const rp2 = (await list({ prefix: 'r2/', limit: 1000 })).blobs.map((b) => b.pathname);
     const recog = { n: rp.length, hit: rp.filter((x) => x.endsWith('_1.txt')).length };
+    const recog2 = { n: rp2.length, hit: rp2.filter((x) => x.endsWith('_1.txt')).length };
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
-    res.status(200).json({ ...aggregate(paths), recog }); return;
+    res.status(200).json({ ...aggregate(paths), recog, recog2 }); return;
   }
   if (req.method !== 'POST') { res.status(405).end(); return; }
   let body: Record<string, unknown>;

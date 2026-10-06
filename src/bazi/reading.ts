@@ -1,8 +1,9 @@
 // Подробный разбор по базе знаний проекта (KB 02–05, 09, 10 в ~/projects/бацзы): каждый вывод — из фактов карты,
 // с цитатой и источником. Сокращения: ДТС — 滴天髓 (Жэнь Тецяо), ЦПЦЦ — 子平真诠, ЮХ — 渊海子平, СМ — 三命通会,
 // ЦТБЦ — 穷通宝鉴. Расчёт силы/полезных стихий — в calc.ts; здесь только толкование.
-import { STEMS, BRANCHES, EL, EL_GEN, GODS, SEASON_STATE, godOf, stageOf, seasonState, type El } from './core';
+import { STEMS, BRANCHES, EL, EL_GEN, GODS, SEASON_STATE, godOf, stageOf, seasonState } from './core';
 import type { Analysis, Chart, Pos } from './calc';
+import { describe } from './describe';
 
 export interface Note { title: string; text: string; quote?: string; src?: string; tone?: 'good' | 'bad' | 'mixed' }
 
@@ -215,21 +216,12 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   return out;
 }
 
-/** Короткий связный портрет для карточки «Кто вы». */
+/** Портрет «Кто вы» — по KB 18: тип силы, черта/тень, точка срыва, снаружи/внутри; стих ствола — краска в конце. */
 export function portrait(c: Chart, a: Analysis): string[] {
-  const month = pillars(c).find((p) => p.pos === 'month')!;
-  const ss = seasonState(a.dmEl, BRANCHES[month.branch].el);
-  const roots = pillars(c).map((p) => rootOf(a.dm, p.branch)).filter(Boolean).length;
   const ax = axisNote(c, a), g = GODS[ax.godKey];
-  const need = [...new Set([...TIAOHOU[a.dm][month.branch]].slice(0, 2).map((z) => EL[STEMS[SZ.indexOf(z)].el].toLowerCase()))];
   return [
+    ...describe(c, a).lines,
+    ax.godKey === 'BJ' || ax.godKey === 'JC' ? '' : `Главная тема жизни — «${g.ru}»: ${g.sense}.`,
     STEM_VERSE[a.dm].ru,
-    `Вы родились ${ss <= 1 ? 'в сезон своей стихии' : 'не в свой сезон'} и ${roots >= 2 ? 'хорошо укоренены' : roots === 1 ? 'имеете опору' : 'опоры в карте мало'} — ${a.brain.power.key === 'strong' ? 'сил хватает, важно направить их в дело' : a.brain.power.key === 'weak' ? 'силы стоит беречь и опираться на поддержку' : 'силы в равновесии'}.`,
-    ax.godKey === 'BJ' || ax.godKey === 'JC'
-      ? 'Месяц рождения — ваша же стихия: опора внутри, направление задают стволы.'
-      : `Главная тема жизни — «${g.ru}»: ${g.sense}.`,
-    need.length ? `Для равновесия карте прежде всего нужны ${need.join(' и ')}.` : '',
   ].filter(Boolean);
 }
-
-export type { El };
