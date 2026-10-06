@@ -159,6 +159,31 @@ function renderSaved() {
   });
   document.querySelectorAll<HTMLButtonElement>('.saved [data-del]').forEach((b) => (b.onclick = () => { const xs2 = loadSaved(); xs2.splice(+b.dataset.del!, 1); storeSaved(xs2); renderSaved(); }));
 }
+/** Разделы после «Кто вы» — свёрнутые плитки: заголовок + одна строка, содержимое по нажатию. */
+const openSecs = new Set<string>();
+let onToggle: ((e: Event) => void) | null = null;
+function fold(out: HTMLElement) {
+  out.querySelectorAll<HTMLElement>('section.block').forEach((s) => {
+    const head = s.querySelector<HTMLElement>(':scope > .bhead');
+    if (!head || s.id === 's-fb') return;
+    const h2 = head.querySelector('h2')!, lead = head.querySelector(':scope > p:not(.acc)'), acc = head.querySelector(':scope > p.acc');
+    const key = s.id || h2.textContent!;
+    const d = document.createElement('details');
+    d.className = 'fold'; d.dataset.key = key; d.open = openSecs.has(key);
+    d.innerHTML = `<summary><span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
+    const body = document.createElement('div'); body.className = 'f-body';
+    head.remove(); if (acc) body.append(acc);
+    while (s.firstChild) body.append(s.firstChild);
+    d.append(body); s.append(d); s.classList.add('folded');
+  });
+}
+/** Анимации стихий — только видимым холстам: в закрытом разделе ширина 0, холст вышел бы мыльным. */
+function mountVisible(root: HTMLElement) {
+  root.querySelectorAll<HTMLCanvasElement>('canvas.fxc:not([data-m])').forEach((cv) => {
+    if (cv.closest('details:not([open])')) return;
+    cv.dataset.m = '1'; mountFx(cv, +cv.dataset.stem!);
+  });
+}
 function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   current = { input, variant };
   const variants = allVariants(input);
@@ -169,13 +194,22 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secRecog(c, a, input), secWho(c, a), secRasklad(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
+  out.innerHTML = [secRecog(c, a, input), secWho(c, a), '<p class="fold-hint">Подробности — по разделам, откройте нужный</p>', secRasklad(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
+    fold(out);
     reveal(out); wireMotion();
     drawLinks(c, a);
-    out.querySelectorAll<HTMLCanvasElement>('canvas.fxc').forEach((cv) => mountFx(cv, +cv.dataset.stem!));
+    mountVisible(out);
+    if (onToggle) out.removeEventListener('toggle', onToggle, true);
+    out.addEventListener('toggle', (onToggle = (e: Event) => {
+      const d = e.target as HTMLDetailsElement;
+      if (d.dataset.key) d.open ? openSecs.add(d.dataset.key) : openSecs.delete(d.dataset.key);
+      if (!d.open) return;
+      mountVisible(d);
+      if (d.querySelector('#links')) drawLinks(c, a);
+    }), true);
     wire(c, a, charts);
     wireDays(c, a);
     wirePast(c, a, input);
@@ -195,7 +229,8 @@ const thumb = (b: number, size = 44) => `<img class="thumb" src="${animalSrc(b)}
 
 /** «Расклад по 7 вопросам» (rasklad.ts): ответы из расчёта + на чём держится каждый. */
 function secRasklad(c: Chart, a: Analysis) {
-  const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.map((l) => `<p>${esc(l)}</p>`).join('')}<p class="rk-b">${esc(x.basis)}</p></div>`).join('');
+  const seen = new Set(portrait(c, a)); // то, что уже сказано в «Кто вы», не повторяем
+  const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.filter((l) => !seen.has(l)).map((l) => `<p>${esc(l)}</p>`).join('')}<p class="rk-b">${esc(x.basis)}</p></div>`).join('');
   return `<section class="block" id="s-rasklad"><div class="bhead"><div><h2>Расклад по 7 вопросам</h2></div>
     <p>То, что разбирают на консультации, — посчитано по вашей карте. ${esc(raskladNote(a))}</p></div>
     <div class="rk-grid">${items}</div></section>`;
@@ -706,8 +741,9 @@ function secRecog(c: Chart, a: Analysis, input: BirthInput) {
   }
   const order = [0, 1, 2].sort(() => rnd() - 0.5);
   recogOwn = order.indexOf(0);
-  return `<section class="block" id="s-recog"><div class="bhead"><div><h2>Сначала — короткий тест</h2></div>
-    <p>Прежде чем читать разбор: какое из трёх описаний больше про вас? Одно построено по вашей карте, два — по случайным чужим. Так мы честно проверяем, работает ли метод, а не «подходит всем».</p></div>
+  return `<section class="block" id="s-recog"><div class="bhead"><div><h2>Проверить точность вслепую</h2></div>
+    <p>30 секунд, лучше до чтения разбора ниже.</p></div>
+    <p class="rc-how">Какое из трёх описаний больше про вас? Одно построено по вашей карте, два — по случайным чужим. Так мы честно проверяем, работает ли метод, а не «подходит всем».</p>
     <div class="recog">${order.map((i, k) => `<button class="card pane rc" type="button" data-k="${k}">${texts[i].map((x) => `<p>${esc(x)}</p>`).join('')}</button>`).join('')}</div>
     <p class="acc"><button class="ghost" id="rskip" type="button">Пропустить</button></p><div class="ans" id="rout"></div></section>`;
 }
