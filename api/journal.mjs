@@ -1,5 +1,6 @@
 // scripts/journal-fn.ts
 import { put, list, del } from "@vercel/blob";
+import { createHash } from "node:crypto";
 var TYPES = /* @__PURE__ */ new Set(["peak", "peak-hit", "calm", "heavy"]);
 var TONES = /* @__PURE__ */ new Set(["good", "bad", "mixed", "calm", "-"]);
 var SPH = /* @__PURE__ */ new Set(["-", "work", "money", "love", "health", "mood", "family"]);
@@ -14,9 +15,10 @@ function recordPath(r) {
   if (!(dd <= 1.5 && dd >= -8)) return null;
   return `j/${h}/${iso}/${type}_${score}_${ans}_${luck}_${year}_${conf}_${sphere}.txt`;
 }
-function recogPath(r) {
+function recogPath(r, ip = "-") {
   if (r.kind !== "recog" || !ok(/^[a-f0-9]{16}$/, r.h) || ![0, 1].includes(Number(r.hit))) return null;
-  return `r/${r.h}_${Number(r.hit)}.txt`;
+  const ih = createHash("sha256").update("bazi-recog:" + ip).digest("hex").slice(0, 12);
+  return `r/${ih}/${r.h}_${Number(r.hit)}.txt`;
 }
 function aggregate(paths) {
   const by = (k) => ({ k, n: 0, yes: 0 });
@@ -67,12 +69,13 @@ async function handler(req, res) {
     return;
   }
   if (body.kind === "recog") {
-    const rp = recogPath(body);
+    const xf = req.headers?.["x-forwarded-for"], ip = String(Array.isArray(xf) ? xf[0] : xf ?? "-").split(",")[0].trim();
+    const rp = recogPath(body, ip);
     if (!rp) {
       res.status(400).json({ ok: false });
       return;
     }
-    if ((await list({ prefix: `r/${body.h}_` })).blobs.length) {
+    if ((await list({ prefix: rp.slice(0, rp.lastIndexOf("/") + 1) })).blobs.length) {
       res.status(200).json({ ok: true, dup: true });
       return;
     }
