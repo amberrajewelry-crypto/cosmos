@@ -12,21 +12,22 @@ import type { Note } from './reading';
 
 export interface Sphere { key: string; title: string; lead: string; points: string[]; todo: string; notes: Note[]; how?: string }
 
-type Role = 'yong' | 'xi' | 'ji' | 'neutral';
-const role = (a: Analysis, e: El): Role =>
+export type Role = 'yong' | 'xi' | 'ji' | 'neutral';
+export const PARTNER_TYPE: Record<string, string> = { ZC: 'надёжный, хозяйственный человек, с которым строится быт', PC: 'яркий, щедрый, подвижный человек — с ним интересно, но нужен общий план', ZG: 'надёжный, правильный, с репутацией — опора и порядок', QS: 'сильный, решительный, ведущий — рядом с ним растёшь, но важно не потерять себя' };
+export const role = (a: Analysis, e: El): Role =>
   a.brain.yong === e ? 'yong' : a.brain.xi.includes(e) ? 'xi' : a.brain.ji.includes(e) ? 'ji' : 'neutral';
 const ROLE_RU: Record<Role, string> = { yong: 'главная полезная стихия', xi: 'полезная стихия', ji: 'стихия-нагрузка', neutral: 'нейтральная стихия' };
-const good = (r: Role) => r === 'yong' || r === 'xi';
+export const good = (r: Role) => r === 'yong' || r === 'xi';
 
 // Стихии по отношению к господину дня.
-const rel = (a: Analysis) => ({
+export const rel = (a: Analysis) => ({
   self: a.dmEl, out: ((a.dmEl + 1) % 5) as El, wealth: ((a.dmEl + 2) % 5) as El,
   officer: ((a.dmEl + 3) % 5) as El, res: ((a.dmEl + 4) % 5) as El,
 });
 const P = (c: Chart, pos: Pillar['pos']) => c.pillars.find((p) => p.pos === pos);
 const visibleEls = (c: Chart) => c.pillars.filter((p) => p.pos !== 'day').map((p) => STEMS[p.stem].el);
 const hiddenEls = (c: Chart) => c.pillars.flatMap((p) => BRANCHES[p.branch].hidden.map((h) => STEMS[h].el));
-const presence = (c: Chart, e: El) => (visibleEls(c).includes(e) ? 'shown' : hiddenEls(c).includes(e) ? 'hidden' : 'none');
+export const presence = (c: Chart, e: El) => (visibleEls(c).includes(e) ? 'shown' : hiddenEls(c).includes(e) ? 'hidden' : 'none');
 const pc = (x: number) => `${Math.round(x * 100)}%`;
 const sixCombo = (x: number, y: number) => (x + y) % 12 === 1;   // 子丑 寅亥 卯戌 辰酉 巳申 午未
 const clash = (x: number, y: number) => Math.abs(x - y) === 6;
@@ -40,15 +41,15 @@ const SEASON = ['весной', 'летом', 'на стыках сезонов 
 const currentLuck = (c: Chart, now: number) => [...c.luck].reverse().find((l) => l.year <= now);
 const span = (y: number) => `${y}–${y + 9}`;
 
-const PROF: Record<string, string> = {
+export const PROF: Record<string, string> = {
   'Опора': 'самостоятельная работа, своё дело, спорт, команда равных',
   'Выражение': 'ремесло, творчество, речь, продукт, преподавание, всё, где результат — вещь или выступление',
   'Богатство': 'торговля, управление ресурсами, финансы, предпринимательство',
   'Власть': 'система, должность, право, государственная или корпоративная лестница, ответственность за людей',
   'Ресурс': 'знание, исследование, образование, медицина, консультирование, работа с документами',
 };
-const GROUP_BY_REL = ['Опора', 'Выражение', 'Богатство', 'Власть', 'Ресурс'];
-const groupOf = (a: Analysis) => {
+export const GROUP_BY_REL = ['Опора', 'Выражение', 'Богатство', 'Власть', 'Ресурс'];
+export const groupOf = (a: Analysis) => {
   const g: Record<string, number> = {};
   for (const [k, w] of Object.entries(a.gods)) g[GODS[k].group] = (g[GODS[k].group] ?? 0) + w;
   const tot = Object.values(g).reduce((x, y) => x + y, 0) || 1;
@@ -85,7 +86,7 @@ export function combos(c: Chart, a: Analysis): Combo[] {
   const [s1, s2] = c.input.male ? ['ZC', 'PC'] : ['ZG', 'QS'];
   if (w(s1) + w(s2) >= 0.8) {
     const t = w(s1) >= w(s2) ? s1 : s2;
-    const TYPE: Record<string, string> = { ZC: 'надёжный, хозяйственный человек, с которым строится быт', PC: 'яркий, щедрый, подвижный человек — с ним интересно, но нужен общий план', ZG: 'надёжный, правильный, с репутацией — опора и порядок', QS: 'сильный, решительный, ведущий — рядом с ним растёшь, но важно не потерять себя' };
+    const TYPE = PARTNER_TYPE;
     out.push({ sphere: 'love', title: 'Ваш тип партнёра', text: `Сильнее «${GODS[t].ru}» — тянет к типу «${TYPE[t]}».`, quote: c.input.male ? '用神即是财神，妻美而且富贵' : '女命之夫星，即是用神', src: c.input.male ? 'ЦЛ (KB 12 §4)' : 'ДТС (KB 14 §2)' });
   }
   return out;
