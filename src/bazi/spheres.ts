@@ -1,6 +1,7 @@
 // Сферы жизни простым языком: характер, дело, деньги, любовь, здоровье, родные (KB 12–14 в ~/projects/бацзы).
 // Каждый вывод — из фактов карты (полезный бог мозга, сила, боги, дворцы) + правило корпуса; цитаты — дословно из KB.
 // Нельзя: число детей, «克», болезни и сроки, патриархальная женская карта (KB 12 §5, 13 §3, 14 §1).
+import { describe } from './describe';
 import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, type El } from './core';
 import type { Analysis, Chart, Pillar } from './calc';
 import { yearIdx } from './calc';
@@ -35,10 +36,7 @@ const ORGANS = ['печень и желчный пузырь, сухожилия
   'лёгкие, толстая кишка, кожа', 'почки, мочевой пузырь, нижняя часть тела'];
 const HIT_QUOTE = ['筋骨疼痛，盖因木被金伤', '眼暗目昏，多是火遭水剋', '土虚乘木旺之乡，脾伤', '金弱遇火炎之地，血疾', '下元冷疾，只缘水值土伤'];
 
-const POS_FACE: Record<string, string> = { year: 'в обществе и среди старших', month: 'в работе и среде', hour: 'в замыслах, с детьми и во второй половине жизни' };
 const SEASON = ['весной', 'летом', 'на стыках сезонов (середина и конец каждого)', 'осенью', 'зимой'];
-/** Проступившие боги по столпам: «как вас видят». */
-const faces = (c: Chart, a: Analysis) => c.pillars.filter((p) => p.pos !== 'day').reverse().map((p) => ({ pos: p.pos, g: godOf(a.dm, p.stem) }));
 const currentLuck = (c: Chart, now: number) => [...c.luck].reverse().find((l) => l.year <= now);
 const span = (y: number) => `${y}–${y + 9}`;
 
@@ -94,28 +92,17 @@ export function combos(c: Chart, a: Analysis): Combo[] {
 }
 
 function character(c: Chart, a: Analysis): Sphere {
-  const t = DM_TEXT[a.dm], k = a.brain.power.key;
+  const t = DM_TEXT[a.dm];
   const top = groupOf(a)[0];
-  const godTop = Object.entries(a.gods).sort((x, y) => y[1] - x[1])[0][0];
   const month = P(c, 'month')!, winter = [11, 0, 1].includes(month.branch), summer = [5, 6, 7].includes(month.branch);
   const cold = winter && a.pct[1] < 0.08, hot = summer && a.pct[4] < 0.08;
-  const points = [
-    `Сильные стороны: ${t.gift}.`,
-    `Тень, за которой стоит следить: ${t.shadow}.`,
-    k === 'weak' ? 'Сил у вас немного: в новом месте вы сначала присматриваетесь и раскрываетесь, когда чувствуете поддержку.'
-      : k === 'strong' ? 'Сил у вас много: вы уверены в себе и держитесь своего — сила, которой нужен выход, иначе она становится упрямством.'
-        : 'Сила в равновесии: вы гибко подстраиваетесь — характер раскрывается по обстоятельствам и периодам жизни.',
-    `Ярче всего в карте — «${GODS[godTop].ru}»: ${GODS[godTop].sense}.`,
-  ];
-  const fs = faces(c, a);
-  if (fs.length) points.push(`Как вас видят: ${fs.map((f) => `${POS_FACE[f.pos]} — «${f.g.ru}» (${f.g.sense.split(',')[0]})`).join('; ')}.`);
-  const inner = godOf(a.dm, BRANCHES[P(c, 'day')!.branch].hidden[0]);
-  points.push(`Наедине и дома — «${inner.ru}»: ${inner.sense}.`);
+  // KB 18: тот же портрет, что в «Кто вы» (describe.ts), + краска стихии дня; «как видят / наедине» — внутри describe (§5).
+  const points = [...describe(c, a).lines, `Краска вашей стихии: ${t.gift}; тень — ${t.shadow}.`];
   if (cold) points.push('Карта рождена в холод почти без Огня: внутри бывает зябко и одиноко — нужны тепло, люди, движение.');
   if (hot) points.push('Карта рождена в жару почти без Воды: много напора, мало остывания — нужны паузы и тишина.');
   return {
     key: 'character', title: 'Характер',
-    lead: `${t.core} ${STEMS[a.dm].ru} — это «${STEMS[a.dm].image}»: так описывают ваш способ быть. Главная группа сил в карте — «${top[0].toLowerCase()}» (${pc(top[1])}).`,
+    lead: `${t.core} ${STEMS[a.dm].ru} — это «${STEMS[a.dm].image}»: так описывают ваш способ быть. Главная группа сил в карте — «${top[0].toLowerCase()}».`,
     points, todo: t.way,
     notes: [
       { title: 'Сила и нрав', quote: '日干弱，则退缩怕羞；日干强，则妄诞，执一自傲', src: 'ЮХ (KB 13 §1)', text: 'Слабый господин дня — сдержанность, сильный — уверенность до упрямства.' },
