@@ -17,7 +17,7 @@ import {
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { describe, describeNote } from './describe';
-import { rasklad } from './rasklad';
+import { rasklad, raskladNote } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
@@ -197,7 +197,7 @@ const thumb = (b: number, size = 44) => `<img class="thumb" src="${animalSrc(b)}
 function secRasklad(c: Chart, a: Analysis) {
   const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.map((l) => `<p>${esc(l)}</p>`).join('')}<p class="rk-b">${esc(x.basis)}</p></div>`).join('');
   return `<section class="block" id="s-rasklad"><div class="bhead"><div><h2>Расклад по 7 вопросам</h2></div>
-    <p>То, что разбирают на консультации, — посчитано по вашей карте. Под каждым ответом — на чём он держится и насколько это проверено.</p></div>
+    <p>То, что разбирают на консультации, — посчитано по вашей карте. ${esc(raskladNote(a))}</p></div>
     <div class="rk-grid">${items}</div></section>`;
 }
 
