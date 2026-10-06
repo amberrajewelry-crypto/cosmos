@@ -17,7 +17,7 @@ import {
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
 import { describe, describeNote } from './describe';
-import { rasklad, raskladNote } from './rasklad';
+import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
@@ -327,7 +327,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
-      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(confidence(a))}
+      ${((k) => `<p class="conf ${k.dispute ? 'low' : 'mid'}"><b>На чём держится вывод: ${k.dispute ? 'классика, есть спорное место' : 'классика, школы согласны'}.</b> ${esc(raskladNote(a))}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(bookBasis(a))}
       <div class="methods">${methods}</div>
     </div></div></section>`;
 }
