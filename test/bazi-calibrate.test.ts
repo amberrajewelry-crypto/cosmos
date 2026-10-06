@@ -53,3 +53,12 @@ describe('сверка: дни журнала и адрес', () => {
     expect(decodeSet('x')).toBeNull();
   });
 });
+
+import { recogPath } from '../scripts/journal-fn';
+describe('тест «узнаёте себя»', () => {
+  it('принимает только хэш и 0/1', () => {
+    expect(recogPath({ kind: 'recog', h: '0123456789abcdef', hit: 1 })).toBe('r/0123456789abcdef_1.txt');
+    expect(recogPath({ kind: 'recog', h: 'zz', hit: 1 })).toBeNull();
+    expect(recogPath({ kind: 'recog', h: '0123456789abcdef', hit: 5 })).toBeNull();
+  });
+});

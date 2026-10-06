@@ -14,6 +14,10 @@ function recordPath(r) {
   if (!(dd <= 1.5 && dd >= -8)) return null;
   return `j/${h}/${iso}/${type}_${score}_${ans}_${luck}_${year}_${conf}_${sphere}.txt`;
 }
+function recogPath(r) {
+  if (r.kind !== "recog" || !ok(/^[a-f0-9]{16}$/, r.h) || ![0, 1].includes(Number(r.hit))) return null;
+  return `r/${r.h}_${Number(r.hit)}.txt`;
+}
 function aggregate(paths) {
   const by = (k) => ({ k, n: 0, yes: 0 });
   const type = {}, score = {};
@@ -45,8 +49,10 @@ async function handler(req, res) {
       paths.push(...r.blobs.map((b) => b.pathname));
       cursor = r.hasMore ? r.cursor : void 0;
     } while (cursor && paths.length < 2e4);
+    const rp = (await list({ prefix: "r/", limit: 1e3 })).blobs.map((b) => b.pathname);
+    const recog = { n: rp.length, hit: rp.filter((x) => x.endsWith("_1.txt")).length };
     res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
-    res.status(200).json(aggregate(paths));
+    res.status(200).json({ ...aggregate(paths), recog });
     return;
   }
   if (req.method !== "POST") {
@@ -58,6 +64,21 @@ async function handler(req, res) {
     body = typeof req.body === "string" ? JSON.parse(req.body) : req.body ?? {};
   } catch {
     res.status(400).end();
+    return;
+  }
+  if (body.kind === "recog") {
+    const rp = recogPath(body);
+    if (!rp) {
+      res.status(400).json({ ok: false });
+      return;
+    }
+    if ((await list({ prefix: `r/${body.h}_` })).blobs.length) {
+      res.status(200).json({ ok: true, dup: true });
+      return;
+    }
+    await put(rp, "1", { access: "private", addRandomSuffix: false, contentType: "text/plain" });
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json({ ok: true });
     return;
   }
   const path = recordPath(body);
@@ -75,5 +96,6 @@ async function handler(req, res) {
 export {
   aggregate,
   handler as default,
+  recogPath,
   recordPath
 };

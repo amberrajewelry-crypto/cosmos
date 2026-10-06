@@ -24,6 +24,12 @@ export function recordPath(r: Record<string, unknown>): string | null {
   return `j/${h}/${iso}/${type}_${score}_${ans}_${luck}_${year}_${conf}_${sphere}.txt`;
 }
 
+/** Слепой тест «узнаёте себя?»: свой портрет против двух случайных чужих; случайно узнают 1 из 3. */
+export function recogPath(r: Record<string, unknown>): string | null {
+  if (r.kind !== 'recog' || !ok(/^[a-f0-9]{16}$/, r.h) || ![0, 1].includes(Number(r.hit))) return null;
+  return `r/${r.h}_${Number(r.hit)}.txt`;
+}
+
 export function aggregate(paths: string[]) {
   const by = (k: string) => ({ k, n: 0, yes: 0 });
   const type: Record<string, ReturnType<typeof by>> = {}, score: Record<string, ReturnType<typeof by>> = {};
@@ -43,12 +49,22 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     const paths: string[] = [];
     let cursor: string | undefined;
     do { const r = await list({ prefix: 'j/', cursor, limit: 1000 }); paths.push(...r.blobs.map((b) => b.pathname)); cursor = r.hasMore ? r.cursor : undefined; } while (cursor && paths.length < 20000);
+    const rp = (await list({ prefix: 'r/', limit: 1000 })).blobs.map((b) => b.pathname);
+    const recog = { n: rp.length, hit: rp.filter((x) => x.endsWith('_1.txt')).length };
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
-    res.status(200).json(aggregate(paths)); return;
+    res.status(200).json({ ...aggregate(paths), recog }); return;
   }
   if (req.method !== 'POST') { res.status(405).end(); return; }
   let body: Record<string, unknown>;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body as Record<string, unknown>) ?? {}; } catch { res.status(400).end(); return; }
+  if (body.kind === 'recog') {
+    const rp = recogPath(body);
+    if (!rp) { res.status(400).json({ ok: false }); return; }
+    // один ответ на карту: первый честный, повторы не пишем
+    if ((await list({ prefix: `r/${body.h}_` })).blobs.length) { res.status(200).json({ ok: true, dup: true }); return; }
+    await put(rp, '1', { access: 'private', addRandomSuffix: false, contentType: 'text/plain' });
+    res.setHeader('Cache-Control', 'no-store'); res.status(200).json({ ok: true }); return;
+  }
   const path = recordPath(body);
   if (!path) { res.status(400).json({ ok: false }); return; }
   const dir = path.slice(0, path.lastIndexOf('/') + 1);
