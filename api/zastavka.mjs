@@ -2614,9 +2614,12 @@ function periodVerdict(b, idx, c, partner) {
   if (c) {
     const day = c.pillars.find((p) => p.pos === "day"), month = c.pillars.find((p) => p.pos === "month");
     if (voidOf(day.idx).includes(idx % 12)) {
-      const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
-      r *= half ? 0.7 : 0.3;
-      extra += ` \u0412\u0435\u0442\u0432\u044C \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \xAB\u0432 \u043F\u0443\u0441\u0442\u043E\u0442\u0435\xBB \u2014 \u0435\u0451 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 ${half ? "\u043E\u0441\u043B\u0430\u0431\u043B\u0435\u043D\u043E \u043D\u0430 \u0442\u0440\u0435\u0442\u044C" : "\u043F\u043E\u0447\u0442\u0438 \u043D\u0435 \u0447\u0443\u0432\u0441\u0442\u0432\u0443\u0435\u0442\u0441\u044F"} (\u547D\u7406\u7EA6\u8A00 \u7A7A\u4EA1\u8BBA)`;
+      if (c.pillars.some((p) => p.branch === idx % 12)) extra += " \u0412\u0435\u0442\u0432\u044C \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \xAB\u0437\u0430\u043F\u043E\u043B\u043D\u044F\u0435\u0442\xBB \u043F\u0443\u0441\u0442\u0443\u044E \u0432\u0435\u0442\u0432\u044C \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u044B (\u586B\u5B9E) \u2014 \u0435\u0451 \u0442\u0435\u043C\u0430 \u043E\u0436\u0438\u0432\u0430\u0435\u0442 (\u547D\u7406\u7EA6\u8A00 \u7A7A\u4EA1\u8BBA)";
+      else {
+        const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
+        r *= half ? 0.85 : 0.65;
+        extra += ` \u0412\u0435\u0442\u0432\u044C \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \xAB\u0432 \u043F\u0443\u0441\u0442\u043E\u0442\u0435\xBB \u2014 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0441\u043B\u0430\u0431\u0435\u0435 (\u547D\u7406\u7EA6\u8A00 \u7A7A\u4EA1\u8BBA)`;
+      }
     }
     if (tianKeDiChong(idx, day.idx)) {
       const freed = partner !== void 0 && (Math.abs(partner % 10 - idx % 10) === 5 || SIX_HE.some(([x, y]) => x === partner % 12 && y === idx % 12 || y === partner % 12 && x === idx % 12));
@@ -2898,7 +2901,8 @@ function dayInfo(c, a0, y, m, d) {
       if (HARM2.some(([x, z]) => x === pb && z === b || x === b && z === pb)) notes.push("\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u044B \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F \u2014 \u043F\u0435\u0440\u0435\u043F\u0440\u043E\u0432\u0435\u0440\u044F\u0439\u0442\u0435 \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0451\u043D\u043D\u043E\u0441\u0442\u0438");
     }
   }
-  if (a.voids.includes(b)) notes.push("\u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043C\u043E\u0436\u0435\u0442 \u043F\u0440\u0438\u0439\u0442\u0438 \u043D\u0435\u043F\u043E\u043B\u043D\u044B\u043C");
+  const inChart = c.pillars.some((p) => p.branch === b);
+  if (a.voids.includes(b) && !inChart) notes.push("\u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043C\u043E\u0436\u0435\u0442 \u043F\u0440\u0438\u0439\u0442\u0438 \u043D\u0435\u043F\u043E\u043B\u043D\u044B\u043C");
   const day = c.pillars.find((p) => p.pos === "day");
   if (tianKeDiChong(idx, day.idx)) {
     notes.push("\u0434\u0432\u043E\u0439\u043D\u043E\u0439 \u0443\u0434\u0430\u0440 \u043F\u043E \u0432\u0430\u043C \u043B\u0438\u0447\u043D\u043E \u2014 \u0434\u0435\u043D\u044C \u0434\u043B\u044F \u0442\u0438\u0448\u0438\u043D\u044B, \u043D\u0435 \u0434\u043B\u044F \u0440\u0435\u0448\u0435\u043D\u0438\u0439");
@@ -2984,7 +2988,7 @@ function advice(c, a, idx, monthIdx, type, yi, bgAdj) {
     score -= 1;
     warn.push("\u0434\u0435\u043D\u044C \u0431\u044C\u0451\u0442 \u043C\u0435\u0441\u044F\u0446: \u043A\u0440\u0443\u043F\u043D\u043E \u043D\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044C, \u0432 \u0434\u043E\u043B\u0433 \u043D\u0435 \u0434\u0430\u0432\u0430\u0442\u044C, \u0434\u0430\u043B\u0435\u043A\u043E \u0437\u0430 \u0434\u0435\u043D\u044C\u0433\u0430\u043C\u0438 \u043D\u0435 \u0435\u0445\u0430\u0442\u044C");
   }
-  if (a.voids.includes(b)) score -= 0.5;
+  if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
   if (Math.abs(yi % 12 - b) === 6) score -= 0.5;
   score += bgAdj;
   if (WET.includes(b) && bad(4) && fav(2)) {
