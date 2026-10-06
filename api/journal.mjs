@@ -18,7 +18,7 @@ function recordPath(r) {
 function recogPath(r, ip = "-") {
   if (r.kind !== "recog" || !ok(/^[a-f0-9]{16}$/, r.h) || ![0, 1].includes(Number(r.hit))) return null;
   const ih = createHash("sha256").update("bazi-recog:" + ip).digest("hex").slice(0, 12);
-  return `r/${ih}/${r.h}_${Number(r.hit)}.txt`;
+  return `${Number(r.v) === 2 ? "r2" : "r"}/${ih}/${r.h}_${Number(r.hit)}.txt`;
 }
 function aggregate(paths) {
   const by = (k) => ({ k, n: 0, yes: 0 });
@@ -52,9 +52,11 @@ async function handler(req, res) {
       cursor = r.hasMore ? r.cursor : void 0;
     } while (cursor && paths.length < 2e4);
     const rp = (await list({ prefix: "r/", limit: 1e3 })).blobs.map((b) => b.pathname);
+    const rp2 = (await list({ prefix: "r2/", limit: 1e3 })).blobs.map((b) => b.pathname);
     const recog = { n: rp.length, hit: rp.filter((x) => x.endsWith("_1.txt")).length };
+    const recog2 = { n: rp2.length, hit: rp2.filter((x) => x.endsWith("_1.txt")).length };
     res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
-    res.status(200).json({ ...aggregate(paths), recog });
+    res.status(200).json({ ...aggregate(paths), recog, recog2 });
     return;
   }
   if (req.method !== "POST") {
