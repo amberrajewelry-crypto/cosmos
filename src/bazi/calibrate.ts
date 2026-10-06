@@ -23,7 +23,7 @@ const TONE = { good: 1, bad: -1, mixed: 0, calm: 0 } as const;
 const uniq = (xs: El[]) => xs.filter((x, i) => xs.indexOf(x) === i);
 
 /** Событие года Y: год весит 1, такт (фон) — 0.5. */
-function eventScore(b: Brain, c: Chart, Y: number): number {
+export function eventScore(b: Brain, c: Chart, Y: number): number {
   const yi = yearIdx(Y), lk = [...c.luck].reverse().find((l) => l.year <= Y);
   const y = TONE[periodVerdict(b, yi, c, lk?.idx).tone];
   const l = lk ? TONE[periodVerdict(b, lk.idx, c, yi).tone] : 0;
