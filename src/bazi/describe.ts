@@ -4,7 +4,7 @@
 // Каждая фраза выводится из одного признака карты и для другого типа была бы неверна (анти-Барнум, KB 18 §6).
 import { STEMS, BRANCHES, GODS, type El } from './core';
 import type { Analysis, Chart } from './calc';
-import type { Note } from './reading';
+import { rootOf, type Note } from './reading';
 
 export type PowerType = 'strong-check' | 'strong-free' | 'weak-support' | 'weak-alone' | 'balanced' | 'vibrant' | 'follow' | 'transform';
 
@@ -146,7 +146,36 @@ export function describe(c: Chart, a: Analysis): Description {
     lines.push('Внутри часто неспокойно: тянет менять дом, работу, планы — это ваш способ двигаться, а не слабость.');
     detail.push('Удар по ветви дня от соседней ветви — 朱祖夏 (八字与用神, 冲): «内心动荡».');
   }
+  // §6.6 нрав по тактам (МЛЮЯ «始正而终邪者…则行运使然耳»; Жэнь: «至岁运遇击神，亦能变为强弱»)
+  const ph = phases(c, a);
+  if (ph.length > 1) {
+    const W = { strong: 'напористее и резче', weak: 'осторожнее и мягче', balanced: 'ровнее, без крайностей' };
+    const seg = ph.map((x, i) => `${i === 0 ? `до ${ph[1].age} лет` : i === ph.length - 1 ? `после ${x.age}` : `с ${x.age} до ${ph[i + 1].age}`} — ${W[x.key]}`);
+    lines.push(`С возрастом нрав меняется: ${seg.join('; ')}.`);
+    detail.push(`По тактам сила дня меняет тип (ствол такта ±1, ветвь — корень по шкале ЦПЦЦ гл.3 или ±1): ${ph.map((x) => `${x.age}+ ${x.key}`).join(', ')} — МЛЮЯ 看性情法 «行运使然».`);
+  }
   return { type, lines, detail };
+}
+
+/** Тип силы по тактам до 75 лет: натальная шкала brain + ствол и ветвь такта; соседние одинаковые склеены. */
+export function phases(c: Chart, a: Analysis): { age: number; year: number; key: 'strong' | 'weak' | 'balanced' }[] {
+  if (a.brain.frame.kind !== 'normal' || !c.luck?.length) return [];
+  const d = a.dmEl, res = (d + 4) % 5, up = (e: number) => (e === d || e === res ? 1 : -1);
+  type K = 'strong' | 'weak' | 'balanced';
+  const per: { age: number; year: number; key: K }[] = [{ age: 0, year: c.luck[0].year - Math.round(c.luck[0].age), key: a.brain.power.key }];
+  for (const l of c.luck) {
+    if (l.age >= 75) break;
+    const s = l.idx % 10, b = l.idx % 12, root = rootOf(a.dm, b)?.w ?? 0;
+    const score = a.brain.power.score + up(STEMS[s].el) + (root ? root : up(STEMS[BRANCHES[b].hidden[0]].el));
+    per.push({ age: Math.round(l.age), year: l.year, key: score >= 3 ? 'strong' : score <= -1 ? 'weak' : 'balanced' });
+  }
+  // сглаживание: сдвиг засчитываем, только если держится ≥ 2 такта (20 лет), иначе это фон, а не перемена нрава
+  const out: typeof per = [per[0]];
+  for (let i = 1; i < per.length; i++) {
+    const cur = out[out.length - 1].key;
+    if (per[i].key !== cur && per[i + 1]?.key === per[i].key) out.push(per[i]);
+  }
+  return out;
 }
 
 /** Для «Подробного разбора»: механизм описания с источниками. */
