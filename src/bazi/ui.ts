@@ -16,6 +16,7 @@ import {
 } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
+import { describe, describeNote } from './describe';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
@@ -409,7 +410,7 @@ function secRazbor(c: Chart, a: Analysis) {
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
-        ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
+        ${noteHtml(describeNote(c, a))}${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
         <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
@@ -678,18 +679,21 @@ function wirePast(c: Chart, a: Analysis, input: BirthInput) {
 // ——— Слепой тест «узнаёте себя?» (до чтения разбора): свой портрет против двух случайных чужих ———
 const recogKey = (i: BirthInput) => `bazi-recog:${i.date}:${i.timeKnown ? i.time : '-'}:${i.male ? 'm' : 'f'}`;
 let recogOwn = -1;
-function charText(c: Chart, a: Analysis) { return spheres(c, a)[0].points.slice(0, 3); }
+// v2 (06.10): тест по портрету KB 18 (тип, черта/тень, точка срыва), а не по стиху ствола.
+function charText(c: Chart, a: Analysis) { return describe(c, a).lines.slice(0, 3); }
 function secRecog(c: Chart, a: Analysis, input: BirthInput) {
   if (localStorage.getItem(recogKey(input))) return '';
   // псевдослучайно, но стабильно для карты: чужие карты с другим господином дня
   let seed = [...(input.date + input.time)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
   const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 2 ** 32);
-  const texts: string[][] = [charText(c, a)], used = [a.dm];
+  const texts: string[][] = [charText(c, a)];
   for (let k = 0; texts.length < 3 && k < 40; k++) {
     const t = new Date(Date.UTC(1955, 0, 1) + rnd() * 54 * 365.25 * 864e5).toISOString().slice(0, 10);
     const c2 = computeChart({ ...input, date: t, time: '12:00', timeKnown: true }, DEFAULT_VARIANT), a2 = analyze(c2);
-    if (used.includes(a2.dm)) continue;
-    used.push(a2.dm); texts.push(charText(c2, a2));
+    const t2 = charText(c2, a2);
+    // чужой портрет должен отличаться от своего и от уже взятого хотя бы в двух строках
+    if (texts.some((x) => x.filter((l, i) => l === t2[i]).length >= 2)) continue;
+    texts.push(t2);
   }
   const order = [0, 1, 2].sort(() => rnd() - 0.5);
   recogOwn = order.indexOf(0);
