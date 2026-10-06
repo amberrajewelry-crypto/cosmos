@@ -58,3 +58,4 @@ karta.html
 
 # база мест собирается при сборке из data/places.tsv.gz (scripts/gen-places.mjs)
 public/places/
+.env*

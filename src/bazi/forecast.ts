@@ -16,8 +16,8 @@ const clash = (x: number, y: number) => Math.abs(x - y) === 6;
 const TONE_RU: Record<Tone, string> = { good: 'благоприятно', bad: 'тяжело', mixed: 'смешанно', calm: 'спокойно' };
 export const toneRu = (t: Tone) => TONE_RU[t];
 
-function period(c: Chart, a: Analysis, idx: number): Period {
-  const v = periodVerdict(a.brain, idx, c), g = godOf(a.dm, idx % 10);
+function period(c: Chart, a: Analysis, idx: number, partner?: number): Period {
+  const v = periodVerdict(a.brain, idx, c, partner), g = godOf(a.dm, idx % 10);
   const day = c.pillars.find((p) => p.pos === 'day')!, month = c.pillars.find((p) => p.pos === 'month')!;
   const hits: string[] = [];
   if (clash(idx % 12, day.branch)) hits.push('перемены в доме, паре, здоровье');
@@ -39,9 +39,9 @@ export function yearForecast(c: Chart, a: Analysis, Y: number): YearF {
     months.push({ start: ms, ...period(c, a, idx) });
     t = ms;
   }
-  const L = [...c.luck].reverse().find((l) => l.year <= Y);
+  const L = luckAt(c, Y);
   return {
-    year: Y, start, end, months, ...period(c, a, yearIdx(Y)),
+    year: Y, start, end, months, ...period(c, a, yearIdx(Y), L?.idx),
     luck: L && { idx: L.idx, tone: periodVerdict(a.brain, L.idx, c).tone, from: L.year },
   };
 }
@@ -50,9 +50,12 @@ export function yearForecast(c: Chart, a: Analysis, Y: number): YearF {
 export function decade(c: Chart, a: Analysis, from: number): (Period & { year: number; detail: string[] })[] {
   return Array.from({ length: 10 }, (_, i) => {
     const y = from + i, idx = yearIdx(y);
-    return { year: y, ...period(c, a, idx), detail: luckDetail(c, a, idx) };
+    return { year: y, ...period(c, a, idx, luckAt(c, y)?.idx), detail: luckDetail(c, a, idx) };
   });
 }
+
+/** Такт, идущий в год бацзы Y. */
+export const luckAt = (c: Chart, Y: number) => [...c.luck].reverse().find((l) => l.year <= Y);
 
 /** Текущий год бацзы: до 立春 — ещё прошлый. */
 export const baziYear = (t = new Date()) => (t < lichun(t.getUTCFullYear()) ? t.getUTCFullYear() - 1 : t.getUTCFullYear());

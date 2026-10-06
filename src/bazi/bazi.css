@@ -456,3 +456,10 @@ button:active, .ghost:active { transform: scale(.97); }
 
 @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; filter: none; } h2.shine { color: var(--ink); background: none; } }
 @media print { .rv { opacity: 1 !important; transform: none !important; filter: none !important; } .readbar { display: none; } h2.shine { color: #000; background: none; } }
+.conf { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 14px; color: var(--ink-2); background: rgba(255,255,255,.03); border-left: 3px solid var(--gold-2); }
+.conf.low { border-left-color: rgba(226,150,79,.6); } .conf.vlow { border-left-color: rgba(214,96,79,.7); }
+.jr { margin-top: 16px; }
+.jrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid rgba(var(--ink-rgb),.06); }
+.jrow > span { flex: 1 1 140px; font-size: 15px; color: var(--ink-2); }
+.jrow .ghost.on { border-color: var(--gold); background: var(--gold-3); color: var(--ink); }
+.jrow select { background: rgba(255,255,255,.04); color: var(--ink-2); border: 1px solid rgba(var(--ink-rgb),.12); border-radius: 10px; padding: 7px 8px; font: inherit; font-size: 14px; max-width: 100%; }

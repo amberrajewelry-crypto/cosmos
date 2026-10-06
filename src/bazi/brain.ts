@@ -1,7 +1,7 @@
 // «Мозг» карты: структура (格局 / внешние 格) и полезный бог (用神) по классике — порядок из 命理约言 卷一 看用神法:
 // сначала внешний格 (从/化/一行得气), иначе 扶抑 по корням (ЦПЦЦ гл.6, ДТС 衰旺), затем 调候 (穷通宝鉴; 命理约言 卷四),
 // 通关 (ДТС) и 病药 (神峰通考). Результат питает разбор, такты и календарь дней (consensus/avoid в calc.ts).
-import { STEMS, BRANCHES, EL, GODS, godOf, stageOf, seasonState, type El } from './core';
+import { STEMS, BRANCHES, EL, GODS, godOf, stageOf, seasonState, voidOf, type El } from './core';
 import { rootOf, TIAOHOU } from './reading';
 import type { Analysis, Chart } from './calc';
 
@@ -22,6 +22,7 @@ const DIRS: [number[], El][] = [[[2, 3, 4], 0], [[5, 6, 7], 1], [[8, 9, 10], 3],
 const TRINE: [number[], El][] = [[[11, 3, 7], 0], [[2, 6, 10], 1], [[5, 9, 1], 3], [[8, 0, 4], 4]];
 const COMBO: [number, number, El][] = [[0, 5, 2], [1, 6, 3], [2, 7, 4], [3, 8, 0], [4, 9, 1]];
 const VIBRANT = [['曲直', 'Прямое-кривое'], ['炎上', 'Пламя вверх'], ['稼穑', 'Посев и жатва'], ['从革', 'Следующий переменам'], ['润下', 'Влага вниз']];
+const SIX_HE = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]];
 const uniq = (xs: El[]) => xs.filter((x, i) => xs.indexOf(x) === i);
 
 export function brain(c: Chart, a: Analysis): Brain {
@@ -183,18 +184,23 @@ export function brain(c: Chart, a: Analysis): Brain {
 
 /** Такт или год целиком: ствол и ветвь вместе, «上下俱喜则十年全吉…一喜一忌则吉凶参半»; кто кого бьёт, тот весит больше
  *  («上克下者，上之力胜于下») — 命理约言 卷一 看运法, 卷二 行运赋. */
-export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
+/** Набор 用/喜/忌, действующий в периоде idx: при силе «на грани» такт ломает баланс (朱祖夏 八字与用神 гл.2 中和). */
+export function activeSet(b: Brain, idx: number, c?: Chart): { set: Pick<Brain, 'yong' | 'xi' | 'ji'>; swung: boolean } {
+  if (!b.alt || !c) return { set: b, swung: false };
+  const d = STEMS[c.pillars.find((p) => p.pos === 'day')!.stem].el, up = (e: El) => (e === d || e === (d + 4) % 5 ? 1 : -1);
+  const tip = up(STEMS[idx % 10].el) + up(BRANCHES[idx % 12].el);
+  return (tip > 0 ? 'strong' : tip < 0 ? 'weak' : '') === b.alt.lean ? { set: b.alt, swung: true } : { set: b, swung: false };
+}
+
+/** 天克地冲: ствол бьёт ствол и ветвь бьёт ветвь одновременно (甲庚 乙辛 丙壬 丁癸 + 子午…). */
+export const tianKeDiChong = (x: number, y: number) => Math.abs((x % 10) - (y % 10)) === 6 && Math.min(x % 10, y % 10) < 4 && Math.abs((x % 12) - (y % 12)) === 6;
+
+export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   let se: El = STEMS[idx % 10].el;
   const be = BRANCHES[idx % 12].el;
   // Сила на грани: ствол и ветвь периода оба «свои/Печать» или оба против — перевес меняется, берём другой набор.
-  let set: Pick<Brain, 'yong' | 'xi' | 'ji'> = b, swing = '';
-  if (b.alt && c) {
-    const d = STEMS[c.pillars.find((p) => p.pos === 'day')!.stem].el, up = (e: El) => (e === d || e === (d + 4) % 5 ? 1 : -1);
-    const tip = up(se) + up(be);
-    if ((tip > 0 ? 'strong' : tip < 0 ? 'weak' : '') === b.alt.lean) {
-      set = b.alt; swing = ` Сила на грани, период её ${b.alt.lean === 'strong' ? 'поднимает' : 'опускает'} — полезный здесь ${EL[b.alt.yong]} (朱祖夏 中和)`;
-    }
-  }
+  const { set, swung } = activeSet(b, idx, c);
+  const swing = swung && b.alt ? ` Сила на грани, период её ${b.alt.lean === 'strong' ? 'поднимает' : 'опускает'} — полезный здесь ${EL[b.alt.yong]} (朱祖夏 中和)` : '';
   const v = (e: El) => (e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0);
   // Союз ствола периода со стволом натала (命理约言 干合论; ЦПЦЦ гл.5): связанный ствол «贪合» — работает вполсилы;
   // если ветвь месяца карты — стихия союза, он превращается (丙辛 зимой → Вода; ДТС «丙辛生於冬月»).
@@ -214,9 +220,30 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart): { tone: 'good' 
   }
   let s = v(se) * k, r = v(be);
   if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
+  let extra = '';
+  if (c) {
+    const day = c.pillars.find((p) => p.pos === 'day')!, month = c.pillars.find((p) => p.pos === 'month')!;
+    // 空亡 (命理约言 空亡论): пустая ветвь, которая есть в карте, период «заполняет» — «至运逢原空之神，是为填实，不为愈空»;
+    // если в карте её нет — тоже пустота, но слабее, чем в самой карте («苟原无而运遇之，亦以空论，然不如局遇之紧»).
+    // В карте: вне сезона (失时) −7/10, в сезоне (得时) −3/10 — для периода берём половину.
+    if (voidOf(day.idx).includes(idx % 12)) {
+      if (c.pillars.some((p) => p.branch === idx % 12)) extra += ' Ветвь периода «заполняет» пустую ветвь вашей карты (填实) — её тема оживает (命理约言 空亡论)';
+      else {
+        const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
+        r *= half ? 0.85 : 0.65;
+        extra += ` Ветвь периода «в пустоте» — действует слабее (命理约言 空亡论)`;
+      }
+    }
+    // 天克地冲 со столпом дня — «间有不利» (命理约言 太岁论); снимается союзом с соседним периодом (朱祖夏 гл.8).
+    if (tianKeDiChong(idx, day.idx)) {
+      const freed = partner !== undefined && (Math.abs((partner % 10) - (idx % 10)) === 5 || SIX_HE.some(([x, y]) => (x === partner % 12 && y === idx % 12) || (y === partner % 12 && x === idx % 12)));
+      if (freed) extra += ' Двойной удар по столпу дня снят союзом такта и года (朱祖夏 八字与用神 гл.8)';
+      else { s -= 0.75; r -= 0.75; extra += ' Двойной удар по столпу дня (天克地冲): перемены в доме, паре, здоровье — «间有不利» (命理约言 太岁论)'; }
+    }
+  }
   const t = s + r;
   const res0 = verdictOf(s, r, t);
-  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') };
+  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') + (extra ? '.' + extra : '') };
 }
 
 function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {

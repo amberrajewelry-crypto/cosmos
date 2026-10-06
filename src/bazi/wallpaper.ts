@@ -52,7 +52,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
     y += 38;
   };
   block('Делать', cap(d.act));
-  block(d.heal ? 'Выровнять день' : 'Опора дня', cap(d.add.theory));
+  block(`${d.heal ? 'Выровнять день' : 'Опора дня'} · теория стихий`, cap(d.add.theory));
   const hh = bestHours(a, d, shift);
   if (hh.length) block('Лучшие часы', hh.slice(0, 2).join(', '), '#ebecf0', 1);
   const risk = [...d.notes, ...d.warn][0];
@@ -60,6 +60,9 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   const k = days.findIndex((x) => x.iso === d.iso), week = days.slice(k + 1, k + 8);
   const top = week.reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
+  const BG = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
+  const BGN = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
+  if (y < 2190) { text(`Фон: ${d.bg.luck ? `десятилетие ${BGN[d.bg.luck]}, ` : ''}год ${BG[d.bg.year]}`, 36, 600, '#a9aeb9'); y += 56; }
   if (top && y < 2270) text(`Лучший день недели: ${label(top.iso)} · ${top.score} из 5`, 38, 600, '#a9aeb9');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">

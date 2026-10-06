@@ -3,9 +3,13 @@
 import { SunPosition } from 'astronomy-engine';
 import { STEMS, BRANCHES, EL, cyc, gen, godOf, type God, type El } from './core';
 import { lichun, yearIdx, type Chart, type Analysis, type Pos } from './calc';
+import { activeSet, periodVerdict, tianKeDiChong } from './brain';
 
 export type DayType = 'peak' | 'peak-hit' | 'calm' | 'heavy';
-export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; type: DayType; god: God; act: string; notes: string[] }
+export type BgTone = 'good' | 'bad' | 'mixed' | 'calm';
+/** Фон дня: такт и год (KB 11; день — перенос метода, KB 17 §6). fav/avoid — набор, действующий в этом такте. */
+export interface DayBg { luck: BgTone | null; year: BgTone; adj: number; swung: boolean }
+export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; type: DayType; god: God; act: string; notes: string[]; bg: DayBg; fav: El[]; avoid: El[] }
 
 export const DAY_TYPE: Record<DayType, { ru: string; hint: string }> = {
   peak: { ru: 'Сильный', hint: 'главные шаги: переговоры, запуски, оплаты, публикации' },
@@ -45,7 +49,25 @@ export function monthIdxAt(t: Date): number {
   return cyc((((yi % 10) % 5) * 2 + 2 + m) % 10, (2 + m) % 12);
 }
 
-export function dayInfo(c: Chart, a: Analysis, y: number, m: number, d: number): DayInfo {
+const TV: Record<BgTone, number> = { good: 1, bad: -1, mixed: 0, calm: 0 };
+const bgCache = new WeakMap<Analysis, Map<number, { A: Analysis; bg: DayBg; yi: number }>>();
+/** Год бацзы и такт на дату → фон и действующий набор полезных стихий (кэш по году). */
+function background(c: Chart, a: Analysis, t: Date): { A: Analysis; bg: DayBg; yi: number } {
+  const Y = t.getTime() < lc(t.getUTCFullYear()) ? t.getUTCFullYear() - 1 : t.getUTCFullYear();
+  let m = bgCache.get(a); if (!m) bgCache.set(a, (m = new Map()));
+  const hit = m.get(Y); if (hit) return hit;
+  const L = [...c.luck].reverse().find((l) => l.year <= Y), yi = yearIdx(Y);
+  const { set, swung } = L ? activeSet(a.brain, L.idx, c) : { set: a.brain, swung: false };
+  const A: Analysis = swung ? { ...a, consensus: [set.yong, ...set.xi], avoid: set.ji, brain: { ...a.brain, ...set } } : a;
+  const luck = L ? periodVerdict(a.brain, L.idx, c).tone : null, year = periodVerdict(a.brain, yi, c, L?.idx).tone;
+  // Фон сдвигает оценку дня не больше чем на полбалла; год = такт (岁运并临, «灾祥庚大» — 命理约言) — в полтора раза.
+  const adj = 0.25 * ((luck ? TV[luck] : 0) + TV[year]) * (L && L.idx === yi ? 1.5 : 1);
+  const r = { A, bg: { luck, year, adj, swung }, yi };
+  m.set(Y, r); return r;
+}
+
+export function dayInfo(c: Chart, a0: Analysis, y: number, m: number, d: number): DayInfo {
+  const { A: a, bg, yi } = background(c, a0, new Date(Date.UTC(y, m - 1, d, 12)));
   const idx = dayIdx(y, m, d), s = idx % 10, b = idx % 12;
   const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
   const se = STEMS[s].el, be = BRANCHES[b].el;
@@ -63,12 +85,17 @@ export function dayInfo(c: Chart, a: Analysis, y: number, m: number, d: number):
       if (HARM.some(([x, z]) => (x === pb && z === b) || (x === b && z === pb))) notes.push('возможны недопонимания — перепроверяйте договорённости');
     }
   }
-  if (a.voids.includes(b)) notes.push('результат может прийти неполным');
+  // 空亡 (命理约言 空亡论): пустая ветвь, которая есть в карте, «заполняется» (填实); которой нет — слабая пустота
+  const inChart = c.pillars.some((p) => p.branch === b);
+  if (a.voids.includes(b) && !inChart) notes.push('результат может прийти неполным');
+  const day = c.pillars.find((p) => p.pos === 'day')!;
+  if (tianKeDiChong(idx, day.idx)) { notes.push('двойной удар по вам лично — день для тишины, не для решений'); hit = true; }
+  if (Math.abs((yi % 12) - b) === 6) notes.push('день бьёт год — крупное не начинать');
   if (hit && type === 'peak') type = 'peak-hit';
   const god = godOf(a.dm, s);
   const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const monthIdx = monthIdxAt(new Date(Date.UTC(y, m - 1, d, 12)));
-  return { iso, idx, monthIdx, type, god, act: GOD_ACT[god.key], notes, ...advice(c, a, idx, monthIdx, type) };
+  return { iso, idx, monthIdx, type, god, act: GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...advice(c, a, idx, monthIdx, type, yi, bg.adj) };
 }
 
 // ——— Подсказка дня (KB 17 §5; tools/today.py) ———
@@ -93,7 +120,7 @@ export const EL_ADD: Record<El, { theory: string; folk: string }> = {
 const roundEven = (x: number) => { const f = Math.floor(x), r = x - f; return r > 0.5 ? f + 1 : r < 0.5 ? f : f % 2 ? f + 1 : f; };
 const ACC = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
 
-function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayType): DayAdvice {
+function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayType, yi: number, bgAdj: number): DayAdvice {
   const s = idx % 10, b = idx % 12, se = STEMS[s].el, be = BRANCHES[b].el;
   const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
   const ill = [se, be].filter(bad) as El[];
@@ -135,7 +162,10 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
   if (c.pillars.some((p) => p.pos !== 'day' && Math.abs(p.stem - s) === 5) && nat.includes(s) && !c.pillars.some((p) => p.pos === 'day' && Math.abs(p.stem - s) === 5)) { score -= 0.5; warn.push('появляется соперник за деньги или партнёра — долей не делиться'); }
   // 月破: ветвь дня бьёт ветвь месяца (协纪辨方)
   if (Math.abs(monthIdx % 12 - b) === 6) { score -= 1; warn.push('день бьёт месяц: крупно не тратить, в долг не давать, далеко за деньгами не ехать'); }
-  if (a.voids.includes(b)) score -= 0.5;
+  if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
+  // 岁破: ветвь дня бьёт ветвь года (协纪辨方) — день против года
+  if (Math.abs((yi % 12) - b) === 6) score -= 0.5;
+  score += bgAdj;
   if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('земля дня влажная — сдерживает слабее'); }
   // ствол дня уходит в союз со стволом карты (не с вами) и превращается во вредную стихию — сила дня слабее
   for (const p of c.pillars) if (p.pos !== 'day' && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
@@ -146,16 +176,16 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
 
 // Лучшие двухчасовые отрезки дня: стихия-лекарство в стволе или ветви часа, без вредных стихий и удара по ветви дня.
 // shift — сколько часов прибавить к солнечному времени, чтобы получить время на часах.
-export function bestHours(a: Analysis, d: DayInfo, shift = 0, from = 7, to = 23): string[] {
+export function bestHours(_a: Analysis, d: DayInfo, shift = 0, from = 7, to = 23): string[] {
   const ds = d.idx % 10, db = d.idx % 12, med = d.med;
-  const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
+  const fav = (e: number) => (d.fav as number[]).includes(e), bad = (e: number) => (d.avoid as number[]).includes(e);
   const fm = (x: number) => { const m = Math.round(x * 12) * 5; return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
   const res: { a: number; t: string; best: boolean }[] = [];
   for (let k = 0; k < 12; k++) {
     const hs = ((ds % 5) * 2 + k) % 10, es = STEMS[hs].el, eb = BRANCHES[k].el;
     if (Math.abs(k - db) === 6 || bad(es) || bad(eb)) continue;
     if (med !== es && med !== eb && !(fav(es) && fav(eb))) continue;
-    if (med === 2 && WET.includes(k) && es !== 2 && a.avoid.includes(4)) continue;
+    if (med === 2 && WET.includes(k) && es !== 2 && d.avoid.includes(4)) continue;
     let st = mod(k * 2 - 1 + shift, 24); if (st < from - 0.01) st += 24;
     if (st + 2 > to + 0.01) continue;
     res.push({ a: st, t: `${fm(st)}–${fm(st + 2)}`, best: (med === es || med === eb) && fav(es) && fav(eb) });
