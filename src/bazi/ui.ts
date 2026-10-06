@@ -19,6 +19,7 @@ import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './inter
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
+import { calibrate, applyHypo, rankHours, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } from './days';
@@ -161,10 +162,12 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   const variants = allVariants(input);
   const charts = variants.map((v) => { const c = computeChart(input, v); return { v, c, a: analyze(c) }; });
   const c = computeChart(input, variant), a = analyze(c);
+  const past = loadPast(input);
+  if (past.apply) applyHypo(a, past.apply);
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
+  out.innerHTML = [secWho(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
@@ -173,6 +176,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     out.querySelectorAll<HTMLCanvasElement>('canvas.fxc').forEach((cv) => mountFx(cv, +cv.dataset.stem!));
     wire(c, a, charts);
     wireDays(c, a);
+    wirePast(c, a, input);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -605,6 +609,67 @@ function secAsk() {
   return `<section class="block"><div class="bhead"><div><h2>Спросить карту</h2></div><p>Ответ строится только из вашего разбора выше — без выдуманных чисел.</p></div>
     <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Ваш вопрос о карте" aria-label="Ваш вопрос о карте" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
 }
+// ——— Сверка по прошлому: годы, когда было явно хорошо или плохо (calibrate.ts) ———
+interface Past { evs: LifeEvent[]; apply?: Pick<Hypo, 'yong' | 'xi' | 'ji' | 'label'> }
+const pastKey = (i: BirthInput) => `bazi-past:${i.date}:${i.timeKnown ? i.time : '-'}:${i.male ? 'm' : 'f'}`;
+const loadPast = (i: BirthInput): Past => { try { return JSON.parse(localStorage.getItem(pastKey(i)) || '{"evs":[]}'); } catch { return { evs: [] }; } };
+const storePast = (i: BirthInput, p: Past) => { try { localStorage.setItem(pastKey(i), JSON.stringify(p)); } catch { /* storage off */ } };
+
+function secPast(c: Chart, past: Past) {
+  const y0 = c.local.y, y1 = new Date().getFullYear();
+  const sph = (Object.keys(SPHERE_RU) as Sphere[]).map((k) => `<option value="${k}">${SPHERE_RU[k]}</option>`).join('');
+  return `<section class="block" id="s-past"><div class="bhead"><div><h2>Сверка с вашей жизнью</h2></div>
+    <p>Отметьте 5–10 лет, когда было явно хорошо или явно плохо: деньги, работа, любовь, переезд, здоровье. Мы проверим, совпадает ли с ними разбор, и если ваша жизнь лучше объясняется другим раскладом — перестроим под неё. Данные остаются в этом браузере.</p></div>
+    <div class="card pane">${past.apply ? `<p class="dhint" style="margin-top:0">Сейчас разбор настроен по вашим событиям (${esc(past.apply.label)}). <button class="ghost" id="preset" type="button">Вернуть разбор по формуле</button></p>` : ''}
+      <form class="askf cf pf" id="pf"><input id="pf-y" type="number" min="${y0}" max="${y1}" placeholder="Год" required aria-label="Год события" />
+      <select id="pf-g" aria-label="Каким был год"><option value="1">хорошо</option><option value="0">плохо</option></select>
+      <select id="pf-s" aria-label="Сфера">${sph}</select><input id="pf-n" maxlength="80" placeholder="Что было (необязательно)" aria-label="Что было" />
+      <button class="go" type="submit">Добавить</button></form>
+      <div id="pev"></div><div class="acts dacts"><button class="ghost" id="pcheck" type="button">Проверить разбор</button></div>
+      <div class="ans" id="pout"></div></div></section>`;
+}
+
+function wirePast(c: Chart, a: Analysis, input: BirthInput) {
+  const f = document.getElementById('pf') as HTMLFormElement | null;
+  if (!f) return;
+  const list = document.getElementById('pev')!, out = document.getElementById('pout')!;
+  const draw = () => {
+    const p = loadPast(input);
+    list.innerHTML = p.evs.length ? `<ul class="pev">${p.evs.map((e, i) => `<li>${e.year} — ${e.good ? 'хорошо' : 'плохо'}${e.sphere ? `, ${SPHERE_RU[e.sphere]}` : ''}${e.note ? `: ${esc(e.note)}` : ''} <button class="ghost" type="button" data-del="${i}" aria-label="Убрать">×</button></li>`).join('')}</ul>` : '<p class="dhint">Пока пусто.</p>';
+    list.querySelectorAll<HTMLButtonElement>('[data-del]').forEach((b) => (b.onclick = () => { const q = loadPast(input); q.evs.splice(+b.dataset.del!, 1); storePast(input, q); draw(); }));
+  };
+  draw();
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const y = +(document.getElementById('pf-y') as HTMLInputElement).value;
+    if (!y) return;
+    const p = loadPast(input);
+    p.evs = p.evs.filter((x) => x.year !== y);
+    p.evs.push({ year: y, good: (document.getElementById('pf-g') as HTMLSelectElement).value === '1', sphere: (document.getElementById('pf-s') as HTMLSelectElement).value as Sphere, note: (document.getElementById('pf-n') as HTMLInputElement).value.trim() || undefined });
+    p.evs.sort((x, z) => x.year - z.year);
+    storePast(input, p); f.reset(); draw();
+  });
+  document.getElementById('preset')?.addEventListener('click', () => { const p = loadPast(input); delete p.apply; storePast(input, p); build(current!.input, current!.variant); document.getElementById('s-past')?.scrollIntoView({ block: 'start' }); });
+  document.getElementById('pcheck')!.onclick = () => {
+    const p = loadPast(input);
+    // Проверяем разбор «по формуле», даже если сейчас применён другой расклад.
+    const base = p.apply ? analyze(c) : a, r = calibrate(c, base, p.evs);
+    let html = `<p>${esc(r.text)}</p>`;
+    if (r.verdict !== 'few') html += `<p class="dhint">Варианты: ${r.hypos.slice(0, 4).map((h) => `${esc(h.label)} — ${h.hits} из ${r.n}`).join('; ')}.</p>`;
+    if (r.verdict !== 'few' && !input.timeKnown) {
+      const hs = rankHours(input, p.evs).slice(0, 3);
+      html += `<p class="dhint">Время рождения неизвестно. Лучше всего ваши годы объясняет рождение около ${hs.map((h) => `${h.time} (${h.hits} из ${r.n})`).join(', ')} — проверьте по документам или у родных.</p>`;
+    }
+    if (r.verdict === 'changed') html += `<p><button class="go" id="papply" type="button">Перестроить разбор под мою жизнь</button></p>`;
+    out.innerHTML = html;
+    document.getElementById('papply')?.addEventListener('click', () => {
+      storePast(input, { ...p, apply: { yong: r.best.yong, xi: r.best.xi, ji: r.best.ji, label: r.best.label } });
+      build(current!.input, current!.variant); document.getElementById('s-past')?.scrollIntoView({ block: 'start' });
+    });
+    track('bazi:past');
+  };
+}
+
 function secFeedback() {
   return `<section class="block" id="s-fb"><div class="bhead"><div><h2>Разбор попал?</h2></div><p>Нам важно, где непонятно или мимо — читаем каждое сообщение. Дата рождения не отправляется.</p></div>
     <div class="card pane"><div class="dacts fbv" id="fbv"><button class="ghost" type="button" data-ok="1">Да, это я</button><button class="ghost" type="button" data-ok="0">Мимо</button></div>
