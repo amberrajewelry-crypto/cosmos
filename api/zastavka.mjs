@@ -3033,6 +3033,29 @@ function daysFrom(c, a, start, n) {
   return out;
 }
 
+// src/bazi/calibrate.ts
+var DAY_W = 1 / 3;
+function applyHypo(a, h) {
+  const b = a.brain;
+  b.yong = h.yong;
+  b.xi = h.xi;
+  b.ji = h.ji;
+  b.alt = void 0;
+  b.steps.push({
+    title: "\u0421\u0432\u0435\u0440\u043A\u0430 \u043F\u043E \u0432\u0430\u0448\u0435\u0439 \u0436\u0438\u0437\u043D\u0438",
+    src: "\u0441\u0432\u0435\u0440\u043A\u0430 \u043F\u043E \u0441\u043E\u0431\u044B\u0442\u0438\u044F\u043C \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F (calibrate.ts)",
+    text: `\u041F\u043E\u043B\u0435\u0437\u043D\u0430\u044F \u0441\u0442\u0438\u0445\u0438\u044F \u0432\u044B\u0431\u0440\u0430\u043D\u0430 \u043F\u043E \u0432\u0430\u0448\u0438\u043C \u0441\u043E\u0431\u044B\u0442\u0438\u044F\u043C \u043F\u0440\u043E\u0448\u043B\u044B\u0445 \u043B\u0435\u0442 (${h.label}), \u0430 \u043D\u0435 \u0442\u043E\u043B\u044C\u043A\u043E \u043F\u043E \u0444\u043E\u0440\u043C\u0443\u043B\u0435.`
+  });
+  a.consensus = [b.yong, ...b.xi];
+  a.avoid = b.ji;
+}
+function decodeSet(s) {
+  const m = /^([0-4])([0-4]{0,2})-([0-4]{0,2})$/.exec(s ?? "");
+  if (!m) return null;
+  const yong = +m[1];
+  return { yong, xi: [...m[2]].map(Number), ji: [...m[3]].map(Number), label: `\u0433\u043B\u0430\u0432\u043D\u0430\u044F \u2014 ${EL[yong]}` };
+}
+
 // src/bazi/wallpaper.ts
 var WP = { w: 1179, h: 2556 };
 var MON = ["\u044F\u043D\u0432\u0430\u0440\u044F", "\u0444\u0435\u0432\u0440\u0430\u043B\u044F", "\u043C\u0430\u0440\u0442\u0430", "\u0430\u043F\u0440\u0435\u043B\u044F", "\u043C\u0430\u044F", "\u0438\u044E\u043D\u044F", "\u0438\u044E\u043B\u044F", "\u0430\u0432\u0433\u0443\u0441\u0442\u0430", "\u0441\u0435\u043D\u0442\u044F\u0431\u0440\u044F", "\u043E\u043A\u0442\u044F\u0431\u0440\u044F", "\u043D\u043E\u044F\u0431\u0440\u044F", "\u0434\u0435\u043A\u0430\u0431\u0440\u044F"];
@@ -3144,6 +3167,8 @@ function render(q, now = /* @__PURE__ */ new Date()) {
   const z = q.z && validTz(q.z) ? q.z : tz;
   const c = computeChart({ date: d, time: t === "-" ? "12:00" : t, timeKnown: t !== "-", tz, lat: +lat, lon: +lon, male: q.g !== "f", place: name.join(",") }, DEFAULT_VARIANT);
   const a = analyze(c);
+  const u = decodeSet(q.u);
+  if (u) applyHypo(a, u);
   const [Y, M, D] = new Intl.DateTimeFormat("en-CA", { timeZone: z }).format(now).split("-").map(Number);
   const days = daysFrom(c, a, new Date(Y, M - 1, D), 9);
   const shift = z === tz ? tzOffsetH(z, now) - +lon / 15 : 0;

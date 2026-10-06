@@ -1,5 +1,5 @@
 import { confidence } from './confidence';
-import { chartHash, answer, myAnswer, mySummary, globalSummary } from './journal';
+import { chartHash, answer, myAnswer, mySummary, globalSummary, myDays } from './journal';
 import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
@@ -19,7 +19,7 @@ import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './inter
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
-import { calibrate, applyHypo, rankHours, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
+import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } from './days';
@@ -316,7 +316,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
-      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}</p>`)(confidence(a))}
+      ${((k) => `<p class="conf ${k.level}"><b>Насколько точно: ${k.ru}.</b> ${k.text}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — это точнее формулы, если событий много.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(confidence(a))}
       <div class="methods">${methods}</div>
     </div></div></section>`;
 }
@@ -549,6 +549,7 @@ function wireDays(c: Chart, a: Analysis) {
   }));
   const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
   for (const k of ['d', 't', 'p', 'g']) { const v = wq.get(k); if (v) wp.set(k, v); }
+  { const ap = current && loadPast(current.input).apply; if (ap) wp.set('u', encodeSet(ap)); }
   try { wp.set('z', Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* нет Intl — день по поясу рождения */ }
   const wurl = `${location.origin}/bazi/zastavka.png?${wp}`, wo = document.getElementById('wpopen') as HTMLAnchorElement | null, wc = document.getElementById('wpcopy');
   if (wo) wo.href = wurl;
@@ -619,7 +620,7 @@ function secPast(c: Chart, past: Past) {
   const y0 = c.local.y, y1 = new Date().getFullYear();
   const sph = (Object.keys(SPHERE_RU) as Sphere[]).map((k) => `<option value="${k}">${SPHERE_RU[k]}</option>`).join('');
   return `<section class="block" id="s-past"><div class="bhead"><div><h2>Сверка с вашей жизнью</h2></div>
-    <p>Отметьте 5–10 лет, когда было явно хорошо или явно плохо: деньги, работа, любовь, переезд, здоровье. Мы проверим, совпадает ли с ними разбор, и если ваша жизнь лучше объясняется другим раскладом — перестроим под неё. Данные остаются в этом браузере.</p></div>
+    <p>Отметьте 5–10 лет, когда было явно хорошо или явно плохо: деньги, работа, любовь, переезд, здоровье. Дни, отмеченные в «Проверке прогноза», тоже учитываются. Мы проверим, совпадает ли с ними разбор, и если ваша жизнь лучше объясняется другим раскладом — перестроим под неё. Данные остаются в этом браузере.</p></div>
     <div class="card pane">${past.apply ? `<p class="dhint" style="margin-top:0">Сейчас разбор настроен по вашим событиям (${esc(past.apply.label)}). <button class="ghost" id="preset" type="button">Вернуть разбор по формуле</button></p>` : ''}
       <form class="askf cf pf" id="pf"><input id="pf-y" type="number" min="${y0}" max="${y1}" placeholder="Год" required aria-label="Год события" />
       <select id="pf-g" aria-label="Каким был год"><option value="1">хорошо</option><option value="0">плохо</option></select>
@@ -650,15 +651,18 @@ function wirePast(c: Chart, a: Analysis, input: BirthInput) {
     storePast(input, p); f.reset(); draw();
   });
   document.getElementById('preset')?.addEventListener('click', () => { const p = loadPast(input); delete p.apply; storePast(input, p); build(current!.input, current!.variant); document.getElementById('s-past')?.scrollIntoView({ block: 'start' }); });
-  document.getElementById('pcheck')!.onclick = () => {
+  document.getElementById('pcheck')!.onclick = async () => {
     const p = loadPast(input);
+    // Отмеченные в журнале дни тоже идут в сверку (день весит треть года).
+    let days: { iso: string; good: boolean }[] = [];
+    try { days = myDays(await chartHash(new URLSearchParams(lastQuery || location.search.slice(1)))); } catch { /* нет crypto */ }
     // Проверяем разбор «по формуле», даже если сейчас применён другой расклад.
-    const base = p.apply ? analyze(c) : a, r = calibrate(c, base, p.evs);
+    const base = p.apply ? analyze(c) : a, r = calibrate(c, base, p.evs, days);
     let html = `<p>${esc(r.text)}</p>`;
-    if (r.verdict !== 'few') html += `<p class="dhint">Варианты: ${r.hypos.slice(0, 4).map((h) => `${esc(h.label)} — ${h.hits} из ${r.n}`).join('; ')}.</p>`;
+    if (r.verdict !== 'few') html += `<p class="dhint">Варианты: ${r.hypos.slice(0, 4).map((h) => `${esc(h.label)} — ${[p.evs.length ? `годы ${h.hits} из ${p.evs.length}` : '', days.length ? `дни ${h.dHits} из ${days.length}` : ''].filter(Boolean).join(', ')}`).join('; ')}.</p>`;
     if (r.verdict !== 'few' && !input.timeKnown) {
       const hs = rankHours(input, p.evs).slice(0, 3);
-      html += `<p class="dhint">Время рождения неизвестно. Лучше всего ваши годы объясняет рождение около ${hs.map((h) => `${h.time} (${h.hits} из ${r.n})`).join(', ')} — проверьте по документам или у родных.</p>`;
+      html += `<p class="dhint">Время рождения неизвестно. Лучше всего ваши годы объясняет рождение около ${hs.map((h) => `${h.time} (${h.hits} из ${p.evs.length})`).join(', ')} — проверьте по документам или у родных.</p>`;
     }
     if (r.verdict === 'changed') html += `<p><button class="go" id="papply" type="button">Перестроить разбор под мою жизнь</button></p>`;
     out.innerHTML = html;
