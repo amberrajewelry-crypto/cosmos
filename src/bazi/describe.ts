@@ -114,7 +114,7 @@ export function describe(c: Chart, a: Analysis): Description {
   const pair = [['BJ', 'JC'], ['SS', 'SG'], ['ZC', 'PC'], ['ZG', 'QS'], ['ZY', 'PY']][r];
   const gk = (a.gods[pair[1]] ?? 0) > (a.gods[pair[0]] ?? 0) ? pair[1] : pair[0];
   const [plus, minus] = TRAIT[gk];
-  lines.push(`Ваша сильная сторона — ${plus}. Когда её становится слишком много, она срывается в ${minus}.`);
+  lines.push(`Ваша сильная сторона — ${plus}. Обратная сторона — ${minus}.`);
   detail.push(`Черта/тень: полезный бог — ${GODS[gk].ru} (${GODS[gk].zh}), ЦЛ 性情 «…为用神 / …太多».`);
 
   // §2 точка срыва = «击神» Жэня (ДТС 性情): сильному мешает то, что запирает выход — Власть и Ресурс

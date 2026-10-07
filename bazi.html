@@ -31,15 +31,16 @@
     <main>
       <header class="hero">
         <div class="orbit" id="orbit" aria-hidden="true"></div>
-        <p class="eyebrow">Четыре столпа · восемь знаков</p>
-        <h1>Бацзы — карта ци в момент вашего рождения</h1>
-        <p class="lead">Год, месяц, день и час превращаются в восемь знаков: небесные стволы и земные ветви. Считаем точно по Солнцу для места вашего рождения.</p>
+        <p class="eyebrow">Китайская карта судьбы</p>
+        <h1>Бацзы: что говорит о вас день рождения</h1>
+        <p class="lead">Характер, сильные годы и удачные дни — по дате, времени и месту рождения, простым языком. Бесплатно и без регистрации.</p>
         <form id="f" class="card form" autocomplete="off">
           <label>Дата рождения<input id="fd" type="date" required min="1800-01-01" max="2100-12-31" /></label>
           <label>Время<input id="ft" type="time" value="12:00" /><span class="chk"><input id="fnt" type="checkbox" /> не знаю</span></label>
           <label class="place">Место рождения<input id="fp" type="text" placeholder="Город" required /><ul id="fpl" class="sug" hidden></ul></label>
           <fieldset class="seg"><legend>Пол</legend><label><input type="radio" name="g" value="m" checked /> <span>мужской</span></label><label><input type="radio" name="g" value="f" /> <span>женский</span></label></fieldset>
           <div class="acts"><button class="go" type="submit">Построить карту</button><button id="voice" class="ghost" type="button" hidden>Сказать голосом</button></div>
+          <p class="demo">Сначала посмотреть, как это выглядит? <a href="/bazi/?d=1955-02-24&amp;t=19:15&amp;p=37.77,-122.42,America/Los_Angeles,San%20Francisco&amp;g=m" id="demo">Пример — разбор Стива Джобса</a> (24.02.1955, 19:15, Сан-Франциско)</p>
           <p id="fmsg" class="msg" role="status"></p>
         </form>
       </header>

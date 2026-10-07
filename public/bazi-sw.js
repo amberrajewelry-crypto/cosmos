@@ -1,6 +1,6 @@
 // Service worker раздела /bazi/: офлайн-работа приложения «Бацзы».
 // Страница — сначала сеть, при отсутствии — кэш; ассеты с хэшем, шрифты, города — из кэша.
-const CACHE = 'bazi-v3';
+const CACHE = 'bazi-v4';
 const CORE = ['/bazi/', '/places/core.json', '/bazi.webmanifest', '/icons/bazi-192.png', '/icons/bazi-512.png', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -59,4 +59,21 @@ self.addEventListener('fetch', (e) => {
       return res;
     })());
   }
+});
+
+// Утренняя карточка дня (Web Push, /api/push + tools/push_worker.ts на VPS).
+self.addEventListener('push', (e) => {
+  let m = {}; try { m = e.data ? e.data.json() : {}; } catch { m = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(m.title || 'Ваш день', {
+    body: m.body || '', icon: '/icons/bazi-192.png', badge: '/icons/bazi-192.png', tag: 'bazi-day', renotify: true, data: { url: m.url || '/bazi/' },
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || '/bazi/', self.location.origin).href;
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of all) if (w.url.startsWith(self.location.origin + '/bazi')) { await w.focus(); return w.navigate ? w.navigate(url) : undefined; }
+    return self.clients.openWindow(url);
+  })());
 });
