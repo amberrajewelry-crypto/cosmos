@@ -214,6 +214,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     wireDays(c, a);
     wirePast(c, a, input);
     wireRecog(input);
+    if (input.timeKnown) wireJudge(c, a);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -248,6 +249,7 @@ function secWho(c: Chart, a: Analysis) {
       <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
+      <p class="conf mid judge" id="judge" hidden></p>
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
@@ -839,4 +841,32 @@ void [SEASON_STATE];
 // Приложение (PWA): офлайн-кэш раздела /bazi/; в dev не регистрируем.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   addEventListener('load', () => { navigator.serviceWorker.register('/bazi-sw.js', { scope: '/bazi/' }).catch(() => {}); });
+}
+
+// ——— Вторая проверка полезной стихии («судья», очередь /api/judge → воркер на VPS). Только при известном времени.
+let judgeRun = 0;
+function wireJudge(c: Chart, a: Analysis) {
+  const box = document.getElementById('judge'); if (!box) return;
+  const run = ++judgeRun, idx = (pos: string) => c.pillars.find((p) => p.pos === pos)!.idx;
+  const p = ['year', 'month', 'day', 'hour'].map(idx).join('_'), mine = a.brain.yong;
+  const show = (html: string) => { if (run !== judgeRun) return; box.hidden = false; box.innerHTML = html; };
+  const done = (el: number | null) => {
+    if (el === null || el === undefined) { box.hidden = true; return; }
+    if (el === mine) show(`<b>Вторая проверка согласна:</b> главное для вас — ${EL[mine].toLowerCase()}. Два независимых разбора сошлись — этому выводу можно доверять больше обычного.`);
+    else { box.className = 'conf low judge'; show(`<b>Вторая проверка видит иначе:</b> возможно, главное для вас — ${EL[el].toLowerCase()}, а не ${EL[mine].toLowerCase()}. Карта спорная: держите в голове оба варианта. Если годы, когда было много стихии «${EL[el].toLowerCase()}», были у вас удачнее, — ближе второй вариант.`); }
+    track(`bazi:judge:${el === mine ? 'agree' : 'differ'}`);
+  };
+  const ask = async (method: 'POST' | 'GET') => {
+    const r = await fetch(method === 'POST' ? '/api/judge' : `/api/judge?p=${p}`, method === 'POST' ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p }) } : undefined);
+    return r.ok ? r.json() : null;
+  };
+  (async () => {
+    try {
+      let j = await ask('POST'); if (!j || run !== judgeRun) return;
+      if (j.status === 'busy') return;
+      if (j.status !== 'done') show('Идёт вторая, независимая проверка вашей полезной стихии — ответ появится здесь через минуту-две.');
+      for (let t = 0; j && j.status !== 'done' && t < 30 && run === judgeRun; t++) { await new Promise((ok) => setTimeout(ok, 8000)); j = await ask('GET'); }
+      if (j && j.status === 'done' && run === judgeRun) done(j.el); else if (run === judgeRun) box.hidden = true;
+    } catch { box.hidden = true; }
+  })();
 }
