@@ -218,9 +218,6 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
 
 /** Портрет «Кто вы» — по KB 18: тип силы, черта/тень, точка срыва, снаружи/внутри. Стих ствола (STEM_VERSE) — только в подробном разборе (08.10: без имён стволов в основном потоке). */
 export function portrait(c: Chart, a: Analysis): string[] {
-  const ax = axisNote(c, a), g = GODS[ax.godKey];
-  return [
-    ...describe(c, a).lines,
-    ax.godKey === 'BJ' || ax.godKey === 'JC' ? '' : `Главная тема жизни: ${g.sense}.`,
-  ].filter(Boolean);
+  // 08.10: не больше 4 строк — тип силы, черта и обратная сторона, точка срыва, снаружи/внутри; тема жизни — в «Расклад», вопрос 2.
+  return describe(c, a).lines.filter(Boolean).slice(0, 4);
 }

@@ -507,3 +507,13 @@ details.fold[open] .f-ch { transform: rotate(180deg); background: var(--gold-3);
 /* 08.10: группа «Для тех, кому интересно глубже» — вложенные разделы без лишних полей */
 section.block.deep > details.more > section.block { margin: 14px 0 0; padding: 0; background: none; border: 0; box-shadow: none; }
 section.block.deep > details.more > section.block.folded { margin-top: 12px; }
+.demo { margin-top: 14px; font-size: 14px; color: var(--ink-2); }
+.demo a { color: var(--gold); }
+.push-cta .card { text-align: left; }
+.push-cta .go { margin-top: 12px; }
+/* 08.10: на телефоне форма — на первом экране: колесо меньше */
+@media (max-width: 520px) {
+  .hero { padding-top: 2vh; }
+  .orbit { width: min(260px, 68vw); --R: calc(min(260px, 68vw) * 0.44); margin: -6px auto 4px; }
+  .hero h1 { font-size: 30px; }
+}

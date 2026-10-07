@@ -196,7 +196,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   const out = $('out');
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
-  out.innerHTML = [secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(),
+  out.innerHTML = [secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(), pushCta(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
     secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
@@ -219,6 +219,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     wireDays(c, a);
     wirePast(c, a, input);
     wireRecog(input);
+    void wirePush();
     if (input.timeKnown) wireJudge(c, a);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -456,6 +457,57 @@ function secSpheres(c: Chart, a: Analysis) {
     <div class="sph-grid">${cards}</div></section>`;
 }
 
+// ——— Утренняя карточка дня (Web Push: /api/push, рассылка tools/push_worker.ts в 8:00 по поясу человека) ———
+const VAPID_PUBLIC = 'BAtafqYtBLaVo0Hdz37tmWAPbdl4KsKLTImwFW3nXXCJU9BEjwhEWNrUQ0bYFB_tASdD7CUImFgr-YnWukGH_1I';
+function pushCta() {
+  return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
+    <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
+    <button class="go" data-push type="button">Получать мой день каждое утро</button><p class="dhint" data-pushmsg></p></div></section>`;
+}
+function chartQuery(): string {
+  const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
+  for (const k of ['d', 't', 'p', 'g']) { const v = wq.get(k); if (v) wp.set(k, v); }
+  const ap = current && loadPast(current.input).apply; if (ap) wp.set('u', encodeSet(ap));
+  return wp.toString();
+}
+const b64key = (s: string) => { const b = atob((s + '='.repeat((4 - (s.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, (ch) => ch.charCodeAt(0)); };
+async function swReg(): Promise<ServiceWorkerRegistration> {
+  const reg = await navigator.serviceWorker.register('/bazi-sw.js', { scope: '/bazi/' });
+  for (let i = 0; i < 100 && !reg.active; i++) await new Promise((r) => setTimeout(r, 100));
+  return reg;
+}
+async function wirePush() {
+  const btns = [...document.querySelectorAll<HTMLButtonElement>('[data-push]')], msgs = [...document.querySelectorAll<HTMLElement>('[data-pushmsg]')];
+  if (!btns.length) return;
+  const say = (t: string) => msgs.forEach((m) => (m.textContent = t));
+  const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Получать мой день каждое утро'));
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    if (ios && !standalone) { btns.forEach((b) => (b.onclick = () => say('На iPhone уведомления работают из приложения: «Поделиться» → «На экран „Домой“», откройте сайт с иконки и нажмите эту кнопку там.'))); return; }
+    document.querySelector('.push-cta')?.remove(); btns.forEach((b) => b.remove()); return;
+  }
+  let sub: PushSubscription | null = null;
+  try { const r = await navigator.serviceWorker.getRegistration('/bazi/'); sub = r ? await r.pushManager.getSubscription() : null; } catch { /* нет доступа */ }
+  label(!!sub && localStorage.getItem('bazi-push') === chartQuery());
+  btns.forEach((b) => (b.onclick = async () => {
+    btns.forEach((x) => (x.disabled = true));
+    try {
+      if (sub && localStorage.getItem('bazi-push') === chartQuery()) {
+        await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ off: sub.endpoint }) });
+        await sub.unsubscribe(); sub = null; localStorage.removeItem('bazi-push'); label(false); say('Отключено.'); track('bazi:push:off'); return;
+      }
+      if ((await Notification.requestPermission()) !== 'granted') { say('Уведомления запрещены в настройках браузера — разрешите их для сайта и нажмите снова.'); return; }
+      const reg = await swReg();
+      sub = (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64key(VAPID_PUBLIC) });
+      let z = ''; try { z = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* нет Intl */ }
+      const r = await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sub: sub.toJSON(), q: chartQuery(), z: z || current?.input.tz }) });
+      if (!r.ok) throw new Error(String(r.status));
+      localStorage.setItem('bazi-push', chartQuery()); label(true); say('Готово: завтра в 8 утра придёт ваш день.'); track('bazi:push:on');
+    } catch { say('Не получилось включить — попробуйте позже.'); }
+    finally { btns.forEach((x) => (x.disabled = false)); }
+  }));
+}
+
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
@@ -561,7 +613,7 @@ function secDays(c: Chart, a: Analysis) {
     <h3 style="margin-top:26px">Лучшие дни ближайших 45</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
-    <div class="acts dacts" style="margin-top:20px"><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
+    <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Получать мой день каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
     <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
       <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
       <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>
