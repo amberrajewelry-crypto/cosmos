@@ -51,14 +51,14 @@ export function rasklad(c: Chart, a: Analysis, now = new Date()): Answer[] {
   const animals = c.pillars.filter((p) => p.pos !== 'hour' || c.input.timeKnown).slice().reverse()
     .map((p) => `${BRANCHES[p.branch].animal} (${POS_ROLE[p.pos]})`);
   out.push({ q: 'Кто вы: главный элемент и животные карты', basis: 'расчёт столпов точный: сверен с независимой программой на 3000 карт',
-    a: [`Главный элемент — ${dm.ru}, ${EL[dm.el].toLowerCase()} ${dm.yang ? 'ян' : 'инь'}: «${dm.image}».`, `Животные: ${animals.join('; ')}.`, d.lines[0]] });
+    a: [`Ваша стихия — ${EL[dm.el].toLowerCase()}: «${dm.image}».`, `Животные: ${animals.join('; ')}.`, d.lines[0]] });
 
   // 2. Предназначение: тема месяца (格) + куда уходит сила (полезный бог)
   const ax = axisNote(c, a), g = GODS[ax.godKey];
   const yongGroup = GROUP_BY_REL[(a.brain.yong - a.dmEl + 5) % 5];
   out.push({ q: 'Ваше предназначение', basis: `тема — точный расчёт; направление — ${yongNote}`,
-    a: [ax.godKey === 'BJ' || ax.godKey === 'JC' ? 'Главная тема — стоять на своём и вести своё: опора внутри вас, направление задаёте вы сами.' : `Главная тема жизни — «${g.ru}»: ${g.sense}.`,
-      `Сила раскрывается через ${EL_ACC[a.brain.yong]} — это для вас «${yongGroup.toLowerCase()}».`] });
+    a: [ax.godKey === 'BJ' || ax.godKey === 'JC' ? 'Главная тема — стоять на своём и вести своё: опора внутри вас, направление задаёте вы сами.' : `Главная тема жизни: ${g.sense}.`,
+      `Сила раскрывается через ${EL_ACC[a.brain.yong]}.`] });
 
   // 3. Стратегия
   out.push({ q: 'Успешная стратегия поведения', basis: yongNote,

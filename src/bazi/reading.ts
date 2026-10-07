@@ -216,12 +216,11 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   return out;
 }
 
-/** Портрет «Кто вы» — по KB 18: тип силы, черта/тень, точка срыва, снаружи/внутри; стих ствола — краска в конце. */
+/** Портрет «Кто вы» — по KB 18: тип силы, черта/тень, точка срыва, снаружи/внутри. Стих ствола (STEM_VERSE) — только в подробном разборе (08.10: без имён стволов в основном потоке). */
 export function portrait(c: Chart, a: Analysis): string[] {
   const ax = axisNote(c, a), g = GODS[ax.godKey];
   return [
     ...describe(c, a).lines,
-    ax.godKey === 'BJ' || ax.godKey === 'JC' ? '' : `Главная тема жизни — «${g.ru}»: ${g.sense}.`,
-    STEM_VERSE[a.dm].ru,
+    ax.godKey === 'BJ' || ax.godKey === 'JC' ? '' : `Главная тема жизни: ${g.sense}.`,
   ].filter(Boolean);
 }
