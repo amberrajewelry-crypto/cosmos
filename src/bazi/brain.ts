@@ -72,7 +72,10 @@ export function brain(c: Chart, a: Analysis): Brain {
     const [zh, nm] = VIBRANT[d];
     steps.push({ title: `Одна стихия (${zh})`, src: '命理约言 卷二 一行得气赋; ДТС 一行得气',
       text: `Стихия дня в сезоне и собрана ветвями в сторону/союз — «一行得气». Полезны своя стихия, Печать и выход силы (食伤 «秀气流行»); вреден Чиновник/Убийство.` });
-    return done({ kind: 'vibrant', name: nm, zh: `${zh}格` }, d, [out, res], [officer, wealth]);
+    // 07.10: ДТС 任注 в 一行得气 берёт 食伤 (泄秀) при наличии выхода силы в стволах/главных ци ветвей: 14 из 19 карт эталона.
+    const hasOut = vis.some((p) => elOf(p.stem) === out) || branches.some((b) => BRANCHES[b].el === out);
+    if (hasOut) steps.push({ title: 'Выход силы (泄秀)', src: '滴天髓 一行得气, 任铁樵注', text: 'Выход силы в карте есть — сила стихии «秀气流行» через него: он и полезен первым.' });
+    return done({ kind: 'vibrant', name: nm, zh: `${zh}格` }, hasOut ? out : d, hasOut ? [d, res] : [out, res], [officer, wealth]);
   }
   for (const p of vis.filter((q) => q.pos === 'month' || q.pos === 'hour')) {
     const pair = COMBO.find(([x, y]) => (x === dm && y === p.stem) || (y === dm && x === p.stem));
@@ -136,6 +139,13 @@ export function brain(c: Chart, a: Analysis): Brain {
   };
   const lean = key === 'balanced' ? (score >= 1 ? 'strong' : 'weak') : key;
   let [yong, xi, ji, why] = pick(lean);
+  // 煞重用印 / 官印相生 (ЦПЦЦ 论偏官 «煞重身轻…用印»; ДТС «杀旺用印»): Власть ≥ 20% и сильнейшая из давящих, проступили и она, и Печать —
+  // Печать переводит давление в поддержку, даже если день не слаб. Отвергнуто 06.10 как подгонка (+5 на 195), подтверждено 07.10
+  // на 209 новых картах 任铁樵 без перенастройки: +5/−1, обе половины.
+  if (score >= -1 && yong !== res && a.pct[officer] >= 0.2 && a.pct[officer] >= a.pct[out] && a.pct[officer] >= a.pct[wealth]
+    && vis.some((p) => elOf(p.stem) === officer) && vis.some((p) => elOf(p.stem) === res)) {
+    [yong, xi, ji, why] = [res, [d], [wealth, officer], 'давит Власть, и Печать рядом в стволах — она переводит давление в поддержку: «煞重用印», «官印相生»'];
+  }
   steps.push({ title: 'Поддержать или ослабить (扶抑)', src: 'ДТС 衰旺; ЦПЦЦ гл.6; 命理约言 卷一 看用神法',
     text: `${key === 'balanced' ? 'Сила на грани — вывод слабее обычного. ' : ''}${why[0].toUpperCase()}${why.slice(1)}. Полезный бог — ${EL[yong]}.` });
 
