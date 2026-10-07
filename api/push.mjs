@@ -1,7 +1,7 @@
 // scripts/push-fn.ts
 import { put, del, list } from "@vercel/blob";
 import { createHash } from "node:crypto";
-var MAX = 5e3;
+var MAX = 2e4;
 var idOf = (endpoint) => createHash("sha256").update(endpoint).digest("hex").slice(0, 24);
 var okTz = (tz) => {
   if (typeof tz !== "string" || tz.length > 64) return false;
@@ -12,7 +12,16 @@ var okTz = (tz) => {
     return false;
   }
 };
-var okEndpoint = (e) => typeof e === "string" && e.length < 1e3 && /^https:\/\/[^\s]+$/.test(e);
+var PUSH_HOST = /^(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/;
+var okEndpoint = (e) => {
+  if (typeof e !== "string" || e.length > 1e3) return false;
+  try {
+    const u = new URL(e);
+    return u.protocol === "https:" && !u.port && PUSH_HOST.test(u.hostname);
+  } catch {
+    return false;
+  }
+};
 async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -52,5 +61,6 @@ async function handler(req, res) {
   res.status(200).json({ ok: true, status: "on" });
 }
 export {
-  handler as default
+  handler as default,
+  okEndpoint
 };
