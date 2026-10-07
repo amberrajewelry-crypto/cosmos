@@ -15,6 +15,8 @@ export interface Brain {
   yong: El; xi: El[]; ji: El[]; steps: Step[];
   /** Сила «на грани»: набор для противоположного перевеса — такт решает, какой работает (朱祖夏 八字与用神 гл.2 中和). */
   alt?: { lean: 'weak' | 'strong'; yong: El; xi: El[]; ji: El[] };
+  /** Полезная стихия по формуле, если её заменила вторая проверка (судья, applyJudge). */
+  formulaYong?: El;
 }
 
 const SEASON_PTS = [3, 2, -1, -2, -3];  // 旺相休囚死
