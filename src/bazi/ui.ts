@@ -21,6 +21,7 @@ import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
+import { periodVerdict } from './brain';
 import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
@@ -229,15 +230,19 @@ function stemTile(stem: number) {
 function branchTile(b: number) {
   return `<div class="glyph ani" style="--rgb:${rgb(BRANCHES[b].el)}"><img src="${animalSrc(b)}" alt="${BRANCHES[b].animal}" loading="lazy" decoding="async" /></div>`;
 }
-const pillarRuHtml = (i: number) => { const s = STEMS[i % 10], b = BRANCHES[i % 12]; return `<span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · <span style="color:${EL_COLOR[b.el]}">${b.animal}</span>`; };
+/** Основной поток — без кухни расчёта: имена божеств в кавычках, ветви, такты, пустота, союзы, трактаты. */
+const lay = (s: string) => s.replace(/«[^»]*»\s*—\s*/g, '').split(/(?<=[.;])\s+/).filter((x) => !/ветв|пуст|союз|такт|трактат/i.test(x)).join(' ').replace(/[.;,]\s*$/, '');
+const animalOf = (idx: number) => `<span style="color:${EL_COLOR[BRANCHES[idx % 12].el]}">${BRANCHES[idx % 12].animal}</span>`;
+/** Тон периода — тот же, что в прогнозе и раскладе (periodVerdict мозга), текст — luckReading. */
+const luckR = (c: Chart, a: Analysis, idx: number) => { const t = periodVerdict(a.brain, idx, c).tone; return { ...luckReading(a, idx), tone: t === 'calm' ? 'mixed' as const : t }; };
 const thumb = (b: number, size = 44) => `<img class="thumb" src="${animalSrc(b)}" alt="${BRANCHES[b].animal}" width="${size}" height="${size}" loading="lazy" />`;
 
 /** «Расклад по 7 вопросам» (rasklad.ts): ответы из расчёта + на чём держится каждый. */
 function secRasklad(c: Chart, a: Analysis) {
   const seen = new Set(portrait(c, a)); // то, что уже сказано в «Кто вы», не повторяем
-  const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.filter((l) => !seen.has(l)).map((l) => `<p>${esc(l)}</p>`).join('')}<p class="rk-b">${esc(x.basis)}</p></div>`).join('');
+  const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.filter((l) => !seen.has(l)).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`).join('');
   return `<section class="block" id="s-rasklad"><div class="bhead"><div><h2>Расклад по 7 вопросам</h2></div>
-    <p>То, что разбирают на консультации, — посчитано по вашей карте. ${esc(raskladNote(a))}</p></div>
+    <p>То, что разбирают на консультации, — посчитано по вашей карте.</p></div>
     <div class="rk-grid">${items}</div></section>`;
 }
 
@@ -245,12 +250,12 @@ function secWho(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], day = c.pillars.find((p) => p.pos === 'day')!, br = BRANCHES[day.branch], t = DM_TEXT[a.dm];
   const yr = c.pillars.find((p) => p.pos === 'year')!;
   const nowY = new Date().getFullYear(), cur = c.luck.find((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
-  const tone = cur ? luckReading(a, cur.idx).tone : 'mixed';
+  const tone = cur ? luckR(c, a, cur.idx).tone : 'mixed';
   return `<section class="block who" style="--rgb:${rgb(d.el)}">
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
-    <div class="who-txt"><p class="eyebrow">Ваш Господин дня</p>
-      <h2>${d.ru} — ${t.title.toLowerCase()}</h2>
-      <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
+    <div class="who-txt"><p class="eyebrow">Кто вы</p>
+      <h2>${t.title}</h2>
+      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вас поддерживают: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
@@ -409,14 +414,14 @@ function secLuck(c: Chart, a: Analysis) {
   const now = new Date(), nowY = now.getFullYear();
   const cur = c.luck.findIndex((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
   const cards = c.luck.map((l, i) => {
-    const r = luckReading(a, l.idx), s = STEMS[l.idx % 10], b = BRANCHES[l.idx % 12];
+    const r = luckR(c, a, l.idx), s = STEMS[l.idx % 10], b = BRANCHES[l.idx % 12];
     return `<button class="lk ${r.tone}${i === cur ? ' now sel' : ''}" data-i="${i}">${thumb(l.idx % 12, 64)}<span class="lk-el">${elIcon(s.el, EL_COLOR[s.el], 16)}<b style="color:${EL_COLOR[s.el]}">${s.ru}</b></span><small>${b.animal}</small><div class="age">${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет</div><small>${l.year}–${l.year + 9}</small></button>`;
   }).join('');
   const yrs = Array.from({ length: 10 }, (_, k) => nowY - 1 + k).map((y) => {
-    const i = yearIdx(y), r = luckReading(a, i), s = STEMS[i % 10], b = BRANCHES[i % 12];
+    const i = yearIdx(y), r = luckR(c, a, i), s = STEMS[i % 10], b = BRANCHES[i % 12];
     return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text + ' ' + luckDetail(c, a, i).join(' '))}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
   }).join('');
-  const sel = cur >= 0 ? cur : 0, rd = luckReading(a, c.luck[sel].idx);
+  const sel = cur >= 0 ? cur : 0, rd = luckR(c, a, c.luck[sel].idx);
   return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="luck">${cards}</div>
@@ -429,17 +434,17 @@ const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.tit
 function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  const pill = (idx: number) => pillarRuHtml(idx);
+  const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(m.why)}</p><p>${esc(m.act)}</p>${m.hits.map((h) => `<p class="fm-h">${esc(h)}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
-  const yHtml = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(d.text)}.
-    <details><summary>Подробнее</summary><small>Чем заняться: ${esc(d.act)}.${d.hits.length ? ' ' + esc(d.hits.join('; ')) + '.' : ''} ${esc(d.detail.join(' '))}</small></details></li>`);
+  const yHtml = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(lay(d.text))}.
+    <details><summary>Подробнее</summary><small>Чем заняться: ${esc(lay(d.act))}.${d.hits.length ? ' ' + esc(lay(d.hits.join('; '))) + '.' : ''} ${esc(lay(d.detail.join(' ')))}</small></details></li>`);
   const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
-    <div class="card pane"><h3>${Y}: ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(y.text[0].toUpperCase() + y.text.slice(1))}. Главное дело года: ${esc(y.act)}.${y.hits.length ? ' ' + esc(y.hits.join('; ')) + '.' : ''}${y.luck ? ` Год идёт на фоне такта ${pill(y.luck.idx)} (с ${y.luck.from}) — ${toneRu(y.luck.tone)}: такт — климат десятилетия, год — погода внутри него.` : ''}</p>
+    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${y.hits.length ? ' ' + esc(lay(y.hits.join('; '))) + '.' : ''}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
       ${months}</div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
 }
@@ -489,10 +494,10 @@ function dayCard(d: DayInfo, big = false, extra = '') {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
     <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru} · ${d.score} из 5</p>
-    <h3><span style="color:${EL_COLOR[s.el]}">${s.ru}</span> · ${b.animal} — «${d.god.ru}»</h3>
-    <p><b>Что делать:</b> ${d.act}.</p>
+    <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
+    <p><b>Что делать:</b> ${esc(lay(d.act))}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
-    ${d.notes.length || (big && d.warn.length) ? `<p class="dnote">Осторожно: ${[...d.notes, ...(big ? d.warn : [])].map(esc).join('; ')}.</p>` : ''}
+    ${d.notes.length || (big && d.warn.length) ? `<p class="dnote">Осторожно: ${[...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean).map(esc).join('; ')}.</p>` : ''}
     ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
     ${big && extra ? extra : ''}
   </div></div>`;
@@ -522,9 +527,9 @@ function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
     ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
     <p class="dhint"><b>Фон:</b> ${bgRu(d)}</p>
     <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
-    <ul class="list"><li>${esc(d.add.theory)} <span class="dhint">— по теории пяти стихий</span></li>
-      <li>${esc(d.add.folk)} <span class="dhint">— народная практика, в старых книгах этого нет</span></li></ul>
-    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${DAY_TYPE[next.type].ru.toLowerCase()}, ${next.score} из 5.${top ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5, «${top.god.ru}»).` : ''}</p>` : ''}
+    <ul class="list"><li>${esc(d.add.theory)}</li>
+      <li>${esc(d.add.folk)}</li></ul>
+    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${DAY_TYPE[next.type].ru.toLowerCase()}, ${next.score} из 5.${top ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : ''}</p>` : ''}
     <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
   </div>`;
 }
@@ -545,11 +550,11 @@ function secDays(c: Chart, a: Analysis) {
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
-    <p>Каждый день — свой знак из цикла 60. Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. «Божество дня» подсказывает, какое дело на него ставить. Нажмите на день.</p></div>
+    <p>Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. Нажмите на день — подскажем, что на него ставить.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
       <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
-      <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall"></p></div>
+      <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall" hidden></p></div>
     <h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
     <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
@@ -781,7 +786,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   const lkr = document.getElementById('lkr')!;
   document.querySelectorAll<HTMLButtonElement>('.lk').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.lk.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
-    const l = c.luck[+b.dataset.i!], r = luckReading(a, l.idx);
+    const l = c.luck[+b.dataset.i!], r = luckR(c, a, l.idx);
     lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет.</b> ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
   }));
   document.querySelectorAll<HTMLButtonElement>('.vt button[data-v]').forEach((b) => (b.onclick = () => {
