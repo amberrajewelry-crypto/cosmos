@@ -196,7 +196,8 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   const out = $('out');
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
-  out.innerHTML = [secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(), pushCta(),
+  const example = new URLSearchParams(location.search).has('ex');
+  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(), example ? '' : pushCta(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
     secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
@@ -220,6 +221,8 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     wirePast(c, a, input);
     wireRecog(input);
     void wirePush();
+    const own = document.getElementById('ex-own');
+    if (own) own.onclick = () => { fd.value = ''; ft.value = ''; fp.value = ''; chosen = undefined; history.replaceState(null, '', location.pathname); lastQuery = ''; out.hidden = true; $('f').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => fd.focus(), 400); };
     if (input.timeKnown) wireJudge(c, a);
   });
   if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -453,7 +456,7 @@ function secForecast(c: Chart, a: Analysis) {
 function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
     <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p></div>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам</h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты.</p><p class="acc"><button class="ghost" id="pdf" type="button">Сохранить разбор в PDF</button><button class="ghost" id="share" type="button">Поделиться ссылкой</button></p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам</h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты.</p></div>
     <div class="sph-grid">${cards}</div></section>`;
 }
 
@@ -462,7 +465,8 @@ const VAPID_PUBLIC = 'BAtafqYtBLaVo0Hdz37tmWAPbdl4KsKLTImwFW3nXXCJU9BEjwhEWNrUQ0
 function pushCta() {
   return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
     <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
-    <button class="go" data-push type="button">Получать мой день каждое утро</button><p class="dhint" data-pushmsg></p></div></section>`;
+    <button class="go" data-push type="button">Получать мой день каждое утро</button><p class="dhint" data-pushmsg></p>
+    <div class="acts"><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
 }
 function chartQuery(): string {
   const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
@@ -672,7 +676,7 @@ function wireDays(c: Chart, a: Analysis) {
     } catch { /* пользователь закрыл окно — ничего не делаем */ }
   };
   const pdf = document.getElementById('pdf');
-  if (pdf) pdf.onclick = () => { document.querySelectorAll('details').forEach((d) => (d.open = true)); print(); };
+  if (pdf) pdf.onclick = () => { document.querySelectorAll<HTMLDetailsElement>('#out details').forEach((d) => { if (!d.closest('.deep')) d.open = true; }); print(); };
   const cf = document.getElementById('cf') as HTMLFormElement | null;
   if (cf) cf.onsubmit = async (e) => {
     e.preventDefault();
