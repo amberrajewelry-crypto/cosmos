@@ -473,3 +473,34 @@ button:active, .ghost:active { transform: scale(.97); }
 .rk .rk-q { color: var(--ink-1, inherit); font-weight: 600; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
 .rk .rk-q span { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--gold-3); display: inline-grid; place-items: center; font-size: 13px; }
 .rk .rk-b { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-3); }
+
+/* ——— Разделы-плитки: описание открыто, остальное по нажатию ——— */
+.fold-hint { margin: 56px 0 0; text-align: center; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); opacity: .8; }
+section.block.folded { margin-top: 12px; }
+.fold-hint + section.block.folded { margin-top: 18px; }
+details.fold { border-radius: 22px; background: var(--card); border: 1px solid rgba(var(--ink-rgb),.08); transition: border-color .3s var(--ease), box-shadow .3s var(--ease); }
+details.fold:hover, details.fold[open] { border-color: var(--gold-2); }
+details.fold[open] { box-shadow: 0 20px 60px -30px rgba(201,168,92,.35); }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 16px; padding: 20px 22px; -webkit-tap-highlight-color: transparent; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 22px; }
+.f-t { flex: 1; min-width: 0; }
+.f-t h2 { font-size: clamp(22px, 3vw, 30px); margin: 0; line-height: 1.15; }
+.f-t small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 6px; color: var(--ink-3); font-size: 14px; line-height: 1.45; }
+details.fold[open] .f-t small { -webkit-line-clamp: unset; display: block; }
+.f-ch { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--gold-2); position: relative; transition: transform .35s var(--ease), background .3s; }
+.f-ch::before { content: ''; position: absolute; left: 11px; top: 9px; width: 9px; height: 9px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(45deg); }
+details.fold[open] .f-ch { transform: rotate(180deg); background: var(--gold-3); }
+.f-body { padding: 0 22px 24px; animation: f-in .45s var(--ease) both; }
+@keyframes f-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.f-body > .acc { margin: 0 0 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+#s-recog details.fold { background: transparent; border-style: dashed; }
+#s-recog .f-t h2 { font-size: 18px; font-family: var(--sans); font-weight: 600; }
+#s-recog .f-t small { margin-top: 2px; }
+.rc-how { color: var(--ink-2); margin: 0 0 14px; }
+@media (max-width: 760px) {
+  .who-fx { width: min(200px, 56%); }
+  details.fold > summary { padding: 18px 16px; gap: 12px; }
+  .f-body { padding: 0 14px 20px; }
+}
+@media print { details.fold { border: 0; background: none; box-shadow: none; } .f-ch, .fold-hint, #s-recog { display: none !important; } }
