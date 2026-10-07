@@ -8,10 +8,12 @@ import { createHash } from 'node:crypto';
 interface Req { method?: string; body?: unknown; }
 interface Res { setHeader(k: string, v: string): Res; status(n: number): Res; json(b: unknown): void; end(): void; }
 
-const MAX = 5000;
+const MAX = 20000; // мёртвые и поддельные подписки воркер удаляет по 404/410 при первой отправке
 const idOf = (endpoint: string) => createHash('sha256').update(endpoint).digest('hex').slice(0, 24);
 const okTz = (tz: unknown) => { if (typeof tz !== 'string' || tz.length > 64) return false; try { new Intl.DateTimeFormat('en', { timeZone: tz }); return true; } catch { return false; } };
-const okEndpoint = (e: unknown): e is string => typeof e === 'string' && e.length < 1000 && /^https:\/\/[^\s]+$/.test(e);
+// Только сервисы пушей браузеров: иначе воркер на VPS слал бы запросы на произвольные адреса (SSRF).
+const PUSH_HOST = /^(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/;
+export const okEndpoint = (e: unknown): e is string => { if (typeof e !== 'string' || e.length > 1000) return false; try { const u = new URL(e); return u.protocol === 'https:' && !u.port && PUSH_HOST.test(u.hostname); } catch { return false; } };
 
 export default async function handler(req: Req, res: Res): Promise<void> {
   res.setHeader('Cache-Control', 'no-store');

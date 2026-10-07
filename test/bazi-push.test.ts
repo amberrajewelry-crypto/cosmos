@@ -15,3 +15,13 @@ describe('утренняя карточка дня (push)', () => {
     expect(pushMessage({ ...q, p: '1,2,Not/AZone,x' }, 'Asia/Tbilisi')).toBeNull();
   });
 });
+
+import { okEndpoint } from '../scripts/push-fn';
+describe('подписка: только сервисы пушей', () => {
+  it('пропускает FCM/Mozilla/Apple/Windows, режет остальное', () => {
+    for (const ok of ['https://fcm.googleapis.com/fcm/send/abc', 'https://updates.push.services.mozilla.com/wpush/v2/x', 'https://web.push.apple.com/Q', 'https://db5p.notify.windows.com/w/?token=1'])
+      expect(okEndpoint(ok)).toBe(true);
+    for (const bad of ['http://fcm.googleapis.com/x', 'https://127.0.0.1/x', 'https://fcm.googleapis.com.evil.io/x', 'https://fcm.googleapis.com:8443/x', 'https://localhost/x', 'x'])
+      expect(okEndpoint(bad)).toBe(false);
+  });
+});
