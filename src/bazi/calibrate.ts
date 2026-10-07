@@ -99,6 +99,26 @@ export function applyHypo(a: Analysis, h: Pick<Hypo, 'yong' | 'xi' | 'ji' | 'lab
   a.avoid = b.ji;
 }
 
+/** Вторая проверка (судья: рассуждение по правилам KB 06–09) выбрала другую полезную стихию — она становится основной.
+ * Сверка 07.10: судья точнее формулы на 209 картах 任铁樵 (41% против 33%) и по исходам тактов в тексте без модели (17:6, p≈0.035).
+ * Если вариант «на грани» (alt) совпадает с ответом судьи — берём его помощников и вредных; иначе по циклу: помощник — то, что рождает
+ * полезную, вредные — то, что её бьёт, и то, что рождает бьющего. */
+export function applyJudge(a: Analysis, el: El): void {
+  const b = a.brain;
+  if (el === b.yong || b.formulaYong !== undefined) return;
+  const was = b.yong, alt = b.alt?.yong === el ? b.alt : undefined;
+  const mother = ((el + 4) % 5) as El, ctrl = ((el + 3) % 5) as El, ctrlMom = ((el + 2) % 5) as El;
+  b.formulaYong = was;
+  b.yong = el;
+  b.xi = alt ? alt.xi.filter((e) => e !== el) : [mother];
+  b.ji = (alt ? alt.ji : [ctrl, ctrlMom]).filter((e) => e !== el && !b.xi.includes(e));
+  b.alt = undefined;
+  b.steps.push({ title: 'Вторая проверка', src: 'судья: рассуждение по правилам KB 06–09 (tools/judge.py), сверка 07.10 на картах 任铁樵',
+    text: `Формула дала ${EL[was]}, вдумчивый разбор карты по классике — ${EL[el]}. На проверочных картах мастеров второй разбор точнее формулы, поэтому основной считается ${EL[el]}.` });
+  a.consensus = [b.yong, ...b.xi];
+  a.avoid = b.ji;
+}
+
 /** Время неизвестно или сомнительно: какой из 12 двухчасовых отрезков лучше объясняет события. */
 export function rankHours(input: BirthInput, evs: LifeEvent[]): { hour: number; time: string; hits: number; miss: number; yong: El }[] {
   const out = [];
