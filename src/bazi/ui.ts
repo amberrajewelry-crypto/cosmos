@@ -109,7 +109,7 @@ document.addEventListener('submit', (e) => { const id = (e.target as HTMLElement
 fnt.addEventListener('change', () => (ft.disabled = fnt.checked));
 
 const voiceBtn = $<HTMLButtonElement>('voice');
-if (canListen()) {
+if (canListen() && new URLSearchParams(location.search).has('voice')) {
   voiceBtn.hidden = false;
   voiceBtn.onclick = async () => {
     voiceBtn.textContent = 'Слушаю…'; msg.textContent = 'Скажите, например: «двенадцатое мая девяностого года в половине третьего, Москва»';
@@ -194,7 +194,11 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
-  out.innerHTML = [secRecog(c, a, input), secWho(c, a), '<p class="fold-hint">Подробности — по разделам, откройте нужный</p>', secRasklad(c, a), secSpheres(c, a), secForecast(c, a), secPillars(c, a), secElements(c, a, charts), secSeason(c), secDays(c, a), secLuck(c, a), secPast(c, past), secRazbor(c, a), secCompat(), secAsk(), secFeedback(), secHonest()].join('');
+  // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
+  out.innerHTML = [secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(),
+    `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
+    secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
+    '</details></section>', secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
@@ -249,7 +253,6 @@ function secWho(c: Chart, a: Analysis) {
       <p class="who-sub">${EL[d.el]} ${pol(d.yang)} · сила: ${a.strength} · питают: ${a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
-      <p class="conf mid judge" id="judge" hidden></p>
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
@@ -458,7 +461,7 @@ function secRazbor(c: Chart, a: Analysis) {
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
         ${noteHtml(describeNote(c, a))}${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
-      <div class="card pane"><h3>Ось и климат</h3>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
+      <div class="card pane"><h3>Ось и климат</h3><p class="conf mid judge" id="judge" hidden></p>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
         <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
         <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
@@ -727,7 +730,8 @@ const recogKey = (i: BirthInput) => `bazi-recog:${i.date}:${i.timeKnown ? i.time
 let recogOwn = -1;
 // v2 (06.10): тест по портрету KB 18 (тип, черта/тень, точка срыва), а не по стиху ствола.
 function charText(c: Chart, a: Analysis) { return describe(c, a).lines.slice(0, 3); }
-function secRecog(c: Chart, a: Analysis, input: BirthInput) {
+/** Тест вслепую: снят со страницы 08.10 (честен только до чтения портрета). */
+export function secRecog(c: Chart, a: Analysis, input: BirthInput) {
   if (localStorage.getItem(recogKey(input))) return '';
   // псевдослучайно, но стабильно для карты: чужие карты с другим господином дня
   let seed = [...(input.date + input.time)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
