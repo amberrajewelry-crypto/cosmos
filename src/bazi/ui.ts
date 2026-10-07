@@ -21,7 +21,7 @@ import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
-import { calibrate, applyHypo, applyJudge, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
+import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } from './days';
@@ -184,16 +184,13 @@ function mountVisible(root: HTMLElement) {
     cv.dataset.m = '1'; mountFx(cv, +cv.dataset.stem!);
   });
 }
-const judgeKey = (c: Chart) => 'bazi-judge:' + ['year', 'month', 'day', 'hour'].map((pos) => c.pillars.find((p) => p.pos === pos)!.idx).join('_');
-const judgeSaved = (c: Chart): El | null => { try { const v = localStorage.getItem(judgeKey(c)); return v === null ? null : (+v as El); } catch { return null; } };
-function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT, keepScroll = false) {
+function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   current = { input, variant };
   const variants = allVariants(input);
   const charts = variants.map((v) => { const c = computeChart(input, v); return { v, c, a: analyze(c) }; });
   const c = computeChart(input, variant), a = analyze(c);
   const past = loadPast(input);
   if (past.apply) applyHypo(a, past.apply);
-  else if (input.timeKnown) { const j = judgeSaved(c); if (j !== null) applyJudge(a, j); }
   qi.tint(a.pct.map((x) => 0.05 + x));
   const out = $('out');
   out.hidden = false;
@@ -217,9 +214,9 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT, keepScroll
     wireDays(c, a);
     wirePast(c, a, input);
     wireRecog(input);
-    if (input.timeKnown) wireJudge(c, a, !!past.apply);
+    if (input.timeKnown) wireJudge(c, a);
   });
-  if (!keepScroll && !sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!sessionStorage.getItem('bazi-scrolled')) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function stemTile(stem: number) {
@@ -367,7 +364,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
-      ${((k) => `<p class="conf ${k.dispute ? 'low' : 'mid'}"><b>На чём держится вывод: ${k.dispute ? 'классика, есть спорное место' : 'классика, школы согласны'}.</b> ${esc(raskladNote(a))}${a.brain.formulaYong !== undefined ? ' Главная стихия уточнена второй, более вдумчивой проверкой: формула указывала на другую.' : ''}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(bookBasis(a))}
+      ${((k) => `<p class="conf ${k.dispute ? 'low' : 'mid'}"><b>На чём держится вывод: ${k.dispute ? 'классика, есть спорное место' : 'классика, школы согласны'}.</b> ${esc(raskladNote(a))}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(bookBasis(a))}
       <div class="methods">${methods}</div>
     </div></div></section>`;
 }
@@ -848,21 +845,13 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 // ——— Вторая проверка полезной стихии («судья», очередь /api/judge → воркер на VPS). Только при известном времени.
 let judgeRun = 0;
-function wireJudge(c: Chart, a: Analysis, locked: boolean) {
+function wireJudge(c: Chart, a: Analysis) {
   const box = document.getElementById('judge'); if (!box) return;
   const run = ++judgeRun, idx = (pos: string) => c.pillars.find((p) => p.pos === pos)!.idx;
-  const p = ['year', 'month', 'day', 'hour'].map(idx).join('_'), mine = a.brain.formulaYong ?? a.brain.yong;
+  const p = ['year', 'month', 'day', 'hour'].map(idx).join('_'), mine = a.brain.yong;
   const show = (html: string) => { if (run !== judgeRun) return; box.hidden = false; box.innerHTML = html; };
   const done = (el: number | null) => {
     if (el === null || el === undefined) { box.hidden = true; return; }
-    try { localStorage.setItem(judgeKey(c), String(el)); } catch { /* storage off */ }
-    if (el !== mine && !locked && a.brain.yong !== el && current) {
-      // Ответ пришёл, пока человек читает: пересчитать страницу под уточнённую стихию, сохранив место прокрутки.
-      const y = scrollY; build(current.input, current.variant, true);
-      requestAnimationFrame(() => requestAnimationFrame(() => scrollTo(0, y)));
-      track('bazi:judge:applied'); return;
-    }
-    if (el !== mine && a.brain.yong === el) { box.className = 'conf mid judge'; show(`<b>Расчёт уточнён.</b> Формула указывала на стихию «${EL[mine].toLowerCase()}», но вторая, более вдумчивая проверка по классике выбрала главной для вас стихию «${EL[el].toLowerCase()}». На проверочных картах мастеров она точнее формулы, поэтому описание, дни, годы и советы здесь построены по ней.`); return; }
     if (el === mine) show(`<b>Вторая проверка согласна:</b> главное для вас — ${EL[mine].toLowerCase()}. Два независимых разбора сошлись — этому выводу можно доверять больше обычного.`);
     else { box.className = 'conf low judge'; show(`<b>Вторая проверка видит иначе:</b> возможно, главное для вас — ${EL[el].toLowerCase()}, а не ${EL[mine].toLowerCase()}. Карта спорная: держите в голове оба варианта. Если годы, когда было много стихии «${EL[el].toLowerCase()}», были у вас удачнее, — ближе второй вариант.`); }
     track(`bazi:judge:${el === mine ? 'agree' : 'differ'}`);
