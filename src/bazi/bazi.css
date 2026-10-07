@@ -517,3 +517,7 @@ section.block.deep > details.more > section.block.folded { margin-top: 12px; }
   .orbit { width: min(260px, 68vw); --R: calc(min(260px, 68vw) * 0.44); margin: -6px auto 4px; }
   .hero h1 { font-size: 30px; }
 }
+.ex-note .card { border-color: var(--gold); }
+.ex-note .go { margin-top: 10px; }
+.push-cta .acts { margin-top: 14px; }
+@media print { section.deep, .ex-note, .push-cta .go, [data-pushmsg] { display: none !important; } }
