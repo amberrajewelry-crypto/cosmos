@@ -210,7 +210,7 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
   const be = BRANCHES[idx % 12].el;
   // Сила на грани: ствол и ветвь периода оба «свои/Печать» или оба против — перевес меняется, берём другой набор.
   const { set, swung } = activeSet(b, idx, c);
-  const swing = swung && b.alt ? ` Сила на грани, период её ${b.alt.lean === 'strong' ? 'поднимает' : 'опускает'} — полезный здесь ${EL[b.alt.yong]} (朱祖夏 中和)` : '';
+  const swing = swung && b.alt ? ` Сила на грани, период её ${b.alt.lean === 'strong' ? 'поднимает' : 'опускает'} — здесь полезнее ${EL[b.alt.yong].toLowerCase()} (朱祖夏 中和)` : '';
   const v = (e: El) => (e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0);
   // Союз ствола периода со стволом натала (命理约言 干合论; ЦПЦЦ гл.5): связанный ствол «贪合» — работает вполсилы;
   // если ветвь месяца карты — стихия союза, он превращается (丙辛 зимой → Вода; ДТС «丙辛生於冬月»).

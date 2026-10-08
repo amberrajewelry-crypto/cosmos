@@ -35,3 +35,12 @@ describe('bazi days', () => {
     expect(p).toContain('2026-10-20>2026-10-21');
   });
 });
+describe('bazi days: текст переживает lay() на сайте', () => {
+  it('в notes/warn/good нет «…» — (lay вырезал бы сферу), why без «становится полезной»', () => {
+    const ds = daysFrom(c, a, new Date(2026, 0, 1), 400);
+    const txt = ds.flatMap((d) => [...d.notes, ...d.warn, ...(d.good ?? [])]);
+    expect(txt.filter((t) => /«[^»]*»\s*—/.test(t))).toEqual([]);
+    expect(ds.some((d) => /в сфере «/.test([...d.warn, ...d.notes].join()))).toBe(true);
+    expect(ds.filter((d) => /становится полезной/.test(d.why))).toEqual([]);
+  });
+});

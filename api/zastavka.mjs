@@ -2589,7 +2589,7 @@ function periodVerdict(b, idx, c, partner) {
   let se = STEMS[idx % 10].el;
   const be = BRANCHES[idx % 12].el;
   const { set, swung } = activeSet(b, idx, c);
-  const swing = swung && b.alt ? ` \u0421\u0438\u043B\u0430 \u043D\u0430 \u0433\u0440\u0430\u043D\u0438, \u043F\u0435\u0440\u0438\u043E\u0434 \u0435\u0451 ${b.alt.lean === "strong" ? "\u043F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442" : "\u043E\u043F\u0443\u0441\u043A\u0430\u0435\u0442"} \u2014 \u043F\u043E\u043B\u0435\u0437\u043D\u044B\u0439 \u0437\u0434\u0435\u0441\u044C ${EL[b.alt.yong]} (\u6731\u7956\u590F \u4E2D\u548C)` : "";
+  const swing = swung && b.alt ? ` \u0421\u0438\u043B\u0430 \u043D\u0430 \u0433\u0440\u0430\u043D\u0438, \u043F\u0435\u0440\u0438\u043E\u0434 \u0435\u0451 ${b.alt.lean === "strong" ? "\u043F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442" : "\u043E\u043F\u0443\u0441\u043A\u0430\u0435\u0442"} \u2014 \u0437\u0434\u0435\u0441\u044C \u043F\u043E\u043B\u0435\u0437\u043D\u0435\u0435 ${EL[b.alt.yong].toLowerCase()} (\u6731\u7956\u590F \u4E2D\u548C)` : "";
   const v = (e) => e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0;
   let bond = "", k = 1;
   if (c) {
@@ -2615,7 +2615,7 @@ function periodVerdict(b, idx, c, partner) {
   let s = v(se) * k, r = v(be);
   if ((se + 2) % 5 === be) s *= 1.5;
   else if ((be + 2) % 5 === se) r *= 1.5;
-  let extra = "";
+  let extra = "", s0 = s, r0 = r;
   if (c) {
     const day = c.pillars.find((p) => p.pos === "day"), month = c.pillars.find((p) => p.pos === "month");
     if (voidOf(day.idx).includes(idx % 12)) {
@@ -2623,6 +2623,7 @@ function periodVerdict(b, idx, c, partner) {
       else {
         const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
         r *= half ? 0.85 : 0.65;
+        r0 = r;
         extra += ` \u0412\u0435\u0442\u0432\u044C \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \xAB\u0432 \u043F\u0443\u0441\u0442\u043E\u0442\u0435\xBB \u2014 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0441\u043B\u0430\u0431\u0435\u0435 (\u547D\u7406\u7EA6\u8A00 \u7A7A\u4EA1\u8BBA)`;
       }
     }
@@ -2636,8 +2637,8 @@ function periodVerdict(b, idx, c, partner) {
       }
     }
   }
-  const t = s + r;
-  const res0 = verdictOf(s, r, t);
+  const t = s + r, byEl = verdictOf(s0, r0, s0 + r0), fin = verdictOf(s, r, t);
+  const res0 = { tone: fin.tone, text: byEl.text + (fin.tone !== byEl.tone ? ", \u043D\u043E \u0443\u0434\u0430\u0440 \u043F\u043E \u0441\u0442\u043E\u043B\u043F\u0443 \u0434\u043D\u044F \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442" : "") };
   return { tone: res0.tone, text: res0.text + (bond ? "." + bond : "") + (swing ? "." + swing : "") + (extra ? "." + extra : ""), set, se, swung };
 }
 function verdictOf(s, r, t) {
@@ -2949,7 +2950,7 @@ function advice(c, a, idx, monthIdx, type, yi, bgAdj) {
     const ctlBy = (x + 3) % 5;
     if (fav(gen(x))) {
       med = gen(x);
-      why = `${EL[x]} \u043F\u0435\u0440\u0435\u0442\u0435\u043A\u0430\u0435\u0442 \u0432 ${ACC[med]} \u0438 \u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0441\u044F \u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0439`;
+      why = `${EL[x]} \u043F\u0435\u0440\u0435\u0442\u0435\u043A\u0430\u0435\u0442 \u0432 ${ACC[med]}, \u043F\u043E\u043B\u0435\u0437\u043D\u0443\u044E \u0432\u0430\u043C \u0441\u0442\u0438\u0445\u0438\u044E`;
     } else if (fav(ctlBy)) {
       med = ctlBy;
       why = `${EL[med]} \u0441\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 ${ACC[x]}`;
@@ -2969,9 +2970,9 @@ function advice(c, a, idx, monthIdx, type, yi, bgAdj) {
     if (Math.abs(pb - b) === 6) score -= BRANCH_POS_W[p.pos];
     if (Math.abs(pb - b) !== 6 && (PUNISH2.some((set) => set.includes(pb) && set.includes(b) && pb !== b) || pb === b && SELF_PUNISH.includes(b))) {
       score -= BRANCH_POS_W[p.pos];
-      if (p.pos !== "day") warn.push(`\u0442\u0440\u0435\u043D\u0438\u044F \u0432 \u0441\u0444\u0435\u0440\u0435 \xAB${POS_AREA[p.pos]}\xBB \u2014 \u0431\u0435\u0437 \u0440\u0435\u0437\u043A\u0438\u0445 \u0448\u0430\u0433\u043E\u0432`);
+      if (p.pos !== "day") warn.push(`\u0442\u0440\u0435\u043D\u0438\u044F \u0432 \u0441\u0444\u0435\u0440\u0435 \xAB${POS_AREA[p.pos]}\xBB, \u0431\u0435\u0437 \u0440\u0435\u0437\u043A\u0438\u0445 \u0448\u0430\u0433\u043E\u0432`);
     }
-    if (p.pos === "day" && SIX2.some(([x, z]) => x === pb && z === b || x === b && z === pb)) good.push(`\u043F\u0440\u0438\u0442\u044F\u0436\u0435\u043D\u0438\u0435 \u0432 \u0441\u0444\u0435\u0440\u0435 \xAB${POS_AREA.day}\xBB \u2014 \u0445\u043E\u0440\u043E\u0448\u043E \u0434\u043E\u0433\u043E\u0432\u0430\u0440\u0438\u0432\u0430\u0442\u044C\u0441\u044F`);
+    if (p.pos === "day" && SIX2.some(([x, z]) => x === pb && z === b || x === b && z === pb)) good.push(`\u043F\u0440\u0438\u0442\u044F\u0436\u0435\u043D\u0438\u0435 \u0432 \u0441\u0444\u0435\u0440\u0435 \xAB${POS_AREA.day}\xBB, \u0445\u043E\u0440\u043E\u0448\u043E \u0434\u043E\u0433\u043E\u0432\u0430\u0440\u0438\u0432\u0430\u0442\u044C\u0441\u044F`);
     if (p.pos === "day" && Math.abs(ps - s) === 5) {
       score += 0.5;
       good.push("\u0434\u0435\u043D\u044C \u0442\u044F\u043D\u0435\u0442\u0441\u044F \u043A \u0432\u0430\u043C: \u0434\u0435\u043D\u044C\u0433\u0438 \u0438\u043B\u0438 \u043F\u0430\u0440\u0442\u043D\u0451\u0440 \u0441\u0430\u043C\u0438 \u0438\u0434\u0443\u0442 \u043D\u0430\u0432\u0441\u0442\u0440\u0435\u0447\u0443 \u2014 \u0443\u0441\u043B\u043E\u0432\u0438\u044F \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u0442\u044C");

@@ -68,7 +68,7 @@ export function rasklad(c: Chart, a: Analysis, now = new Date()): Answer[] {
 
   // 4. Есть ли деньги и где лежат
   const w = a.pct[r.wealth], wr = role(a, r.wealth), pres = presence(c, r.wealth), k = a.brain.power.key;
-  const verdict = pres === 'none' ? 'Своих денег в карте мало: деньги приносят периоды, когда Богатство приходит извне.'
+  const verdict = pres === 'none' ? 'Своих денег в карте мало: деньги приносят периоды, когда стихия денег приходит извне.'
     : w >= 0.3 && k === 'weak' ? 'Деньги вокруг есть, а сил удержать меньше: богатеете через партнёров и команду, а не в одиночку.'
       : good(wr) && k !== 'weak' ? 'Да: деньги в карте есть и вам по силам — их можно брать и удерживать.'
         : wr === 'ji' ? 'Деньги в карте есть, но гонка за ними вас изматывает: зарабатывайте через своё сильное место, а не через погоню.'
@@ -76,7 +76,7 @@ export function rasklad(c: Chart, a: Analysis, now = new Date()): Answer[] {
   const places = c.pillars.filter((p) => (p.pos !== 'day' && STEMS[p.stem].el === r.wealth) || STEMS[BRANCHES[p.branch].hidden[0]].el === r.wealth)
     .filter((p) => p.pos !== 'hour' || c.input.timeKnown).map((p) => MONEY_PLACE[p.pos]);
   out.push({ q: 'Есть ли деньги в карте и где они лежат', basis: `где лежат — точный расчёт; по силам ли — ${yongNote}`,
-    a: [verdict, places.length ? `Где лежат: ${[...new Set(places)].join('; ')}.` : 'На виду в карте Богатства нет — смотрите денежные периоды ниже.'] });
+    a: [verdict, places.length ? `Где лежат: ${[...new Set(places)].join('; ')}.` : 'На виду в карте денег нет — смотрите денежные периоды ниже.'] });
 
   // 5. Чем зарабатывать
   const top = groupOf(a)[0][0];
