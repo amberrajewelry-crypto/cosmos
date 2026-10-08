@@ -15,35 +15,19 @@ import {
   type BirthInput, type Chart, type Analysis, type Variant, type Pos,
 } from './calc';
 import { mountFx, elIcon } from './fx';
-import { DM_TEXT, EL_NEED, godProfile, luckReading, chartSummary } from './interp';
+import { DM_TEXT, EL_NEED, godProfile, chartSummary } from './interp';
 import { describe, describeNote } from './describe';
 import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
-import { periodVerdict } from './brain';
 import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
-import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } from './days';
+import { daysFrom, type DayInfo, dayInfo } from './days';
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
-// Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
-const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\(\s*—\s*/g, '(').replace(/\s*—\s*(?=[.,;:)]|$)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1').replace(/(?<!\.)\.\.(?!\.)/g, '.');
-// Классические имена богов звучат пугающе — на странице мягкие («Давление», «Соперник», «Бунтарь»).
-const RANG: Record<string, string> = { 'ий': 'Бунтарь', 'его': 'Бунтаря', 'ему': 'Бунтарю', 'им': 'Бунтарём' };
-const UBI: Record<string, string> = { 'о': 'Давление', 'а': 'Давления', 'у': 'Давлению', 'ом': 'Давлением' };
-const soften = (s: string) => s.replace(/Семь убийств/g, 'Давление').replace(/Грабител[а-я]* богатства/g, 'Соперник')
-  .replace(/Ранящ(ий|его|ему|им)( чиновника)?/g, (_, e: string) => RANG[e]).replace(/Убийств(ом|о|а|у)/g, (_, e: string) => UBI[e]);
-const esc = (s: string) => plain(soften(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-const rgb = (e: number) => EL_RGB[e];
-const pol = (yang: boolean) => (yang ? 'ян' : 'инь');
-const lbl = (p: Place) => (p.cc ? placeLabel(p) : p.ru);
-const ANIMAL = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
-const IMGS = import.meta.glob('./img/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-export const animalSrc = (b: number) => IMGS[`./img/${ANIMAL[b]}.webp`];
-
+import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
+import { dayCard, dayMore, dLabel, secDays } from './ui-days';
 // ——— Фон: поток ци ———
 const qi = (() => {
   const cv = $<HTMLCanvasElement>('qi'), ctx = cv.getContext('2d')!;
@@ -77,7 +61,7 @@ const qi = (() => {
 (() => {
   const o = document.getElementById('orbit');
   if (!o) return;
-  const ring = ANIMAL.map((_, b) => `<span style="--a:${b * 30}deg"><img src="${animalSrc(b)}" alt="" /></span>`).join('');
+  const ring = ANIMAL.map((_, b) => `<span style="--a:${b * 30}deg"><img src="${animalSm(b)}" alt="" /></span>`).join('');
   const FX5 = [3, 4, 7, 8, 0]; // Огонь (вверху), Земля, Металл, Вода, Дерево — по кругу порождения
   const inner = FX5.map((stem, i) => { const a = -90 + i * 72, e = STEMS[stem].el; return `<div class="o-el" style="--x:${Math.cos((a * Math.PI) / 180) * 24}%;--y:${Math.sin((a * Math.PI) / 180) * 24}%;--rgb:${rgb(e)}"><canvas class="fxc" data-stem="${stem}"></canvas><b>${EL[e]}</b></div>`; }).join('');
   o.innerHTML = `<div class="o-ring">${ring}</div><svg class="o-pent" viewBox="-50 -50 100 100"><circle r="26" /><path d="${[0, 2, 4, 1, 3, 0].map((i, k) => `${k ? 'L' : 'M'}${(Math.cos(((-90 + i * 72) * Math.PI) / 180) * 26).toFixed(2)},${(Math.sin(((-90 + i * 72) * Math.PI) / 180) * 26).toFixed(2)}`).join('')}" /></svg>${inner}<div class="o-core"><span>8</span>знаков</div>`;
@@ -146,7 +130,6 @@ $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
 // ——— Построение ———
 let current: { input: BirthInput; variant: Variant } | null = null;
 let lastQuery = '';
-const ME_KEY = 'bazi-me';
 // Несколько карт в этом браузере: [{ q, label }]. Хранилище может быть недоступно (приватный режим) — тогда просто пусто.
 const LIST_KEY = 'bazi-list';
 type Saved = { q: string; label: string };
@@ -234,12 +217,6 @@ function stemTile(stem: number) {
 function branchTile(b: number) {
   return `<div class="glyph ani" style="--rgb:${rgb(BRANCHES[b].el)}"><img src="${animalSrc(b)}" alt="${BRANCHES[b].animal}" loading="lazy" decoding="async" /></div>`;
 }
-/** Основной поток — без кухни расчёта: имена божеств в кавычках, ветви, такты, пустота, союзы, трактаты. */
-const lay = (s: string) => s.replace(/«[^»]*»\s*—\s*/g, '').split(/(?<=[.;])\s+/).filter((x) => !/ветв|пуст|союз|такт|трактат/i.test(x)).join(' ').replace(/[.;,]\s*$/, '');
-const animalOf = (idx: number) => `<span style="color:${EL_COLOR[BRANCHES[idx % 12].el]}">${BRANCHES[idx % 12].animal}</span>`;
-/** Тон периода — тот же, что в прогнозе и раскладе (periodVerdict мозга), текст — luckReading. */
-const luckR = (c: Chart, a: Analysis, idx: number) => { const t = periodVerdict(a.brain, idx, c).tone; return { ...luckReading(a, idx, t), t4: t }; };
-const thumb = (b: number, size = 44) => `<img class="thumb" src="${animalSrc(b)}" alt="${BRANCHES[b].animal}" width="${size}" height="${size}" loading="lazy" />`;
 
 /** «Расклад по 7 вопросам» (rasklad.ts): ответы из расчёта + на чём держится каждый. */
 function secRasklad(c: Chart, a: Analysis) {
@@ -263,9 +240,9 @@ function secWho(c: Chart, a: Analysis) {
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
-        <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
-        <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
-        ${cur ? `<div class="lt ${tone}"><img src="${animalSrc(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
+        <div><img src="${animalSm(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
+        <div><img src="${animalSm(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
+        ${cur ? `<div class="lt ${tone}"><img src="${animalSm(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
       </div></div></section>`;
 }
 
@@ -395,7 +372,7 @@ function secSeason(c: Chart) {
     const lon = 315 + k * 15, jie = k % 2 === 0;
     const [x1, y1] = pos(lon, R - (jie ? 22 : 12)), [x2, y2] = pos(lon, R + 6);
     s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(236,230,211,${jie ? 0.6 : 0.25})" stroke-width="${jie ? 1.4 : 1}"/>`;
-    if (jie) { const [tx, ty] = pos(lon + 15, R - 40); const b = (2 + k / 2) % 12; s += `<image href="${animalSrc(b)}" x="${tx - 19}" y="${ty - 19}" width="38" height="38"/>`; }
+    if (jie) { const [tx, ty] = pos(lon + 15, R - 40); const b = (2 + k / 2) % 12; s += `<image href="${animalSm(b)}" x="${tx - 19}" y="${ty - 19}" width="38" height="38"/>`; }
   }
   const [sx, sy] = pos(c.sunLon, R);
   s += `<line x1="${cx}" y1="${cy}" x2="${sx}" y2="${sy}" stroke="rgba(226,196,124,.5)" stroke-dasharray="3 4"/>`;
@@ -554,94 +531,6 @@ const INTER_SENSE: Record<string, string> = {
   dir: 'сезонный союз — вся сторона света в карте, стихия доминирует',
 };
 
-function dayCard(d: DayInfo, big = false, extra = '') {
-  const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
-  return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
-    <p class="eyebrow">${dLabel(d)} · ${dayRu(d)} · ${d.score} из 5</p>
-    <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
-    <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? ' — сегодня готовить и обдумывать, а не решать' : ''}.</p>
-    ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
-    ${((w) => w.length ? `<p class="dnote">Осторожно: ${w.map(esc).join('; ')}.</p>` : '')([...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean))}
-    ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
-    ${big && extra ? extra : ''}
-  </div></div>`;
-}
-
-// Часы на руке = солнечное время + сдвиг. Если человек в том же поясе, что при рождении, — по долготе места рождения,
-// иначе — по середине своего пояса (точность ±30 мин).
-function clockShift(c: Chart): number {
-  const off = -new Date().getTimezoneOffset() / 60;
-  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* нет Intl */ }
-  return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
-}
-const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
-/** «Сильный · 2 из 5» читается как противоречие: стихия дня полезна, но фон десятилетия/года тянет вниз — так и пишем. */
-const dayRu = (d: DayInfo) => DAY_TYPE[d.type].ru;
-const BG_RU = { good: 'благоприятное', bad: 'с нагрузкой', mixed: 'смешанное', calm: 'спокойное' } as const;
-const BG_RU_Y = { good: 'благоприятный', bad: 'с нагрузкой', mixed: 'смешанный', calm: 'спокойный' } as const;
-function bgRu(d: DayInfo): string {
-  const b = d.bg, parts = [`${b.luck ? `десятилетие ${BG_RU[b.luck]}, ` : ''}год ${BG_RU_Y[b.year]}`];
-  parts.push(b.adj > 0 ? 'фон приподнимает оценку дня' : b.adj < 0 ? 'фон снижает оценку дня' : 'на оценку дня не влияет');
-  return parts.join(' — ') + (b.swung ? '. В это десятилетие ваша сила меняет баланс, поэтому полезные стихии на нём другие, чем по рождению.' : '.');
-}
-function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
-  const hh = bestHours(a, d, clockShift(c));
-  const k = days.findIndex((x) => x.iso === d.iso), next = days[k + 1], week = days.slice(k + 1, k + 8);
-  const pick = week.filter(bigOk), top = (pick.length ? pick : week).reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
-  return `<div class="dmore">
-    <p><b>${d.heal ? 'Чем выровнять день' : 'На что опереться'}:</b> ${EL[d.med]} — ${esc(d.why)}.</p>
-    ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
-    <p class="dhint"><b>Фон:</b> ${bgRu(d)}</p>
-    <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
-    <ul class="list"><li>${esc(d.add.theory)}</li>
-      <li>${esc(d.add.folk)}</li></ul>
-    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${dayRu(next).toLowerCase()}, ${next.score} из 5.${top ? (pick.length ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : (d.score >= 3 ? ` Дальше на неделе сильных дней нет — важное лучше поставить на сегодня.` : ` Сильных дней на неделе нет — важное лучше перенести; самый ровный — ${dLabel(top)}.`)) : ''}</p>` : ''}
-    <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
-  </div>`;
-}
-
-// ——— Мои дни: календарь по карте ———
-/** День, на который можно ставить важное: сильный, от 3 из 5, без запрета на крупное — одно правило для «Лучших дней» и «лучшего дня недели». */
-const bigOk = (d: DayInfo) => d.type === 'peak' && d.score >= 3 && !d.notes.some((n) => n.includes('не начинать') || n.includes('не для решений'));
-const WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-const dLabel = (d: DayInfo, wd = true) => { const [y, m, dd] = d.iso.split('-').map(Number); const w = new Date(y, m - 1, dd).getDay(); return `${dd} ${MON[m - 1]}${wd ? ', ' + WD[w] : ''}`; };
-const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], dd = +d.iso.slice(8);
-  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}"><b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSrc(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
-
-function secDays(c: Chart, a: Analysis) {
-  const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const days = daysFrom(c, a, start, 120), today = days[0];
-  // Лучшие — от 3 из 5; самые высокие оценки без запрета на крупное, потом по дате (раньше брались первые 5 подряд, в т.ч. «3 из 5, крупное не начинать»).
-  const best = days.slice(0, 45).filter(bigOk)
-    .sort((x, y) => y.score - x.score || x.iso.localeCompare(y.iso)).slice(0, 5).sort((x, y) => x.iso.localeCompare(y.iso));
-  const pairs = showThenClose(days).slice(0, 5);
-  const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
-  const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
-  const fav = a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ');
-  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
-    <p>Сильный день (4–5 из 5) — когда приходит полезная вам стихия (${fav}) и ничто её не перебивает: для главных шагов — переговоров, запусков, оплат, публикаций. Дни нагрузки (1–2 из 5) — когда ${bad ? `приходят ${bad} или ` : ''}день бьёт по вашей карте. Нажмите на день — подскажем, что на него ставить.</p></div>
-    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
-    <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
-      <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
-      <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall" hidden></p></div>
-    <h3 style="margin-top:26px">8 недель</h3>
-    <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
-    <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
-    <h3 style="margin-top:26px">Лучшие дни ближайших 45 дней</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
-    ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
-    <div class="saved" hidden></div>
-    <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Получать мой день каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
-    <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
-      <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
-      <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>
-      <ol class="list"><li>iPhone: «Команды» → «Автоматизация» → «+» → «Время суток»: 6:00, ежедневно, «Запускать сразу».</li>
-        <li>Действие «Получить содержимое URL» — вставить скопированную ссылку.</li>
-        <li>Действие «Установить обои» — экран блокировки; «Показать предпросмотр» выключить.</li>
-        <li>Готово: каждое утро заставка обновится сама. Разово — откройте картинку, «Поделиться» → «Сделать обоями».</li></ol>
-    </details>
-  </section>`;
-}
 const SPHERES: [string, string][] = [['-', 'сфера (необязательно)'], ['work', 'работа'], ['money', 'деньги'], ['love', 'отношения'], ['family', 'семья'], ['health', 'здоровье'], ['mood', 'настроение']];
 async function wireJournal(c: Chart, a: Analysis, today: DayInfo) {
   const box = document.getElementById('jrows'); if (!box) return;
@@ -728,7 +617,7 @@ function wireDays(c: Chart, a: Analysis) {
 function secCompat() {
   return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div><p>Сравниваем две карты целиком: что каждый даёт другому в чувствах, поддержке и деньгах. Итог — легче или труднее, без «можно/нельзя».</p></div>
     <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
-      <input id="cf-p" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
+      <input id="cf-p" aria-label="Город рождения партнёра" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
 }
 

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 // SSG натальных страниц (§5.3): грузим TS-модуль через Vite SSR (резолвит импорты как в приложении),
 // прогоняем 366 дат × 2 языка, пишем статические HTML в public/ (Vite копирует их в dist как есть).
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SITE = 'https://cosmos-alpha-three.vercel.app';
+const SITE = 'https://astropro.tech';
 
 const vite = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { natalPage, urlFor, signPage, signUrl, ophiuchusPage, ophiuchusUrl, shell, setStarCatalog } = await vite.ssrLoadModule('/src/natal/page.ts');
