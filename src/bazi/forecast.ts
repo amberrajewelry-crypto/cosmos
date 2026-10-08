@@ -8,7 +8,7 @@ import { GOD_ACT } from './days';
 import { luckDetail } from './reading';
 
 export type Tone = 'good' | 'bad' | 'mixed' | 'calm';
-export interface Period { idx: number; tone: Tone; text: string; why: string; act: string; hits: string[] }
+export interface Period { idx: number; tone: Tone; text: string; why: string; act: string; hits: string[]; swing?: string }
 export interface MonthF extends Period { start: Date }
 export interface YearF extends Period { year: number; start: Date; end: Date; luck?: { idx: number; tone: Tone; from: number } ; months: MonthF[] }
 
@@ -22,10 +22,13 @@ function period(c: Chart, a: Analysis, idx: number, partner?: number): Period {
   const hits: string[] = [];
   if (clash(idx % 12, day.branch)) hits.push('перемены в доме, паре, здоровье');
   if (clash(idx % 12, month.branch)) hits.push('встряска в работе и основе жизни');
-  const r = (e: El) => (a.brain.yong === e ? 'главное полезное' : a.brain.xi.includes(e) ? 'полезно' : a.brain.ji.includes(e) ? 'нагрузка' : 'нейтрально');
-  const se = STEMS[idx % 10].el, be = BRANCHES[idx % 12].el;
+  // Метки стихий — по тому же набору 用/喜/忌, что и тон (при силе «на грани» такт/год его меняет), и по стихии ствола после союза.
+  const S = v.set, r = (e: El) => (S.yong === e ? 'главное полезное' : S.xi.includes(e) ? 'полезно' : S.ji.includes(e) ? 'нагрузка' : 'нейтрально');
+  const se = v.se, be = BRANCHES[idx % 12].el;
   const why = se === be ? `${EL[se]} — ${r(se)}` : `${EL[se]} — ${r(se)}, ${EL[be].toLowerCase()} — ${r(be)}`;
-  return { idx, tone: v.tone, text: v.text, why, act: `«${g.ru}» — ${GOD_ACT[g.key]}`, hits };
+  // Сила «на грани»: в этом периоде полезное другое, чем обычно, — сказать прямо, иначе метки месяцев «прыгают» без причины.
+  const swing = v.swung ? `сила на грани: в этот период полезнее ${EL[S.yong].toLowerCase()}, а не ${EL[a.brain.yong].toLowerCase()}` : undefined;
+  return { idx, tone: v.tone, text: v.text, why, act: `«${g.ru}» — ${GOD_ACT[g.key]}`, hits, swing };
 }
 
 /** Год бацзы (от 立春) с двенадцатью месяцами. */

@@ -51,7 +51,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
     for (const ln of wrap(body, 44, TW, max)) { text(ln, 44, 400, fill); y += 58; }
     y += 38;
   };
-  block('Делать', cap(d.act));
+  block(d.type === 'heavy' ? 'Тема дня · готовить, не решать' : 'Делать', cap(d.act));
   block(`${d.heal ? 'Выровнять день' : 'Опора дня'} · теория стихий`, cap(d.add.theory));
   const hh = bestHours(a, d, shift);
   if (hh.length) block('Лучшие часы', hh.slice(0, 2).join(', '), '#ebecf0', 1);

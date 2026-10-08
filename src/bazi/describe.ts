@@ -142,7 +142,14 @@ export function describe(c: Chart, a: Analysis): Description {
   }
   const og = topGroup(outerW), ig = topGroup(innerW);
   const fem = !c.input.male, outer = (fem ? OUTER_F : OUTER)[og];
-  lines.push(og === ig ? `${fem ? 'Какой' : 'Каким'} вас видят — ${outer}, — ${fem ? 'такая' : 'такой'} вы и внутри: маски у вас нет.` : `Со стороны вы кажетесь ${outer}, а ${INNER[ig]}.`);
+  // «Маски нет» нельзя говорить, если облик спорит с типом из §1: сильный с мягким обликом (Печать) или слабый
+  // с обликом «несговорчивый» (свои) — тогда облик описываем как то, что видят до давления / как защиту.
+  const strongT = type === 'strong-check' || type === 'strong-free', weakT = type === 'weak-support' || type === 'weak-alone';
+  const clashOuter = (strongT && og === 4) || (weakT && og === 0);
+  lines.push(og === ig && !clashOuter ? `${fem ? 'Какой' : 'Каким'} вас видят — ${outer}, — ${fem ? 'такая' : 'такой'} вы и внутри: маски у вас нет.`
+    : clashOuter && strongT ? `Со стороны вы кажетесь ${outer} — но это до первого давления: сил под этим больше, чем видно.`
+    : clashOuter ? `Со стороны вы кажетесь ${outer} — это защита: так вы держите дистанцию, пока не уверены в людях.`
+    : `Со стороны вы кажетесь ${outer}, а ${INNER[ig]}.`);
   detail.push(`Снаружи/внутри: стволы — ${REL_GROUP[og]}, главная ци ветвей — ${REL_GROUP[ig]} (盲派 гл.2: «天干代表人的表象…地支代表人的内在»).`);
 
   // 朱 (冲 у ветви дня с соседней ветвью): «内心动荡»

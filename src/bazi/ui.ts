@@ -259,7 +259,7 @@ function secWho(c: Chart, a: Analysis) {
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
     <div class="who-txt"><p class="eyebrow">Кто вы</p>
       <h2>${t.title}</h2>
-      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вас поддерживают: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
+      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вам полезны: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
@@ -435,20 +435,28 @@ function secLuck(c: Chart, a: Analysis) {
 
 const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div>`;
 
+const ucFirst = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const lcFirst = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
+const hitsTxt = (h: string[]) => (h.length ? ' ' + esc(lay(ucFirst(h.join('; ')))) + '.' : '');
+
 function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
-  const yHtml = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(lay(d.text))}.
-    <details><summary>Подробнее</summary><small>Чем заняться — ${esc(lay(d.act))}.${d.hits.length ? ' ' + esc(lay(d.hits.join('; '))) + '.' : ''} ${esc(lay(d.detail.join(' ')))}</small></details></li>`);
+  // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
+  const yHtml = dec.map((d) => {
+    const det = d.detail.filter((x) => !d.hits.some((h) => x.toLowerCase().includes(h)));
+    return `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span>: ${esc(lcFirst(d.why))}; ${esc(lay(d.text))}.
+    <details><summary>Подробнее</summary><small>Чем заняться — ${esc(lay(d.act))}.${hitsTxt(d.hits)} ${esc(lay(det.join(' ')))}</small></details></li>`;
+  });
   const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
-    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${y.hits.length ? ' ' + esc(lay(y.hits.join('; '))) + '.' : ''}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
+    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${hitsTxt(y.hits)}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
       ${months}</div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
 }
@@ -551,7 +559,7 @@ function dayCard(d: DayInfo, big = false, extra = '') {
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
     <p class="eyebrow">${dLabel(d)} · ${dayRu(d)} · ${d.score} из 5</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
-    <p><b>Что делать:</b> ${esc(lay(d.act))}.</p>
+    <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? ' — сегодня готовить и обдумывать, а не решать' : ''}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
     ${((w) => w.length ? `<p class="dnote">Осторожно: ${w.map(esc).join('; ')}.</p>` : '')([...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean))}
     ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
@@ -568,7 +576,7 @@ function clockShift(c: Chart): number {
 }
 const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
 /** «Сильный · 2 из 5» читается как противоречие: стихия дня полезна, но фон десятилетия/года тянет вниз — так и пишем. */
-const dayRu = (d: DayInfo) => (d.type === 'peak' && d.score <= 2 ? 'полезный, но фон тяжёлый' : DAY_TYPE[d.type].ru);
+const dayRu = (d: DayInfo) => DAY_TYPE[d.type].ru;
 const BG_RU = { good: 'благоприятное', bad: 'с нагрузкой', mixed: 'смешанное', calm: 'спокойное' } as const;
 const BG_RU_Y = { good: 'благоприятный', bad: 'с нагрузкой', mixed: 'смешанный', calm: 'спокойный' } as const;
 function bgRu(d: DayInfo): string {
@@ -610,7 +618,7 @@ function secDays(c: Chart, a: Analysis) {
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
-    <p>Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций.${bad ? ` Дни нагрузки — когда приходят ${bad}.` : ''} Нажмите на день — подскажем, что на него ставить.</p></div>
+    <p>Сильный день (4–5 из 5) — когда приходит полезная вам стихия (${fav}) и ничто её не перебивает: для главных шагов — переговоров, запусков, оплат, публикаций. Дни нагрузки (1–2 из 5) — когда ${bad ? `приходят ${bad} или ` : ''}день бьёт по вашей карте. Нажмите на день — подскажем, что на него ставить.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
       <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>

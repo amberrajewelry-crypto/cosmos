@@ -33,8 +33,8 @@ export function compat(c1: Chart, a1: Analysis, c2: Chart, a2: Analysis): Compat
   items.push({ sphere: 'growth', title: 'Что партнёр приносит вам', tone: toneOf(g12.score), text: `Сильнее всего в карте партнёра: ${g12.text}.`,
     quote: '用庚者，土妻金子', src: 'ЦТБЦ (KB 12 §1): партнёр — стихия, что служит вашему полезному богу' });
   items.push({ sphere: 'growth', title: 'Что вы приносите партнёру', tone: toneOf(g21.score), text: `Сильнее всего в вашей карте: ${g21.text}.` });
-  if (a1.brain.yong === a2.brain.yong) items.push({ sphere: 'growth', title: 'Общий полезный бог', tone: 'good', text: `Вам обоим нужна ${EL[a1.brain.yong]} — одни и те же места, занятия и периоды поднимают вас вместе.` });
-  else if (a1.brain.ji.includes(a2.brain.yong) && a2.brain.ji.includes(a1.brain.yong)) items.push({ sphere: 'growth', title: 'Противоположные нужды', tone: 'bad', text: `Вам нужна ${EL[a1.brain.yong]}, партнёру — ${EL[a2.brain.yong]}, и каждая нагружает другого: договаривайтесь, чьё время и место сейчас.` });
+  if (a1.brain.yong === a2.brain.yong) items.push({ sphere: 'growth', title: 'Общий полезный бог', tone: 'good', text: `Вам обоим полезна одна стихия — ${EL[a1.brain.yong].toLowerCase()}: одни и те же места, занятия и периоды поднимают вас вместе.` });
+  else if (a1.brain.ji.includes(a2.brain.yong) && a2.brain.ji.includes(a1.brain.yong)) items.push({ sphere: 'growth', title: 'Противоположные нужды', tone: 'bad', text: `Вам полезна стихия ${EL[a1.brain.yong].toLowerCase()}, партнёру — ${EL[a2.brain.yong].toLowerCase()}, и каждая нагружает другого: договаривайтесь, чьё время и место сейчас.` });
 
   // Чувства и быт
   const d1 = day(c1), d2 = day(c2), b1 = d1.branch, b2 = d2.branch;
@@ -44,7 +44,12 @@ export function compat(c1: Chart, a1: Analysis, c2: Chart, a2: Analysis): Compat
   else items.push({ sphere: 'home', title: 'Знаки дома', tone: 'mixed', text: `Ваши знаки дома (${BRANCHES[b1].animal} и ${BRANCHES[b2].animal}) не в союзе и не в противостоянии: быт строится договорённостями, без встроенной лёгкости и без встроенного конфликта.` });
   const e1 = STEMS[d1.stem].el, e2 = STEMS[d2.stem].el;
   if ((d1.stem + 5) % 10 === d2.stem) items.push({ sphere: 'home', title: 'Ваши стихии в союзе', tone: 'good', text: `${STEMS[d1.stem].ru} и ${STEMS[d2.stem].ru} — природная пара: сильное взаимное притяжение.`, quote: '惟是本身十干合之，不爲合去', src: 'ЦПЦЦ гл.5 (KB 14 §2)' });
-  else if ((e1 + 2) % 5 === e2 || (e2 + 2) % 5 === e1) items.push({ sphere: 'home', title: 'Один направляет другого', tone: 'mixed', text: `${EL[e1]} и ${EL[e2]}: ${(e1 + 2) % 5 === e2 ? 'вы задаёте' : 'партнёр задаёт'} рамки — хорошо, если ведомому это полезно, иначе давит.` });
+  else if ((e1 + 2) % 5 === e2 || (e2 + 2) % 5 === e1) {
+    // Кто задаёт рамки, известно; полезны ли они ведомому — по 用/忌 ведомого (раньше оставляли читателю «хорошо, если…»).
+    const iLead = (e1 + 2) % 5 === e2, w = iLead ? W(a2, e1) : W(a1, e2), led = iLead ? 'партнёру' : 'вам';
+    items.push({ sphere: 'home', title: 'Один направляет другого', tone: w > 0 ? 'good' : w < 0 ? 'bad' : 'mixed',
+      text: `${EL[e1]} и ${EL[e2]}: ${iLead ? 'вы задаёте' : 'партнёр задаёт'} рамки — ${w > 0 ? `и ${led} они полезны: собирают, а не давят` : w < 0 ? `а ${led} они лишние: давят — нужны ясные границы, кто за что решает` : `${led} это ни помощь, ни груз — многое решает манера`}.` });
+  }
   else if (e1 === e2) items.push({ sphere: 'home', title: 'Одна стихия', tone: 'mixed', text: `Оба — ${EL[e1].toLowerCase()}: понимаете друг друга без слов, но и тянете одеяло в одну сторону.` });
   else {
     // Кто кого питает — и нужна ли эта забота принимающему (иначе «питает» рядом с «нагружает» в соседнем блоке читается как противоречие).
