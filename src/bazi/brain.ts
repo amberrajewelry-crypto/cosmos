@@ -205,7 +205,7 @@ export function activeSet(b: Brain, idx: number, c?: Chart): { set: Pick<Brain, 
 /** 天克地冲: ствол бьёт ствол и ветвь бьёт ветвь одновременно (甲庚 乙辛 丙壬 丁癸 + 子午…). */
 export const tianKeDiChong = (x: number, y: number) => Math.abs((x % 10) - (y % 10)) === 6 && Math.min(x % 10, y % 10) < 4 && Math.abs((x % 12) - (y % 12)) === 6;
 
-export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
+export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string; set: Pick<Brain, 'yong' | 'xi' | 'ji'>; se: El; swung: boolean } {
   let se: El = STEMS[idx % 10].el;
   const be = BRANCHES[idx % 12].el;
   // Сила на грани: ствол и ветвь периода оба «свои/Печать» или оба против — перевес меняется, берём другой набор.
@@ -230,7 +230,7 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
   }
   let s = v(se) * k, r = v(be);
   if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
-  let extra = '';
+  let extra = '', s0 = s, r0 = r;
   if (c) {
     const day = c.pillars.find((p) => p.pos === 'day')!, month = c.pillars.find((p) => p.pos === 'month')!;
     // 空亡 (命理约言 空亡论): пустая ветвь, которая есть в карте, период «заполняет» — «至运逢原空之神，是为填实，不为愈空»;
@@ -240,7 +240,7 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
       if (c.pillars.some((p) => p.branch === idx % 12)) extra += ' Ветвь периода «заполняет» пустую ветвь вашей карты (填实) — её тема оживает (命理约言 空亡论)';
       else {
         const half = seasonState(be, BRANCHES[month.branch].el) <= 1;
-        r *= half ? 0.85 : 0.65;
+        r *= half ? 0.85 : 0.65; r0 = r;
         extra += ` Ветвь периода «в пустоте» — действует слабее (命理约言 空亡论)`;
       }
     }
@@ -251,14 +251,15 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
       else { s -= 0.75; r -= 0.75; extra += ' Двойной удар по столпу дня (天克地冲): перемены в доме, паре, здоровье — «间有不利» (命理约言 太岁论)'; }
     }
   }
-  const t = s + r;
-  const res0 = verdictOf(s, r, t);
-  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') + (extra ? '.' + extra : '') };
+  // Текст — по стихиям периода (до штрафа за 天克地冲), тон — с ним: иначе «одна стихия — нагрузка» при нейтральной стихии.
+  const t = s + r, byEl = verdictOf(s0, r0, s0 + r0), fin = verdictOf(s, r, t);
+  const res0 = { tone: fin.tone, text: byEl.text + (fin.tone !== byEl.tone ? ', но удар по столпу дня перевешивает' : '') };
+  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') + (extra ? '.' + extra : ''), set, se, swung };
 }
 
 function verdictOf(s: number, r: number, t: number): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   if (s > 0 && r > 0) return { tone: 'good', text: 'обе стихии периода вам полезны — он хорош целиком' };
   if (s < 0 && r < 0) return { tone: 'bad', text: 'обе стихии периода — нагрузка, он тяжёлый целиком' };
   if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одна стихия полезна, другая — нагрузка; перевешивает ${(Math.abs(s) > Math.abs(r)) === (s > 0) ? 'польза' : 'нагрузка'}` };
-  return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'нейтрально' };
+  return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'спокойно: ни заметной помощи, ни нагрузки' };
 }

@@ -42,15 +42,16 @@ export function godProfile(a: Analysis): { top: string[]; text: string } {
   return { top, text };
 }
 
-export function luckReading(a: Analysis, idx: number): { tone: 'good' | 'bad' | 'mixed'; text: string } {
+/** tone — итоговый тон десятилетия (periodVerdict мозга); без него — старый счёт по стихиям ствола и ветви. */
+export function luckReading(a: Analysis, idx: number, toneIn?: 'good' | 'bad' | 'mixed' | 'calm'): { tone: 'good' | 'bad' | 'mixed'; text: string } {
   const s = idx % 10, b = idx % 12;
   const gs = godOf(a.dm, s), gb = godOf(a.dm, BRANCHES[b].hidden[0]);
   const es = STEMS[s].el, eb = BRANCHES[b].el;
   const score = (e: El) => (a.consensus.includes(e) ? 1 : a.avoid.includes(e) ? -1 : 0);
   const sc = score(es) + score(eb);
-  const tone = sc > 0 ? 'good' : sc < 0 ? 'bad' : 'mixed';
+  const t4 = toneIn ?? (sc > 0 ? 'good' : sc < 0 ? 'bad' : 'mixed'), tone = t4 === 'calm' ? 'mixed' : t4;
   const t = `Ствол: ${EL[es]} — «${gs.ru}» (${gs.sense}). Ветвь: ${BRANCHES[b].animal}, ${EL[eb]} — «${gb.ru}».`;
-  return { tone, text: t + (tone === 'good' ? ' Приходит полезная стихия — время действовать.' : tone === 'bad' ? ' Приходит стихия-нагрузка — время укреплять базу, а не рисковать.' : ' Смешанный фон: успех зависит от выбора направления.') };
+  return { tone, text: t + (tone === 'good' ? ' Приходит полезная стихия — время действовать.' : tone === 'bad' ? ' Приходит стихия-нагрузка — время укреплять базу, а не рисковать.' : t4 === 'calm' ? ' Спокойный фон: ни сильной помощи, ни нагрузки — многое решают ваши шаги.' : ' Смешанный фон: успех зависит от выбора направления.') };
 }
 
 export function chartSummary(c: Chart, a: Analysis): string {

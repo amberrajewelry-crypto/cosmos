@@ -25,7 +25,7 @@ export function pushMessage(q: Record<string, string>, z: string, now = new Date
   const hh = bestHours(a, day, shift).slice(0, 2);
   const next = days.slice(1).filter((x) => x.type === 'peak').sort((x, y) => y.score - x.score)[0];
   const lines = [
-    `Что делать: ${clean(day.act)}.`,
+    day.type === 'heavy' ? `Тема дня: ${clean(day.act)} — готовить, а не решать.` : `Что делать: ${clean(day.act)}.`,
     day.type === 'peak' ? '' : `${clean(DAY_TYPE[day.type].hint)}.`,
     day.heal ? `Чем выровнять: ${EL_NOM[day.med]}.` : '',
     hh.length ? `Лучшие часы: ${hh.join(', ')}.` : '',

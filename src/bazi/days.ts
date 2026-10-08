@@ -9,7 +9,7 @@ export type DayType = 'peak' | 'peak-hit' | 'calm' | 'heavy';
 export type BgTone = 'good' | 'bad' | 'mixed' | 'calm';
 /** Фон дня: такт и год (KB 11; день — перенос метода, KB 17 §6). fav/avoid — набор, действующий в этом такте. */
 export interface DayBg { luck: BgTone | null; year: BgTone; adj: number; swung: boolean }
-export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; type: DayType; god: God; act: string; notes: string[]; bg: DayBg; fav: El[]; avoid: El[] }
+export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; type: DayType; kind: DayType; god: God; act: string; notes: string[]; bg: DayBg; fav: El[]; avoid: El[] }
 
 export const DAY_TYPE: Record<DayType, { ru: string; hint: string }> = {
   peak: { ru: 'Сильный', hint: 'главные шаги: переговоры, запуски, оплаты, публикации' },
@@ -28,7 +28,7 @@ export const GOD_ACT: Record<string, string> = {
   PY: 'исследовать, искать нестандартные решения, побыть одному',
   ZY: 'учиться, просить поддержки, оформлять бумаги, восстанавливаться',
   BJ: 'работать с партнёрами и командой, держать свою линию',
-  JC: 'осторожно с деньгами: соперники и азарт — крупно не рисковать',
+  JC: 'с деньгами осторожно — рядом соперники и азарт, крупно не рисковать',
 };
 
 const POS_AREA: Record<Pos, string> = { day: 'дом, близкие, тело', hour: 'дети, планы, сон', month: 'работа, родители', year: 'род, корни, старшие' };
@@ -90,12 +90,16 @@ export function dayInfo(c: Chart, a0: Analysis, y: number, m: number, d: number)
   if (a.voids.includes(b) && !inChart) notes.push('результат может прийти неполным');
   const day = c.pillars.find((p) => p.pos === 'day')!;
   if (tianKeDiChong(idx, day.idx)) { notes.push('двойной удар по вам лично — день для тишины, не для решений'); hit = true; }
-  if (Math.abs((yi % 12) - b) === 6) notes.push('день бьёт год — крупное не начинать');
+  if (Math.abs((yi % 12) - b) === 6) notes.push('день спорит с текущим годом — крупное не начинать');
   if (hit && type === 'peak') type = 'peak-hit';
   const god = godOf(a.dm, s);
   const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const monthIdx = monthIdxAt(new Date(Date.UTC(y, m - 1, d, 12)));
-  return { iso, idx, monthIdx, type, god, act: GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...advice(c, a, idx, monthIdx, type, yi, bg.adj) };
+  const adv = advice(c, a, idx, monthIdx, type, yi, bg.adj);
+  // Ярлык дня не спорит с оценкой: «сильный» — полезная стихия и ≥4 из 5, «нагрузка» — ≤2, остальное — «ровный».
+  // Стихия задаёт лишь кандидата: удары, пустота и фон года/такта могут опустить или поднять день (иначе было «нагрузка · 4 из 5»).
+  const shown: DayType = adv.score >= 4 ? (type === 'peak' || type === 'peak-hit' ? type : 'calm') : adv.score <= 2 ? 'heavy' : 'calm';
+  return { iso, idx, monthIdx, type: shown, kind: type, god, act: GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...adv };
 }
 
 // ——— Подсказка дня (KB 17 §5; tools/today.py) ———
@@ -134,7 +138,7 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
     else { med = a.brain.yong; why = 'это ваша главная полезная стихия'; }
   } else {
     med = fav(se) ? se : fav(be) ? be : a.brain.yong;
-    why = fav(se) || fav(be) ? 'она пришла сама — опирайтесь на неё' : 'это ваша главная полезная стихия';
+    why = fav(se) || fav(be) ? 'уже есть в этом дне, усилий не нужно' : 'это ваша главная полезная стихия';
   }
   // база — как в tools/today.py: только полезные стихии → 4, только вредные → 2, смесь или нейтраль → 3
   // мокрая земля под водным стволом не лечит Воду — день считается нагрузкой (today.py)
@@ -209,7 +213,7 @@ export function showThenClose(days: DayInfo[]): [DayInfo, DayInfo][] {
   const out: [DayInfo, DayInfo][] = [];
   for (let k = 0; k + 1 < days.length; k++) {
     const x = days[k], y = days[k + 1];
-    if (x.type === 'peak' && y.type === 'peak' && ['SS', 'SG'].includes(x.god.key) && ['PC', 'ZC'].includes(y.god.key)) out.push([x, y]);
+    if (x.kind === 'peak' && y.kind === 'peak' && ['SS', 'SG'].includes(x.god.key) && ['PC', 'ZC'].includes(y.god.key)) out.push([x, y]);
   }
   return out;
 }

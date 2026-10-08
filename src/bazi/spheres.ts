@@ -127,17 +127,17 @@ function career(c: Chart, a: Analysis, now: number): Sphere {
   const L = currentLuck(c, now);
   if (L) {
     const g = godOf(a.dm, L.idx % 10), v = periodVerdict(a.brain, L.idx, c);
-    points.push(`Сейчас идёт десятилетие ${span(L.year)} под знаком «${g.ru}»: для дела это значит ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'попутный' : v.tone === 'bad' ? 'встречный: время укреплять базу' : 'смешанный'}.`);
+    points.push(`Сейчас идёт десятилетие ${span(L.year)} под знаком «${g.ru}»: для дела это значит ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'благоприятный' : v.tone === 'bad' ? 'с нагрузкой: время укреплять базу' : 'смешанный'}.`);
   }
   const best = c.luck.filter((l) => l.year + 9 >= now && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
-  if (best.length) points.push(`Самые попутные десятилетия для рывка: ${best.slice(0, 3).join(', ')}.`);
+  if (best.length) points.push(`Самые благоприятные десятилетия для рывка: ${best.slice(0, 3).join(', ')}.`);
   if (outStrong) points.push(`Выражение (${EL[r.out]}) сильно — ${pc(a.pct[r.out])}: талант просится наружу, ему нужен продукт, сцена, ученики.`);
   return {
     key: 'career', title: 'Призвание и работа',
     lead: `Ваше дело — там, где много ${EL_GEN[y].toLowerCase()}, а сильнее всего в вас «${groups[0][0].toLowerCase()}» (${pc(groups[0][1])}): ${PROF[groups[0][0]].split(',').slice(0, 2).join(',')}.${outStrong ? ' Талант просится наружу.' : ''}`,
     how: 'Классика не называет профессию напрямую — она даёт стихию и роль богов; профессии ниже — сегодняшний перевод этих образов.',
     points,
-    todo: `Ищите работу, где много ${EL_GEN[y].toLowerCase()}, и сверяйте решения с тактами: рывки — в периоды, когда приходит ${EL[y].toLowerCase()}.`,
+    todo: `Опирайтесь на ${PROF[GROUP_BY_REL[(y - a.dmEl + 5) % 5]].split(',').slice(0, 2).join(',')}, а рывки планируйте на десятилетия, когда приходит ${EL[y].toLowerCase()}.`,
     notes: [
       { title: 'Ищите, куда выходит сила', quote: '看格不拘月令，只看…归秀气在何处', src: 'ШФ, 伤官格 (KB 13 §2)', text: 'Талант — там, куда утекает самая сильная стихия.' },
       { title: 'Периоды весят наравне с картой', quote: '富贵人未必皆富贵命，或行运辅之以成也', src: 'ЦЛ, 应运 (KB 13 §2)', text: 'Успех делают и такты: смотрите блок «Такты удачи».' },

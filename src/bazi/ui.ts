@@ -30,7 +30,7 @@ import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo, dayInfo } f
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const AMOUNT = (x: number) => (x >= 0.3 ? 'много' : x >= 0.15 ? 'в меру' : x >= 0.06 ? 'мало' : 'почти нет');
 // Посетителю — без иероглифов и ссылок на трактаты: убираем скобки/кавычки с китайским и одиночные знаки.
-const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\(\s*—\s*/g, '(').replace(/\s*—\s*(?=[.,;:)]|$)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1');
+const plain = (s: string) => s.replace(/\s*[(«「][^()«»「」]*[\u4e00-\u9fff][^()«»「」]*[)»」]/g, '').replace(/\s*[\u4e00-\u9fff]+/g, '').replace(/\s*\((?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ|МЛЮЯ|ЦТБЦ|KB)[^)]*\)/g, '').replace(/(?<![А-Яа-яё])[Пп]о (?:ДТС|ЦПЦЦ|ЮХ|СМ|ШФ|ЦЛ)(?![А-Яа-яё])/g, (m) => m[0] + 'о классике').replace(/\s*\(\s*[,;·]?\s*\)/g, '').replace(/\s*\([^()]*\d+\s?%[^()]*\)/g, '').replace(/\s*\([+−-]?\d+\)/g, '').replace(/,?\s*[—-]?\s*\d+\s?%/g, '').replace(/\(\s*—\s*/g, '(').replace(/\s*—\s*(?=[.,;:)]|$)/g, '').replace(/\s+([.,;:])/g, '$1').replace(/:([.;])/g, '$1').replace(/(?<!\.)\.\.(?!\.)/g, '.');
 // Классические имена богов звучат пугающе — на странице мягкие («Давление», «Соперник», «Бунтарь»).
 const RANG: Record<string, string> = { 'ий': 'Бунтарь', 'его': 'Бунтаря', 'ему': 'Бунтарю', 'им': 'Бунтарём' };
 const UBI: Record<string, string> = { 'о': 'Давление', 'а': 'Давления', 'у': 'Давлению', 'ом': 'Давлением' };
@@ -238,7 +238,7 @@ function branchTile(b: number) {
 const lay = (s: string) => s.replace(/«[^»]*»\s*—\s*/g, '').split(/(?<=[.;])\s+/).filter((x) => !/ветв|пуст|союз|такт|трактат/i.test(x)).join(' ').replace(/[.;,]\s*$/, '');
 const animalOf = (idx: number) => `<span style="color:${EL_COLOR[BRANCHES[idx % 12].el]}">${BRANCHES[idx % 12].animal}</span>`;
 /** Тон периода — тот же, что в прогнозе и раскладе (periodVerdict мозга), текст — luckReading. */
-const luckR = (c: Chart, a: Analysis, idx: number) => { const t = periodVerdict(a.brain, idx, c).tone; return { ...luckReading(a, idx), tone: t === 'calm' ? 'mixed' as const : t }; };
+const luckR = (c: Chart, a: Analysis, idx: number) => { const t = periodVerdict(a.brain, idx, c).tone; return { ...luckReading(a, idx, t), t4: t }; };
 const thumb = (b: number, size = 44) => `<img class="thumb" src="${animalSrc(b)}" alt="${BRANCHES[b].animal}" width="${size}" height="${size}" loading="lazy" />`;
 
 /** «Расклад по 7 вопросам» (rasklad.ts): ответы из расчёта + на чём держится каждый. */
@@ -254,18 +254,18 @@ function secWho(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], day = c.pillars.find((p) => p.pos === 'day')!, br = BRANCHES[day.branch], t = DM_TEXT[a.dm];
   const yr = c.pillars.find((p) => p.pos === 'year')!;
   const nowY = new Date().getFullYear(), cur = c.luck.find((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
-  const tone = cur ? luckR(c, a, cur.idx).tone : 'mixed';
+  const lr = cur ? luckR(c, a, cur.idx) : null, tone = lr ? lr.tone : 'mixed', t4 = lr ? lr.t4 : 'mixed';
   return `<section class="block who" style="--rgb:${rgb(d.el)}">
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
     <div class="who-txt"><p class="eyebrow">Кто вы</p>
       <h2>${t.title}</h2>
-      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вас поддерживают: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
+      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вам полезны: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
-        ${cur ? `<div class="lt ${tone}"><img src="${animalSrc(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${tone === 'good' ? 'подъём' : tone === 'bad' ? 'нагрузка' : 'смешанное'}</b></span></div>` : ''}
+        ${cur ? `<div class="lt ${tone}"><img src="${animalSrc(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
       </div></div></section>`;
 }
 
@@ -435,20 +435,28 @@ function secLuck(c: Chart, a: Analysis) {
 
 const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.title)}</h4><p>${esc(n.text)}</p></div>`;
 
+const ucFirst = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const lcFirst = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
+const hitsTxt = (h: string[]) => (h.length ? ' ' + esc(lay(ucFirst(h.join('; ')))) + '.' : '');
+
 function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
-  const yHtml = dec.map((d) => `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span> — ${esc(d.why)}; ${esc(lay(d.text))}.
-    <details><summary>Подробнее</summary><small>Чем заняться: ${esc(lay(d.act))}.${d.hits.length ? ' ' + esc(lay(d.hits.join('; '))) + '.' : ''} ${esc(lay(d.detail.join(' ')))}</small></details></li>`);
+  // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
+  const yHtml = dec.map((d) => {
+    const det = d.detail.filter((x) => !d.hits.some((h) => x.toLowerCase().includes(h)));
+    return `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span>: ${esc(lcFirst(d.why))}; ${esc(lay(d.text))}.
+    <details><summary>Подробнее</summary><small>Чем заняться — ${esc(lay(d.act))}.${hitsTxt(d.hits)} ${esc(lay(det.join(' ')))}</small></details></li>`;
+  });
   const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
-    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${y.hits.length ? ' ' + esc(lay(y.hits.join('; '))) + '.' : ''}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
+    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${hitsTxt(y.hits)}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
       ${months}</div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
 }
@@ -549,11 +557,11 @@ const INTER_SENSE: Record<string, string> = {
 function dayCard(d: DayInfo, big = false, extra = '') {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
-    <p class="eyebrow">${dLabel(d)} · ${DAY_TYPE[d.type].ru} · ${d.score} из 5</p>
+    <p class="eyebrow">${dLabel(d)} · ${dayRu(d)} · ${d.score} из 5</p>
     <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
-    <p><b>Что делать:</b> ${esc(lay(d.act))}.</p>
+    <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? ' — сегодня готовить и обдумывать, а не решать' : ''}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
-    ${d.notes.length || (big && d.warn.length) ? `<p class="dnote">Осторожно: ${[...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean).map(esc).join('; ')}.</p>` : ''}
+    ${((w) => w.length ? `<p class="dnote">Осторожно: ${w.map(esc).join('; ')}.</p>` : '')([...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean))}
     ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
     ${big && extra ? extra : ''}
   </div></div>`;
@@ -567,8 +575,10 @@ function clockShift(c: Chart): number {
   return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
 }
 const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
-const BG_RU = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
-const BG_RU_Y = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
+/** «Сильный · 2 из 5» читается как противоречие: стихия дня полезна, но фон десятилетия/года тянет вниз — так и пишем. */
+const dayRu = (d: DayInfo) => DAY_TYPE[d.type].ru;
+const BG_RU = { good: 'благоприятное', bad: 'с нагрузкой', mixed: 'смешанное', calm: 'спокойное' } as const;
+const BG_RU_Y = { good: 'благоприятный', bad: 'с нагрузкой', mixed: 'смешанный', calm: 'спокойный' } as const;
 function bgRu(d: DayInfo): string {
   const b = d.bg, parts = [`${b.luck ? `десятилетие ${BG_RU[b.luck]}, ` : ''}год ${BG_RU_Y[b.year]}`];
   parts.push(b.adj > 0 ? 'фон приподнимает оценку дня' : b.adj < 0 ? 'фон снижает оценку дня' : 'на оценку дня не влияет');
@@ -585,7 +595,7 @@ function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): string {
     <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
     <ul class="list"><li>${esc(d.add.theory)}</li>
       <li>${esc(d.add.folk)}</li></ul>
-    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${DAY_TYPE[next.type].ru.toLowerCase()}, ${next.score} из 5.${top ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : ''}</p>` : ''}
+    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${dayRu(next).toLowerCase()}, ${next.score} из 5.${top ? (top.score >= 3 ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : (d.score >= 3 ? ` Дальше на неделе сильных дней нет — важное лучше поставить на сегодня.` : ` Сильных дней на неделе нет — важное лучше перенести; самый ровный — ${dLabel(top)}.`)) : ''}</p>` : ''}
     <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
   </div>`;
 }
@@ -600,13 +610,15 @@ const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b
 function secDays(c: Chart, a: Analysis) {
   const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = daysFrom(c, a, start, 120), today = days[0];
-  const best = days.slice(0, 45).filter((d) => d.type === 'peak').slice(0, 5);
+  // Лучшие — от 3 из 5; самые высокие оценки без запрета на крупное, потом по дате (раньше брались первые 5 подряд, в т.ч. «3 из 5, крупное не начинать»).
+  const best = days.slice(0, 45).filter((d) => d.type === 'peak' && d.score >= 3 && !d.notes.some((n) => n.includes('не начинать') || n.includes('не для решений')))
+    .sort((x, y) => y.score - x.score || x.iso.localeCompare(y.iso)).slice(0, 5).sort((x, y) => x.iso.localeCompare(y.iso));
   const pairs = showThenClose(days).slice(0, 5);
   const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e]).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
-    <p>Сильный день — когда приходит полезная вам стихия (${fav}): для главных шагов — переговоров, запусков, оплат, публикаций${bad ? `, нагрузка — когда ${bad}` : ''}. Нажмите на день — подскажем, что на него ставить.</p></div>
+    <p>Сильный день (4–5 из 5) — когда приходит полезная вам стихия (${fav}) и ничто её не перебивает: для главных шагов — переговоров, запусков, оплат, публикаций. Дни нагрузки (1–2 из 5) — когда ${bad ? `приходят ${bad} или ` : ''}день бьёт по вашей карте. Нажмите на день — подскажем, что на него ставить.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
       <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
