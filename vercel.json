@@ -58,6 +58,39 @@
       "permanent": true
     },
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.astropro.tech"
+        }
+      ],
+      "destination": "https://astropro.tech/bazi",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.astropro.tech"
+        }
+      ],
+      "destination": "https://astropro.tech/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "astropro.tech"
+        }
+      ],
+      "destination": "https://astropro.tech/bazi",
+      "permanent": false
+    },
+    {
       "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele",
       "destination": "/natalnaya-karta/znak/:znak/",
       "permanent": true
