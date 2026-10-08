@@ -27,3 +27,14 @@ d('портрет по KB 18', () => {
     expect(Math.max(...Object.values(cnt))).toBeLessThan(240);
   });
 });
+d('портрет без «крайностей мало» рядом с «с крайностями»', () => {
+  it('300 карт', () => {
+    const bad: string[] = [];
+    for (let i = 0; i < 300; i++) {
+      const dt = new Date(Date.UTC(1950, 0, 1) + i * 86400000 * 97.3), date = dt.toISOString().slice(0, 10), time = `${String((i * 7) % 24).padStart(2, '0')}:10`;
+      const { c, a } = mk(date, time), t = describe(c, a).lines.join(' ');
+      if (/крайностей в характере мало/.test(t) && /с крайностями/.test(t)) bad.push(date);
+    }
+    expect(bad).toEqual([]);
+  });
+});

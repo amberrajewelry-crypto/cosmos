@@ -2589,7 +2589,7 @@ function periodVerdict(b, idx, c, partner) {
   let se = STEMS[idx % 10].el;
   const be = BRANCHES[idx % 12].el;
   const { set, swung } = activeSet(b, idx, c);
-  const swing = swung && b.alt ? ` \u0421\u0438\u043B\u0430 \u043D\u0430 \u0433\u0440\u0430\u043D\u0438, \u043F\u0435\u0440\u0438\u043E\u0434 \u0435\u0451 ${b.alt.lean === "strong" ? "\u043F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442" : "\u043E\u043F\u0443\u0441\u043A\u0430\u0435\u0442"} \u2014 \u043F\u043E\u043B\u0435\u0437\u043D\u044B\u0439 \u0437\u0434\u0435\u0441\u044C ${EL[b.alt.yong]} (\u6731\u7956\u590F \u4E2D\u548C)` : "";
+  const swing = swung && b.alt ? ` \u0421\u0438\u043B\u0430 \u043D\u0430 \u0433\u0440\u0430\u043D\u0438, \u043F\u0435\u0440\u0438\u043E\u0434 \u0435\u0451 ${b.alt.lean === "strong" ? "\u043F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442" : "\u043E\u043F\u0443\u0441\u043A\u0430\u0435\u0442"} \u2014 \u0437\u0434\u0435\u0441\u044C \u043F\u043E\u043B\u0435\u0437\u043D\u0435\u0435 ${EL[b.alt.yong].toLowerCase()} (\u6731\u7956\u590F \u4E2D\u548C)` : "";
   const v = (e) => e === set.yong ? 2 : set.xi.includes(e) ? 1 : set.ji.includes(e) ? -1.5 : 0;
   let bond = "", k = 1;
   if (c) {
