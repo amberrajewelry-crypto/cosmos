@@ -133,7 +133,7 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
   if (ill.length) {
     const x = ill.includes(a.avoid[0]) ? a.avoid[0] : ill[0];
     const ctlBy = ((x + 3) % 5) as El; // стихия, которая подавляет x
-    if (fav(gen(x))) { med = gen(x); why = `${EL[x]} перетекает в ${ACC[med]} и становится полезной`; }
+    if (fav(gen(x))) { med = gen(x); why = `${EL[x]} перетекает в ${ACC[med]}, полезную вам стихию`; }
     else if (fav(ctlBy)) { med = ctlBy; why = `${EL[med]} сдерживает ${ACC[x]}`; }
     else { med = a.brain.yong; why = 'это ваша главная полезная стихия'; }
   } else {
@@ -151,9 +151,9 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
     // 刑 со всеми столпами (вес по столпу, как удар), включая самонаказание 辰午酉亥
     if (Math.abs(pb - b) !== 6 && (PUNISH.some((set) => set.includes(pb) && set.includes(b) && pb !== b) || (pb === b && SELF_PUNISH.includes(b)))) {
       score -= BRANCH_POS_W[p.pos];
-      if (p.pos !== 'day') warn.push(`трения в сфере «${POS_AREA[p.pos]}» — без резких шагов`);
+      if (p.pos !== 'day') warn.push(`трения в сфере «${POS_AREA[p.pos]}», без резких шагов`);
     }
-    if (p.pos === 'day' && SIX.some(([x, z]) => (x === pb && z === b) || (x === b && z === pb))) good.push(`притяжение в сфере «${POS_AREA.day}» — хорошо договариваться`);
+    if (p.pos === 'day' && SIX.some(([x, z]) => (x === pb && z === b) || (x === b && z === pb))) good.push(`притяжение в сфере «${POS_AREA.day}», хорошо договариваться`);
     // стволы: союз (разница 5) и удар (甲庚 乙辛 丙壬 丁癸) — 子平真诠 гл. 4–5; 三命通会 т. 2
     if (p.pos === 'day' && Math.abs(ps - s) === 5) { score += 0.5; good.push('день тянется к вам: деньги или партнёр сами идут навстречу — условия записывать'); }
     if (Math.abs(ps - s) === 6 && Math.min(ps, s) < 4) {
