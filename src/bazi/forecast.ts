@@ -13,7 +13,7 @@ export interface MonthF extends Period { start: Date }
 export interface YearF extends Period { year: number; start: Date; end: Date; luck?: { idx: number; tone: Tone; from: number } ; months: MonthF[] }
 
 const clash = (x: number, y: number) => Math.abs(x - y) === 6;
-const TONE_RU: Record<Tone, string> = { good: 'благоприятно', bad: 'тяжело', mixed: 'смешанно', calm: 'спокойно' };
+const TONE_RU: Record<Tone, string> = { good: 'благоприятно', bad: 'нагрузка', mixed: 'смешанно', calm: 'спокойно' };
 export const toneRu = (t: Tone) => TONE_RU[t];
 
 function period(c: Chart, a: Analysis, idx: number, partner?: number): Period {

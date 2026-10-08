@@ -265,7 +265,7 @@ function secWho(c: Chart, a: Analysis) {
       <div class="who-row">
         <div><img src="${animalSrc(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSrc(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
-        ${cur ? `<div class="lt ${tone}"><img src="${animalSrc(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${tone === 'good' ? 'подъём' : tone === 'bad' ? 'нагрузка' : 'смешанное'}</b></span></div>` : ''}
+        ${cur ? `<div class="lt ${tone}"><img src="${animalSrc(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${tone === 'good' ? 'благоприятно' : tone === 'bad' ? 'нагрузка' : 'смешанно'}</b></span></div>` : ''}
       </div></div></section>`;
 }
 
@@ -567,8 +567,8 @@ function clockShift(c: Chart): number {
   return c.input.tz && tz === c.input.tz ? off - c.input.lon / 15 : 0;
 }
 const ACC_EL = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
-const BG_RU = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
-const BG_RU_Y = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
+const BG_RU = { good: 'благоприятное', bad: 'с нагрузкой', mixed: 'смешанное', calm: 'спокойное' } as const;
+const BG_RU_Y = { good: 'благоприятный', bad: 'с нагрузкой', mixed: 'смешанный', calm: 'спокойный' } as const;
 function bgRu(d: DayInfo): string {
   const b = d.bg, parts = [`${b.luck ? `десятилетие ${BG_RU[b.luck]}, ` : ''}год ${BG_RU_Y[b.year]}`];
   parts.push(b.adj > 0 ? 'фон приподнимает оценку дня' : b.adj < 0 ? 'фон снижает оценку дня' : 'на оценку дня не влияет');
