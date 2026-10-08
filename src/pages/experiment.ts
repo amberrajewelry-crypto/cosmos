@@ -733,7 +733,7 @@ export const pageUrl = (p: Page) => `/${p.slug}/`;
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export function renderPage(p: Page): string {
-  const selfUrl = `https://cosmos-alpha-three.vercel.app${pageUrl(p)}`;
+  const selfUrl = `https://astropro.tech${pageUrl(p)}`;
   const faqHtml = p.faq.length
     ? `<section class="faq"><h2>Вопросы</h2>${p.faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</section>`
     : '';

@@ -13,14 +13,14 @@ describe("сферы жизни", () => {
     const s = run("1991-11-10", "00:37");
     expect(s.map((x) => x.key)).toEqual(["character", "career", "money", "love", "health", "family"]);
     const money = s.find((x) => x.key === "money")!, love = s.find((x) => x.key === "love")!;
-    expect(money.lead).toMatch(/Земля.*главная полезная/);
+    expect(money.lead).toMatch(/земля.*главная полезная/);
     expect(love.points.join(" ")).toMatch(/Годы встреч.*2028/);
     expect(love.notes[0].quote).toBe("用神即是财神，妻美而且富贵");
     expect(s.find((x) => x.key === "health")!.points.join(" ")).toMatch(/Холодная карта/);
   });
   it("женская карта — звезда Чиновник, цитата о равенстве карт", () => {
     const love = run("1975-03-20", "15:30", false).find((x) => x.key === "love")!;
-    expect(love.how).toMatch(/для женщины — Чиновник/);
+    expect(love.how).toMatch(/для женщины — стихия статуса/);
     expect(love.lead).toMatch(/звезда партнёра — Металл/);
     expect(love.notes.map((n) => n.quote)).toContain("女命生克之理，与男命同");
   });

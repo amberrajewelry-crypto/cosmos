@@ -197,6 +197,6 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
     y += 158;
   }
   ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(236,230,211,.5)'; ctx.font = '300 18px "Geist Mono", Menlo, monospace';
-  ctx.fillText('cosmos-alpha-three.vercel.app · эфемериды VSOP87/ELP · каждое число проверяемо', W / 2, H - 40);
+  ctx.fillText('astropro.tech · эфемериды VSOP87/ELP · каждое число проверяемо', W / 2, H - 40);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/png'));
 }

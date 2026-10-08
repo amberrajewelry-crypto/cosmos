@@ -21,7 +21,7 @@ export function setStarCatalog(cat: StarCatalog): void { starCat = cat; }
 const skyFor = (year: number) => starCat ? { sky: zodiacLines(starCat, year), skyLabels: zodiacLabels(starCat, year), skyVisible: true } : {};
 const REF_YEAR = 2024; // високосный → дата 29.02 валидна; выбор года не влияет на созвездие
 
-const SITE = 'https://cosmos-alpha-three.vercel.app';
+const SITE = 'https://astropro.tech';
 const BRAND = { ru: 'Астроанализ', en: 'Astroanalysis' };
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
