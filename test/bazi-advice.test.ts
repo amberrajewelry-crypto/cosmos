@@ -9,11 +9,11 @@ const mk = (date: string, time: string, lat: number, lon: number, tz: string, ma
 };
 
 describe("подсказка дня (KB 17, today.py)", () => {
-  it("карта Владимира: 05.10.2026 壬子 — нагрузка 2/5, лекарство Земля; 12.10 己未 — 4/5", () => {
+  it("карта Владимира: 05.10.2026 壬子 — нагрузка 2/5, лекарство Земля; 12.10 己未 — 5/5 (штрафы относительно обычного дня карты, 09.10)", () => {
     const { c, a } = mk("1991-11-10", "00:37", 42.27, 42.7, "Asia/Tbilisi");
     const ds = daysFrom(c, a, new Date(2026, 9, 5), 8);
     expect(ds[0].score).toBe(2); expect(ds[0].med).toBe(2); expect(ds[0].heal).toBe(true);
-    expect(ds[7].score).toBe(4);
+    expect(ds[7].score).toBe(5);
     expect(bestHours(a, ds[0], 4 - 44.79 / 15, 9, 25)).toEqual(["14:00–16:00", "16:00–18:00", "18:00–20:00"]);
   });
   it("любая карта: оценка 1–5, лекарство полезно, советы заполнены", () => {

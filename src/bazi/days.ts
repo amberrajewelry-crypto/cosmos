@@ -126,26 +126,10 @@ export const EL_ADD: Record<El, { theory: string; folk: string }> = {
 const roundEven = (x: number) => { const f = Math.floor(x), r = x - f; return r > 0.5 ? f + 1 : r < 0.5 ? f : f % 2 ? f + 1 : f; };
 const ACC = ['Дерево', 'Огонь', 'Землю', 'Металл', 'Воду'];
 
-function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayType, yi: number, bgAdj: number): DayAdvice {
-  const s = idx % 10, b = idx % 12, se = STEMS[s].el, be = BRANCHES[b].el;
+function natalPen(c: Chart, a: Analysis, idx: number): { pen: number; warn: string[]; good: string[] } {
+  const s = idx % 10, b = idx % 12, se = STEMS[s].el;
   const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
-  const ill = [se, be].filter(bad) as El[];
-  const heal = type === 'heavy' || ill.length > 0;
-  let med: El, why: string;
-  if (ill.length) {
-    const x = ill.includes(a.avoid[0]) ? a.avoid[0] : ill[0];
-    const ctlBy = ((x + 3) % 5) as El; // стихия, которая подавляет x
-    if (fav(gen(x))) { med = gen(x); why = `${EL[x]} перетекает в ${ACC[med]}, полезную вам стихию`; }
-    else if (fav(ctlBy)) { med = ctlBy; why = `${EL[med]} сдерживает ${ACC[x]}`; }
-    else { med = a.brain.yong; why = 'это ваша главная полезная стихия'; }
-  } else {
-    med = fav(se) ? se : fav(be) ? be : a.brain.yong;
-    why = fav(se) || fav(be) ? 'уже есть в этом дне, усилий не нужно' : 'это ваша главная полезная стихия';
-  }
-  // база — как в tools/today.py: только полезные стихии → 4, только вредные → 2, смесь или нейтраль → 3
-  // мокрая земля под водным стволом не лечит Воду — день считается нагрузкой (today.py)
-  const anyFav = fav(se) || (fav(be) && !(WET.includes(b) && se === 4 && bad(4)));
-  let score = ill.length && !anyFav ? 2 : ill.length || !anyFav ? 3 : 4;
+  let score = 0;
   const warn: string[] = [], good: string[] = [];
   for (const p of c.pillars) {
     const pb = p.branch, ps = p.stem;
@@ -166,17 +150,50 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
   // 争合: ствол дня тянется к стволу карты, к которому уже тянется такой же ствол карты (KB 10)
   const nat = c.pillars.map((p) => p.stem);
   if (c.pillars.some((p) => p.pos !== 'day' && Math.abs(p.stem - s) === 5) && nat.includes(s) && !c.pillars.some((p) => p.pos === 'day' && Math.abs(p.stem - s) === 5)) { score -= 0.5; warn.push('появляется соперник за деньги или партнёра — долей не делиться'); }
-  // 月破: ветвь дня бьёт ветвь месяца (协纪辨方)
-  if (Math.abs(monthIdx % 12 - b) === 6) { score -= 1; warn.push('день бьёт месяц: крупно не тратить, в долг не давать, далеко за деньгами не ехать'); }
   if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
-  // 岁破: ветвь дня бьёт ветвь года (协纪辨方) — день против года
-  if (Math.abs((yi % 12) - b) === 6) score -= 0.5;
-  score += bgAdj;
   if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('земля дня влажная — сдерживает слабее'); }
   // ствол дня уходит в союз со стволом карты (не с вами) и превращается во вредную стихию — сила дня слабее
   for (const p of c.pillars) if (p.pos !== 'day' && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
     score -= 0.5; warn.push('полезная стихия дня уходит в союз — действует слабее'); break;
   }
+  return { pen: score, warn, good };
+}
+const penCache = new WeakMap<Analysis, number>();
+function meanPen(c: Chart, a: Analysis): number {
+  let m = penCache.get(a);
+  if (m === undefined) { m = 0; for (let i = 0; i < 60; i++) m += natalPen(c, a, i).pen / 60; penCache.set(a, m); }
+  return m;
+}
+
+function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayType, yi: number, bgAdj: number): DayAdvice {
+  const s = idx % 10, b = idx % 12, se = STEMS[s].el, be = BRANCHES[b].el;
+  const fav = (e: number) => (a.consensus as number[]).includes(e), bad = (e: number) => (a.avoid as number[]).includes(e);
+  const ill = [se, be].filter(bad) as El[];
+  const heal = type === 'heavy' || ill.length > 0;
+  let med: El, why: string;
+  if (ill.length) {
+    const x = ill.includes(a.avoid[0]) ? a.avoid[0] : ill[0];
+    const ctlBy = ((x + 3) % 5) as El; // стихия, которая подавляет x
+    if (fav(gen(x))) { med = gen(x); why = `${EL[x]} перетекает в ${ACC[med]}, полезную вам стихию`; }
+    else if (fav(ctlBy)) { med = ctlBy; why = `${EL[med]} сдерживает ${ACC[x]}`; }
+    else { med = a.brain.yong; why = 'это ваша главная полезная стихия'; }
+  } else {
+    med = fav(se) ? se : fav(be) ? be : a.brain.yong;
+    why = fav(se) || fav(be) ? 'уже есть в этом дне, усилий не нужно' : 'это ваша главная полезная стихия';
+  }
+  // база — как в tools/today.py: только полезные стихии → 4, только вредные → 2, смесь или нейтраль → 3
+  // мокрая земля под водным стволом не лечит Воду — день считается нагрузкой (today.py)
+  const anyFav = fav(se) || (fav(be) && !(WET.includes(b) && se === 4 && bad(4)));
+  let score = ill.length && !anyFav ? 2 : ill.length || !anyFav ? 3 : 4;
+  const { pen, warn, good } = natalPen(c, a, idx);
+  // Взаимодействия с картой — относительно обычного дня этой карты (среднее за 60-дневный цикл): иначе мелкие удары
+  // и 刑 с четырьмя столпами срезали в среднем 0,7 балла каждый день и 57% дней выходили «нагрузкой» (вычитка 09.10).
+  score += pen - meanPen(c, a);
+  // 月破: ветвь дня бьёт ветвь месяца (协纪辨方)
+  if (Math.abs(monthIdx % 12 - b) === 6) { score -= 1; warn.push('день бьёт месяц: крупно не тратить, в долг не давать, далеко за деньгами не ехать'); }
+  // 岁破: ветвь дня бьёт ветвь года (协纪辨方) — день против года
+  if (Math.abs((yi % 12) - b) === 6) score -= 0.5;
+  score += bgAdj;
   return { score: Math.max(1, Math.min(5, roundEven(score))), heal, med, why, warn, good, add: EL_ADD[med] };
 }
 

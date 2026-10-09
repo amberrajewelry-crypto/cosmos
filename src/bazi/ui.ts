@@ -236,7 +236,7 @@ function secWho(c: Chart, a: Analysis) {
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
     <div class="who-txt"><p class="eyebrow">Кто вы</p>
       <h2>${t.title}</h2>
-      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вам полезны: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
+      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · главная опора — ${EL[a.brain.yong].toLowerCase()}${a.brain.xi.length ? `, помогают также ${a.brain.xi.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}` : ''}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
