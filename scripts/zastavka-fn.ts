@@ -12,6 +12,7 @@ import f400 from '../src/bazi/fonts/Manrope-400.ttf';
 import f600 from '../src/bazi/fonts/Manrope-600.ttf';
 import f800 from '../src/bazi/fonts/Manrope-800.ttf';
 import fc600 from '../src/bazi/fonts/Cormorant-600.ttf';
+import * as WPI from './zastavka-img';
 
 const { Resvg } = resvgPkg as unknown as typeof import('@resvg/resvg-js');
 interface Req { query: Record<string, string | string[] | undefined>; }
@@ -35,7 +36,7 @@ export function render(q: Record<string, string>, now = new Date()): Buffer | nu
   const [Y, M, D] = new Intl.DateTimeFormat('en-CA', { timeZone: z }).format(now).split('-').map(Number);
   const days = daysFrom(c, a, new Date(Y, M - 1, D), 9);
   const shift = z === tz ? tzOffsetH(z, now) - +lon / 15 : 0;
-  const svg = wallpaperSvg(a, days[0], days, shift);
+  const svg = wallpaperSvg(a, days[0], days, shift, WPI.images());
   const png = new Resvg(svg, { font: { fontFiles: fonts(), loadSystemFonts: false, defaultFontFamily: 'Manrope' } }).render().asPng();
   return Buffer.from(png);
 }

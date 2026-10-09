@@ -78,11 +78,36 @@ function mandala(cx: number, cy: number, R: number, stemEl: number, branch: numb
   return o.join('');
 }
 
-export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: number): string {
+/** Картинки сайта для заставки: data:-URI животных (12, порядок ветвей) и шаров стихий (5). Без них — векторная мандала. */
+export interface WpImages { an: string[]; el: string[] }
+const EL_RU = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'];
+/** Орбита как в шапке сайта: 12 светящихся животных вокруг пяти живых стихий, знак и стихия дня — крупнее и со свечением. */
+function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number, img: WpImages): string {
+  const o: string[] = [], gold = '#d9b968';
+  o.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${gold}" stroke-opacity=".28" stroke-width="2" stroke-dasharray="3 9"/>`);
+  o.push(`<circle cx="${cx}" cy="${cy}" r="${R + 70}" fill="none" stroke="${gold}" stroke-opacity=".12" stroke-width="1.5"/>`);
+  for (let i = 0; i < 72; i++) { const [x1, y1] = pt(cx, cy, R + 70, i * 5), [x2, y2] = pt(cx, cy, R + (i % 6 === 0 ? 52 : 60), i * 5);
+    o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${gold}" stroke-opacity="${i % 6 === 0 ? .4 : .18}" stroke-width="${i % 6 === 0 ? 2 : 1}"/>`); }
+  const rE = R * 0.56, pos = [288, 0, 72, 144, 216].map((a) => pt(cx, cy, rE, a));
+  for (let e = 0; e < 5; e++) { const [x1, y1] = pos[e], [x2, y2] = pos[(e + 2) % 5], [x3, y3] = pos[(e + 1) % 5];
+    o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#ef5a3c" stroke-opacity=".3" stroke-width="1.8"/>`);
+    o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x3)}" y2="${f1(y3)}" stroke="${gold}" stroke-opacity=".35" stroke-width="1.8" stroke-dasharray="4 8"/>`); }
+  for (let i = 0; i < 12; i++) { const on = i === branch, [x, y] = pt(cx, cy, R, i * 30), sz = on ? 160 : 112;
+    if (on) o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="80" fill="${EL_GLOW[[4, 2, 0, 0, 2, 1, 1, 2, 3, 3, 2, 4][i]]}" opacity=".42" filter="url(#blur)"/>`);
+    o.push(`<image href="${img.an[i]}" x="${f1(x - sz / 2)}" y="${f1(y - sz / 2)}" width="${sz}" height="${sz}" opacity="${on ? 1 : .62}"/>`); }
+  for (let e = 0; e < 5; e++) { const [x, y] = pos[e], on = e === stemEl, sz = on ? 196 : 138;
+    o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${on ? 120 : 84}" fill="${EL_GLOW[e]}" opacity="${on ? .5 : .22}" filter="url(#blur)"/>`);
+    o.push(`<image href="${img.el[e]}" x="${f1(x - sz / 2)}" y="${f1(y - sz / 2)}" width="${sz}" height="${sz}"/>`);
+    o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${EL_GLOW[e]}" stroke-opacity="${on ? .9 : .5}" stroke-width="${on ? 4 : 2}"/>`);
+    o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 36)}" text-anchor="middle" font-family="Manrope" font-size="${on ? 30 : 24}" font-weight="700" fill="${EL_GLOW[e]}" letter-spacing="2">${EL_RU[e]}</text>`); }
+  return o.join('');
+}
+
+export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: number, img?: WpImages): string {
   const { w, h } = WP, CX = w / 2, TW = w - 2 * 120, acc = ACC[d.score] ?? ACC[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
-  let y = 1000;
+  let y = img ? 1110 : 1000;
   const text = (s: string, size: number, weight: number, fill: string, yy = y, extra = '', fam = 'Manrope') =>
     t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   const orn = (yy: number, wd = 300) => { t.push(`<line x1="${CX - wd}" y1="${yy}" x2="${CX - 26}" y2="${yy}" stroke="url(#fadeL)" stroke-width="2"/><line x1="${CX + 26}" y1="${yy}" x2="${CX + wd}" y2="${yy}" stroke="url(#fadeR)" stroke-width="2"/>`);
@@ -91,14 +116,16 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   text(cap(label(d.iso, true)).toUpperCase(), 34, 600, '#cbbf9f', y, 'letter-spacing="7"'); y += 120;
   text(HEAD[d.type], 108, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 72;
   text(`Знак дня: ${br.animal} · стихия ${EL_OF[st.el]}`, 38, 600, col, y, 'letter-spacing="2"'); y += 70;
-  for (let i = 0; i < 5; i++) { const x = CX - 136 + i * 68, on = i < d.score;
+  const dx = img ? -90 : 0;
+  for (let i = 0; i < 5; i++) { const x = CX - 136 + dx + i * 68, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".35" filter="url(#blur)"/>`);
     t.push(diamond(x, y - 14, 22, on ? acc : 'none', on ? '' : 'stroke="#5a5470" stroke-width="2.5"')); }
-  y += 56; text(`${d.score} из 5`, 38, 800, acc, y, 'letter-spacing="3"'); y += 58;
+  if (img) { y += 6; t.push(`<text x="${CX + 230}" y="${y}" text-anchor="middle" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="3">${d.score} из 5</text>`); y += 64; }
+  else { y += 56; text(`${d.score} из 5`, 38, 800, acc, y, 'letter-spacing="3"'); y += 58; }
   orn(y); y += 80;
 
   const block = (head: string, body: string, fill = '#efe9da', max = 3) => {
-    if (!body || y > 2060) return;
+    if (!body || y > (img ? 2110 : 2060)) return;
     text(head.toUpperCase(), 30, 800, gold, y, 'letter-spacing="6"'); y += 58;
     for (const ln of wrap(body, 41, TW, max)) { text(ln, 41, 400, fill); y += 53; }
     y += 30;
@@ -114,9 +141,9 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const top = week.reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
   const BG = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
   const BGN = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
-  if (y < 2060) { orn(y - 6, 200); y += 58; } else y += 4;
-  if (y < 2150) { text(`Фон: ${d.bg.luck ? `десятилетие ${BGN[d.bg.luck]}, ` : ''}год ${BG[d.bg.year]}`, 34, 600, '#a79fbf'); y += 52; }
-  if (top && y < 2200) text(`Лучший день недели: ${label(top.iso)} · ${top.score} из 5`, 34, 600, '#a79fbf');
+  if (!img && y < 2060) { orn(y - 6, 200); y += 58; } else y += 4;
+  if (!img && y < 2150) { text(`Фон: ${d.bg.luck ? `десятилетие ${BGN[d.bg.luck]}, ` : ''}год ${BG[d.bg.year]}`, 34, 600, '#a79fbf'); y += 52; }
+  if (top && !img && y < 2200) text(`Лучший день недели: ${label(top.iso)} · ${top.score} из 5`, 34, 600, '#a79fbf');
 
   // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
   const WK = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'], strip = days.slice(k, k + 7), cw = 88, sx = CX - (strip.length * cw) / 2, sy = 2300;
@@ -153,7 +180,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>
 ${stars.join('')}
-${mandala(CX, 560, 410, st.el, d.idx % 12, br.el)}
+${img ? orbit(CX, 540, 400, st.el, d.idx % 12, img) : mandala(CX, 560, 410, st.el, d.idx % 12, br.el)}
 <rect x="36" y="36" width="${w - 72}" height="${h - 72}" rx="64" fill="none" stroke="${gold}" stroke-opacity=".18" stroke-width="2"/>
 <rect x="52" y="52" width="${w - 104}" height="${h - 104}" rx="52" fill="none" stroke="${gold}" stroke-opacity=".08" stroke-width="1.5"/>
 ${t.join('\n')}
