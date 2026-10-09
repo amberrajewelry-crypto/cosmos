@@ -143,6 +143,23 @@ function renderSaved() {
   });
   document.querySelectorAll<HTMLButtonElement>('.saved [data-del]').forEach((b) => (b.onclick = () => { const xs2 = loadSaved(); xs2.splice(+b.dataset.del!, 1); storeSaved(xs2); renderSaved(); }));
 }
+/** Значки разделов-плиток: линия 1.6, 24×24, цвет — от раздела (--ic). */
+const SEC_IC: [RegExp, string, string][] = [
+  [/дни/i, '#5fc98a', '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/>'],
+  [/год/i, '#e2c47c', '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/><path d="M12 12l4-3"/>'],
+  [/расклад/i, '#c9a85c', '<path d="M12 3l2.4 5.6L20 9.5l-4.3 3.9 1.2 5.9L12 16.4l-4.9 2.9 1.2-5.9L4 9.5l5.6-.9z"/>'],
+  [/совмест/i, '#ef7a8a', '<circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/>'],
+  [/характер/i, '#9dc0ff', '<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/>'],
+  [/сфер/i, '#5fc98a', '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>'],
+  [/такт/i, '#d6a64f', '<path d="M3 17l5-6 4 3 4-7 5 5"/><path d="M3 20.5h18"/>'],
+  [/сверк/i, '#9fe3b7', '<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
+  [/спрос/i, '#9dc0ff', '<path d="M4.5 5.5h15v10h-8l-4.5 4v-4h-2.5z"/>'],
+  [/столп/i, '#c9a85c', '<path d="M5 20V7M10 20V4M14 20V4M19 20V7M3 20.5h18"/>'],
+  [/стихи/i, '#ef5a3c', '<path d="M12 3.5l8 6-3 9.5H7l-3-9.5z"/>'],
+  [/сезон/i, '#4f8ef0', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
+  [/точност|вслепую/i, '#e2c47c', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>'],
+];
+const secIcon = (t: string) => { const m = SEC_IC.find(([r]) => r.test(t)); return m ? `<i class="f-ic" style="--ic:${m[1]}" aria-hidden="true"><svg viewBox="0 0 24 24">${m[2]}</svg></i>` : ''; };
 /** Разделы после «Кто вы» — свёрнутые плитки: заголовок + одна строка, содержимое по нажатию. */
 const openSecs = new Set<string>();
 let onToggle: ((e: Event) => void) | null = null;
@@ -154,7 +171,7 @@ function fold(out: HTMLElement) {
     const key = s.id || h2.textContent!;
     const d = document.createElement('details');
     d.className = 'fold'; d.dataset.key = key; d.open = openSecs.has(key);
-    d.innerHTML = `<summary><span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
+    d.innerHTML = `<summary>${secIcon(h2.textContent || '')}<span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
     const body = document.createElement('div'); body.className = 'f-body';
     head.remove(); if (acc) body.append(acc);
     while (s.firstChild) body.append(s.firstChild);

@@ -12,7 +12,7 @@ import { esc, lay, animalSm, thumb, ME_KEY } from './ui-kit';
 export function dayCard(d: DayInfo, big = false, extra = '') {
   const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12];
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
-    <p class="eyebrow">${dLabel(d)} · ${dayRu(d)} · ${d.score} из 5</p>
+    <div class="dhead"><p class="ddate">${dLabel(d)}</p><span class="dscore ${d.type}" aria-label="${dayRu(d)} · ${d.score} из 5"><span class="dots" aria-hidden="true">${[1, 2, 3, 4, 5].map((k) => `<i${k <= d.score ? ' class="f"' : ''}></i>`).join('')}</span>${dayRu(d)} · ${d.score} из 5</span></div>
     <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
     <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? '. Сегодня готовить и обдумывать, а не решать' : ''}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
@@ -80,10 +80,10 @@ export function secDays(c: Chart, a: Analysis) {
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
       <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
       <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall" hidden></p></div>
-    <h3 style="margin-top:26px">8 недель</h3>
+    <div class="dsplit"><div class="dcal"><h3 style="margin-top:26px">8 недель</h3>
     <div class="dlegend"><span class="peak">сильный</span><span class="peak-hit">сильный, но с риском</span><span class="calm">ровный</span><span class="heavy">нагрузка</span></div>
-    <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div>
-    <h3 style="margin-top:26px">Лучшие дни ближайших 45 дней</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div>
+    <div class="dgrid"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>${cells}</div></div>
+    <div class="dbest"><h3 style="margin-top:26px">Лучшие дни ближайших 45 дней</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div></div></div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
     <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Получать мой день каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
