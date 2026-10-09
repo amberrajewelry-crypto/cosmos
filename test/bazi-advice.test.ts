@@ -14,7 +14,7 @@ describe("подсказка дня (KB 17, today.py)", () => {
     const ds = daysFrom(c, a, new Date(2026, 9, 5), 8);
     expect(ds[0].score).toBe(2); expect(ds[0].med).toBe(2); expect(ds[0].heal).toBe(true);
     expect(ds[7].score).toBe(5);
-    expect(bestHours(a, ds[0], 4 - 44.79 / 15, 9, 25)).toEqual(["14:00–16:00", "16:00–18:00", "18:00–20:00"]);
+    expect(bestHours(a, ds[0], 4 - 44.79 / 15, 9, 25)).toEqual(["14:00–20:00"]);
   });
   it("любая карта: оценка 1–5, лекарство полезно, советы заполнены", () => {
     for (const [d, t, lat, lon, tz, m] of [["1985-03-21", "14:20", 55.75, 37.62, "Europe/Moscow", false], ["2001-07-08", "06:05", 40.71, -74.0, "America/New_York", true], ["1970-12-30", "23:40", -8.65, 115.2, "Asia/Makassar", false]] as const) {

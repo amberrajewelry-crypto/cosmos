@@ -1,7 +1,6 @@
 // Сферы жизни простым языком: характер, дело, деньги, любовь, здоровье, родные (KB 12–14 в ~/projects/бацзы).
 // Каждый вывод — из фактов карты (полезный бог мозга, сила, боги, дворцы) + правило корпуса; цитаты — дословно из KB.
 // Нельзя: число детей, «克», болезни и сроки, патриархальная женская карта (KB 12 §5, 13 §3, 14 §1).
-import { describe } from './describe';
 import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, type El } from './core';
 import type { Analysis, Chart, Pillar } from './calc';
 import { yearIdx } from './calc';
@@ -82,7 +81,7 @@ export function combos(c: Chart, a: Analysis): Combo[] {
   if (has('PY') && has('SS') && !wealth) out.push({ sphere: 'character', title: 'Начать легко, закончить трудно (枭神夺食)', text: '«Интуиция» спорит с «Богом еды»: много начинаний и интересов, меньше доведённого до конца. Помогают сроки, заказчик и деньги как мерило.', quote: '好学艺而多学少成', src: 'ЮХ, 相心賦 (KB 05 §5)' });
   if (a.pct[r.res] >= 0.35) out.push({ sphere: 'character', title: 'Опеки больше, чем нужно', text: `Стихии опеки (${EL[r.res].toLowerCase()}) столько, что поддержка начинает душить: много советов и страховки, мало своего хода. Нужен выход — действие и результат.`, quote: SHENG[a.dmEl], src: 'ЮХ, 论五行生剋制化 (KB 05 §4.9)' });
   const zc = w('ZC'), pcw = w('PC');
-  if (zc + pcw >= 0.8) out.push({ sphere: 'money', title: zc >= pcw ? 'Ваш тип денег — заработок' : 'Ваш тип денег — сделки', text: zc >= pcw ? 'Сильнее «Прямое богатство»: ваше — постоянный доход, накопление, понятная цена труда. Рискованные схемы дают меньше, чем кажется.' : 'Сильнее «Косвенное богатство»: ваше — проекты, сделки, оборот. Доход идёт волнами — держите резерв на тихие месяцы.', quote: '財喜根深，不宜太露', src: 'ЦПЦЦ гл.8' });
+  if (zc + pcw >= 0.8) out.push({ sphere: 'money', title: zc >= pcw ? 'Ваш тип денег — заработок' : 'Ваш тип денег — сделки', text: zc >= pcw ? 'Ваше — постоянный доход, накопление, понятная цена труда. Рискованные схемы дают меньше, чем кажется.' : 'Ваше — проекты, сделки, оборот. Доход идёт волнами — держите резерв на тихие месяцы.', quote: '財喜根深，不宜太露', src: 'ЦПЦЦ гл.8' });
   const [s1, s2] = c.input.male ? ['ZC', 'PC'] : ['ZG', 'QS'];
   if (w(s1) + w(s2) >= 0.8) {
     const t = w(s1) >= w(s2) ? s1 : s2;
@@ -97,7 +96,8 @@ function character(c: Chart, a: Analysis): Sphere {
   const month = P(c, 'month')!, winter = [11, 0, 1].includes(month.branch), summer = [5, 6, 7].includes(month.branch);
   const cold = winter && a.pct[1] < 0.08, hot = summer && a.pct[4] < 0.08;
   // KB 18: тот же портрет, что в «Кто вы» (describe.ts), + краска стихии дня; «как видят / наедине» — внутри describe (§5).
-  const points = [...describe(c, a).lines, `Краска вашей стихии: ${t.gift}; тень — ${t.shadow}.`];
+  // Портрет describe() уже стоит в «Кто вы» и «Характере по традиции» (с оговоркой) — здесь не повторяем (вычитка 09.10).
+  const points = [`Краска вашей стихии: ${t.gift}; тень — ${t.shadow}.`];
   if (cold) points.push('Карта рождена в холод почти без Огня: внутри бывает зябко и одиноко — нужны тепло, люди, движение.');
   if (hot) points.push('Карта рождена в жару почти без Воды: много напора, мало остывания — нужны паузы и тишина.');
   return {
@@ -136,7 +136,7 @@ function career(c: Chart, a: Analysis, now: number): Sphere {
     lead: `Ваше дело — там, где много ${EL_GEN[y].toLowerCase()}, а сильнее всего в вас «${groups[0][0].toLowerCase()}» (${pc(groups[0][1])}): ${PROF[groups[0][0]].split(',').slice(0, 2).join(',')}.${outStrong ? ' Талант просится наружу.' : ''}`,
     how: 'Классика не называет профессию напрямую — она даёт стихию и роль богов; профессии ниже — сегодняшний перевод этих образов.',
     points,
-    todo: `Опирайтесь на ${PROF[GROUP_BY_REL[(y - a.dmEl + 5) % 5]].split(',').slice(0, 2).join(',')}, а рывки планируйте на десятилетия, когда приходит ${EL[y].toLowerCase()}.`,
+    todo: `Опорные занятия — ${PROF[GROUP_BY_REL[(y - a.dmEl + 5) % 5]].split(',').slice(0, 2).join(',')}; рывки планируйте на десятилетия, когда приходит ${EL[y].toLowerCase()}.`,
     notes: [
       { title: 'Ищите, куда выходит сила', quote: '看格不拘月令，只看…归秀气在何处', src: 'ШФ, 伤官格 (KB 13 §2)', text: 'Талант — там, куда утекает самая сильная стихия.' },
       { title: 'Периоды весят наравне с картой', quote: '富贵人未必皆富贵命，或行运辅之以成也', src: 'ЦЛ, 应运 (KB 13 §2)', text: 'Успех делают и такты: смотрите блок «Такты удачи».' },
@@ -173,7 +173,7 @@ function money(c: Chart, a: Analysis, now: number): Sphere {
       return ys.length ? `Денежные годы ближайшего десятилетия (приходит стихия денег, и она не во вред): ${ys.join(', ')}.` : '';
     })(),
     (() => {
-      const ds = c.luck.filter((l) => l.year + 9 >= now && (STEMS[l.idx % 10].el === r.wealth || BRANCHES[l.idx % 12].el === r.wealth)).map((l) => span(l.year));
+      const ds = c.luck.filter((l) => l.year + 9 >= now && (STEMS[l.idx % 10].el === r.wealth || BRANCHES[l.idx % 12].el === r.wealth) && periodVerdict(a.brain, l.idx, c).tone !== 'bad').map((l) => span(l.year));
       return ds.length ? `Десятилетия, когда стихия денег приходит сама: ${ds.slice(0, 3).join(', ')} — время для крупных денежных шагов (покупки, своё дело, рост дохода).` : '';
     })(),
     (() => {

@@ -16,7 +16,7 @@ import {
 } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, chartSummary } from './interp';
-import { describe, describeNote } from './describe';
+import { describe } from './describe';
 import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, portraitMore, type Note } from './reading';
 import { spheres } from './spheres';
@@ -367,7 +367,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
   const bars = [0, 1, 2, 3, 4].map((e) => `<div class="bar" style="--rgb:${rgb(e)}"><div>${EL[e]}<small>${SEASON_STATE[seasonStateOf(e, a.monthEl)]}</small></div><div class="track"><div class="fill" data-w="${Math.round(a.pct[e] * 100)}%"></div></div><div class="v">${AMOUNT(a.pct[e])}</div></div>`).join('');
   const rs = charts.map((x) => x.a.ratio), lo = Math.min(...rs), hi = Math.max(...rs);
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
-  const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${u.fav.map((e) => EL[e]).join(', ')}.</div>`).join('');
+  const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${(u.fav.filter((e) => !a.avoid.includes(e)).length ? u.fav.filter((e) => !a.avoid.includes(e)) : u.fav).map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
   return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
@@ -531,10 +531,10 @@ function secRazbor(c: Chart, a: Analysis) {
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
-        ${noteHtml(describeNote(c, a))}${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
+        ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3><p class="conf mid judge" id="judge" hidden></p>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
-        <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
+        <h4 class="sub">Как выбран полезный бог (структура: ${esc(a.brain.frame.name.toLowerCase())})</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
         <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
       <div class="card pane"><h3>10 божеств: ${gp.top.map((t) => t.replace(/\s*\d+%/, '')).join(' и ').toLowerCase()}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>
