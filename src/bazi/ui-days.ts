@@ -46,10 +46,10 @@ export function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): str
   return `<div class="dmore">
     <p><b>${d.heal ? 'Чем выровнять день' : 'На что опереться'}:</b> ${EL[d.med]} — ${esc(d.why)}.</p>
     ${hh.length ? `<p><b>Лучшие часы:</b> ${hh.join(', ')} <span class="dhint">(примерно, по местному времени)</span>.</p>` : ''}
-    <p class="dhint"><b>Фон:</b> ${bgRu(d)}</p>
-    <h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
+    ${d.bg.adj || d.bg.swung ? `<p class="dhint"><b>Фон:</b> ${bgRu(d)}</p>` : ''}
+    ${d.heal || !/уже есть в этом дне/.test(d.why) ? `<h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
     <ul class="list"><li>${esc(d.add.theory)}</li>
-      <li>${esc(d.add.folk)}</li></ul>
+      <li>${esc(d.add.folk)}</li></ul>` : ''}
     ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${dayRu(next).toLowerCase()}, ${next.score} из 5.${top ? (pick.length ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : (d.score >= 3 ? ` Дальше на неделе сильных дней нет — важное лучше поставить на сегодня.` : ` Сильных дней на неделе нет — важное лучше перенести; самый ровный — ${dLabel(top)}.`)) : ''}</p>` : ''}
     <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
   </div>`;
