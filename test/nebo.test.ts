@@ -12,7 +12,7 @@ describe('/nebo/{дата}', () => {
     expect(h).toContain('href="/?birth=2001-09-14"');
   });
   it('en: canonical /en/sky/', () => {
-    expect(neboPage('1969-07-20', 'en')).toContain('<link rel="canonical" href="https://cosmos-alpha-three.vercel.app/en/sky/1969-07-20/">');
+    expect(neboPage('1969-07-20', 'en')).toContain('<link rel="canonical" href="https://astropro.tech/en/sky/1969-07-20/">');
   });
   it('sitemap: 101 год в индексе, 366×2 URL за 2024', () => {
     expect((neboSitemapIndex().match(/<sitemap>/g) ?? []).length).toBe(101);

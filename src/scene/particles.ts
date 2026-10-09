@@ -68,7 +68,7 @@ vec3 curl(vec3 p){ float e=.1;
 const BODY_VERT = `
 ${NOISE_GLSL}
 uniform float uTime; uniform float uPixelRatio; uniform vec3 uMouse; uniform float uMouseOn; uniform float uReveal; uniform float uMix;
-uniform float uScaleA; uniform float uScaleB;
+uniform float uScaleA; uniform float uScaleB; uniform float uTalk;
 attribute float aSeed; attribute vec3 aTarget; attribute vec3 aColorB;
 const vec3 PIVOT = vec3(0., .9, 0.);
 varying vec3 vColor; varying float vTwinkle;
@@ -78,6 +78,11 @@ void main(){
   vColor = mix(color, aColorB, mx);
   // Непрерывный зум: текущая форма сжимается к точке, следующая входит из-за кадра (масштаб вокруг центра фигуры).
   vec3 p = mix((position - PIVOT) * uScaleA + PIVOT, (aTarget - PIVOT) * uScaleB + PIVOT, mx);
+  // Лицо говорит: нижняя челюсть (ниже линии рта y≈.55, лицо смотрит в +Z) опускается, губы светлеют.
+  float jaw = smoothstep(.575, .52, position.y) * smoothstep(.27, .38, position.y) * smoothstep(.36, .12, abs(position.x)) * smoothstep(.15, .4, position.z);
+  vec3 dl = (position - vec3(0., .55, .6)) * vec3(6., 14., 6.);
+  float lip = exp(-dot(dl, dl)) * (1. - mx);
+  p.y -= uTalk * .045 * jaw * (1. - mx) * uScaleA;
   // §2.4 «внутри неё медленно проступают точки»: сборка из рассеяния, каждая точка со своей задержкой.
   float rv = smoothstep(0., 1., clamp((uReveal - fract(aSeed*.37)*.45) / .55, 0., 1.));
   vec3 scatter = (hash3(vec3(aSeed, aSeed*1.7, aSeed*2.3)) - .5) * vec3(2.6, 3.2, 1.6) + vec3(0., .9, 0.);
@@ -91,7 +96,7 @@ void main(){
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   // Глубина: ближние точки крупнее и ярче, дальние тонут — облако читается объёмом.
   float depth = clamp((-mv.z - 2.4) / 3.2, 0., 1.);
-  vTwinkle = (.75 + .25*sin(uTime*1.7 + aSeed*31.)) * mix(.15, 1., rv) * mix(1.2, .5, depth);
+  vTwinkle = (.75 + .25*sin(uTime*1.7 + aSeed*31.)) * mix(.15, 1., rv) * mix(1.2, .5, depth) * (1. + uTalk * 1.4 * lip);
   gl_PointSize = (1.6 + 3.2*fract(aSeed*7.3)) * uPixelRatio * (2.8 / -mv.z) * mix(1.25, .8, depth);
   gl_Position = projectionMatrix * mv;
 }`;
@@ -115,7 +120,8 @@ export interface BodyPoints {
   /** Пара форм A→B для непрерывного зума и их масштабы вокруг центра фигуры. */
   setPair: (a: { pos: Float32Array; col: Float32Array }, b: { pos: Float32Array; col: Float32Array }) => void; setScales: (a: number, b: number) => void;
   /** Яркость спрайтов: портретная камера дальше — точки плотнее, гасим накопление. */ setGain: (g: number) => void;
-  /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array) => void;
+  /** Лицо говорит: 0 — рот закрыт, 1 — открыт (oracle.mouth). */ setTalk: (a: number) => void;
+  /** Заменить фигуру целиком (точки анатомического меша, public/body.bin). */ replaceBody: (b: Float32Array, shade?: Float32Array) => void;
 }
 
 export function createBodyParticles(count = 9000): BodyPoints {
@@ -151,7 +157,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: {
       uTime: { value: 0 }, uPixelRatio: { value: Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2) },
-      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 }, uGain: { value: 1 }, uScaleA: { value: 1 }, uScaleB: { value: 1 },
+      uMouse: { value: new THREE.Vector3(0, -10, 0) }, uMouseOn: { value: 0 }, uReveal: { value: 0 }, uMix: { value: 0 }, uGain: { value: 1 }, uScaleA: { value: 1 }, uScaleB: { value: 1 }, uTalk: { value: 0 },
     },
   });
   const points = new THREE.Points(geom, mat);
@@ -161,9 +167,15 @@ export function createBodyParticles(count = 9000): BodyPoints {
     setTime: (t) => { mat.uniforms.uTime.value = t; },
     setReveal: (r) => { mat.uniforms.uReveal.value = r; },
     body: bodyPos, bodyColor: bodyCol,
-    replaceBody: (b) => {
+    replaceBody: (b, shade) => {
       const n = Math.min(b.length, bodyPos.length);
       bodyPos.set(b.subarray(0, n));
+      if (shade) {
+        // Per-point light: lit facets bright, shadowed ones dim -> the relief reads at uniform density.
+        for (let k = 0; k < n / 3; k++) { const g = 0.05 + 1.7 * Math.pow(shade[k] ?? 1, 1.5); bodyCol[k * 3] *= g; bodyCol[k * 3 + 1] *= g; bodyCol[k * 3 + 2] *= g; }
+        const c = geom.getAttribute('color') as THREE.BufferAttribute;
+        (c.array as Float32Array).set(bodyCol); c.needsUpdate = true; (colorB.array as Float32Array).set(bodyCol); colorB.needsUpdate = true;
+      }
       const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
       (posAttr.array as Float32Array).set(bodyPos); posAttr.needsUpdate = true;
       (target.array as Float32Array).set(bodyPos); target.needsUpdate = true;
@@ -179,6 +191,7 @@ export function createBodyParticles(count = 9000): BodyPoints {
     },
     setScales: (a, b) => { mat.uniforms.uScaleA.value = a; mat.uniforms.uScaleB.value = b; },
     setGain: (g) => { mat.uniforms.uGain.value = g; },
+    setTalk: (a) => { mat.uniforms.uTalk.value = a; },
     commitTarget: () => {
       const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
       (posAttr.array as Float32Array).set(target.array as Float32Array); posAttr.needsUpdate = true;

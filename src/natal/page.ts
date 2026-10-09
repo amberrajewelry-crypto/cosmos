@@ -1,9 +1,13 @@
 import { natalSVG } from './chart';
+import { SUN_IN_SIGN, MOON_IN_SIGN, ASC_IN_SIGN, SIGNS } from './interp/signs';
+import { DIGNITY } from './interp/extras';
+import { zodiacLines, zodiacLabels, type StarCatalog } from '../data/stars';
 import { precessionOffsetDeg } from '../compute/precession';
 import { sunSignAndConstellation, SIGNS_RU, SIGNS_EN, CONST_RU, CONST_EN } from '../compute/sign';
 import { natalBodies } from '../compute/natalbodies';
 import { dossier } from './dossier';
 import { dateFacts } from './datefacts';
+import { dateDeepHtml, signDeepHtml } from './datedeep';
 import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-engine';
 
 // Программатик «натальная карта родившихся {дата}» (§5.3) под SEO-опору «натальная карта».
@@ -11,10 +15,14 @@ import { Illumination, Body, Equator, Observer, Constellation } from 'astronomy-
 // полдень UTC, никаких координат/времени рождения. Долгота Солнца по календарной дате почти не
 // зависит от года рождения (дрейф <1.5° за десятилетия) — одна страница честно накрывает всех.
 export type Lang = 'ru' | 'en';
+// Каталог звёзд для SSG: генератор задаёт его один раз, страницы дат получают реальные созвездия в кольце.
+let starCat: StarCatalog | null = null;
+export function setStarCatalog(cat: StarCatalog): void { starCat = cat; }
+const skyFor = (year: number) => starCat ? { sky: zodiacLines(starCat, year), skyLabels: zodiacLabels(starCat, year), skyVisible: true } : {};
 const REF_YEAR = 2024; // високосный → дата 29.02 валидна; выбор года не влияет на созвездие
 
-const SITE = 'https://cosmos-alpha-three.vercel.app';
-const BRAND = { ru: 'Космос внутри тебя', en: 'The Cosmos Inside You' };
+const SITE = 'https://astropro.tech';
+const BRAND = { ru: 'Астроанализ', en: 'Astroanalysis' };
 const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -32,7 +40,7 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
   const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
   const dateStr = lang === 'ru' ? `${day} ${MONTHS_RU[month - 1]}` : `${MONTHS_EN[month - 1]} ${day}`;
-  const svg = natalSVG({ sunLon, rotationDeg: 0 });
+  const svg = natalSVG({ sunLon, rotationDeg: 0, ...skyFor(REF_YEAR) });
   const altUrl = SITE + urlFor(lang === 'ru' ? 'en' : 'ru', month, day);
   const selfUrl = SITE + urlFor(lang, month, day);
 
@@ -136,6 +144,14 @@ export function natalPage(month: number, day: number, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <p class="why">${t.why}</p>
+  ${lang === 'ru' ? `<div class="facts razbor"><h2>Солнце в ${SIGNS[signIndex].loc}: что говорит традиция</h2>
+    <p><span class="tag">[ТРАДИЦИЯ]</span> ${SUN_IN_SIGN[signIndex].who}</p>
+    <p><b>Путь.</b> ${SUN_IN_SIGN[signIndex].path}</p>
+    <p><b>Наставление.</b> ${SUN_IN_SIGN[signIndex].advice}</p>
+    <p><span class="tag">[НАУКА]</span> ${SIGNS[signIndex].science}</p>
+    <p class="note">Источник: Птолемей «Тетрабиблос» III; Алан Лео «How to Judge a Nativity» (1903). Знак — тропический (сезон рождения); созвездие Солнца в этот день — ${matches ? 'то же' : 'другое, см. выше'}. Полный разбор с Луной, домами и аспектами — <a href="/karta/">в карте</a>: введи дату и время.</p>
+  </div>` : ''}
+  ${lang === 'ru' ? dateDeepHtml(REF_YEAR, month, day, starCat, (m, d) => urlFor('ru', m, d)) : ''}
   ${skyHtml}
   ${isOphiuchus ? `<p class="why"><a href="${ophiuchusUrl(lang)}" style="color:var(--gold)">${lang === 'ru' ? 'Твоё созвездие — Змееносец, настоящий 13-й знак зодиака →' : 'Your constellation is Ophiuchus — the real 13th zodiac sign →'}</a></p>` : ''}
   ${faqHtml}${faqLd}
@@ -143,17 +159,34 @@ export function natalPage(month: number, day: number, lang: Lang): string {
   ${navHtml}
   <p class="privacy">${t.privacy}</p>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  const hubUrl = lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/';
+  const crumbs = [{ name: BRAND[lang], url: '/' }, { name: lang === 'ru' ? 'Натальная карта' : 'Natal chart', url: hubUrl }, { name: t.title, url: selfUrl }];
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, crumbs });
 }
 
 // Общая HTML-оболочка (DRY): голова с SEO-тегами + тёмная тема. bodyInner вставляется в .wrap.
-interface Shell { title: string; desc: string; selfUrl: string; altUrl: string; altLabel: string; inner: string; }
-function shell(lang: Lang, s: Shell): string {
-  const jsonLd = {
+export interface Crumb { name: string; url: string; }
+export interface Shell {
+  title: string; desc: string; selfUrl: string; altUrl: string; altLabel: string; inner: string;
+  crumbs?: Crumb[]; datePublished?: string; dateModified?: string; eyebrow?: string;
+}
+export function shell(lang: Lang, s: Shell): string {
+  const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org', '@type': 'Article', headline: s.title, description: s.desc,
     inLanguage: lang, isPartOf: { '@type': 'WebSite', name: BRAND[lang], url: SITE },
     mainEntity: { '@type': 'Question', name: s.title, acceptedAnswer: { '@type': 'Answer', text: s.desc } },
   };
+  if (s.datePublished) { jsonLd.datePublished = s.datePublished; jsonLd.dateModified = s.dateModified ?? s.datePublished; }
+  // BreadcrumbList: Главная → раздел → страница (протокол эксперимента, этап 5.3).
+  const crumbs = s.crumbs ?? [{ name: BRAND[lang], url: '/' }, { name: s.title, url: s.selfUrl }];
+  // Eyebrow над h1: путь без текущей страницы (≥3 уровней) или явная метка раздела; сама h1 не дублируется.
+  const trail = crumbs.length > 2 ? crumbs.slice(0, -1) : [crumbs[0]];
+  const crumbsHtml = `<nav class="crumbs" aria-label="${lang === 'ru' ? 'Раздел' : 'Section'}">${trail.map((c) => `<a href="${c.url}">${c.name === BRAND[lang] ? 'Астроанализ' : c.name}</a>`).join('<span>/</span>')}${s.eyebrow ? `<span>/</span><span class="cur">${s.eyebrow}</span>` : ''}</nav>`;
+  const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url.startsWith('http') ? c.url : SITE + c.url })) };
+  const altLinks = s.altUrl ? `<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
+<link rel="alternate" hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${s.altUrl}">` : '';
+  const altNav = s.altUrl ? `<a class="alt" href="${s.altUrl}">${s.altLabel}</a>` : `<a class="alt" href="/">${lang === 'ru' ? 'На главную' : 'Home'}</a>`;
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -162,8 +195,7 @@ function shell(lang: Lang, s: Shell): string {
 <title>${s.title}</title>
 <meta name="description" content="${s.desc}">
 <link rel="canonical" href="${s.selfUrl}">
-<link rel="alternate" hreflang="${lang}" href="${s.selfUrl}">
-<link rel="alternate" hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${s.altUrl}">
+${altLinks}
 <meta property="og:type" content="article">
 <meta property="og:title" content="${s.title}">
 <meta property="og:description" content="${s.desc}">
@@ -174,34 +206,51 @@ function shell(lang: Lang, s: Shell): string {
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%23bfa14a'/></svg>">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<script type="application/ld+json">${JSON.stringify(crumbLd)}</script>
 <style>
-@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Unbounded';font-style:normal;font-weight:200 900;font-display:swap;src:url(/fonts/Unboundedwght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
-:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.68);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--display:'Unbounded','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
+:root{--ink:#ece6d3;--ink2:rgba(236,230,211,.8);--gold:#c9a85c;--gold2:rgba(201,168,92,.32);--bg:#0a0820;--head:'Cormorant Garamond',Georgia,'Times New Roman',serif;--display:'Manrope','Geist','Geist Fallback',system-ui,sans-serif;--serif:'Geist','Geist Fallback',system-ui,sans-serif;--mono:'Geist Mono','Geist Mono Fallback',ui-monospace,Menlo,monospace;--ease:cubic-bezier(.32,.72,0,1)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.6;font-size:18px;-webkit-font-smoothing:antialiased}
+body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#1a1340 0%,var(--bg) 60%);color:var(--ink);font-family:var(--serif);line-height:1.75;font-size:19px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;hyphens:auto;font-variant-numeric:tabular-nums}
+p,li{text-wrap:pretty}main p{max-width:68ch}
+h1,h2,h3,summary{hyphens:manual;font-variant-numeric:lining-nums proportional-nums}
+::selection{background:rgba(201,168,92,.35);color:var(--ink)}
+main a{color:var(--gold);text-underline-offset:.18em;text-decoration-thickness:1px}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.wrap{max-width:760px;margin:0 auto;padding:36px 22px 80px}
-.top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08)}
-.top a{color:var(--gold);text-decoration:none;padding:6px 10px;border-radius:999px}
-h1{font-family:var(--display);font-weight:300;font-size:clamp(26px,3.6vw,40px);line-height:1.12;letter-spacing:-.02em;text-wrap:balance;text-align:center;color:var(--ink);margin:40px 0 12px}
-h1 em,h1 b{font-style:italic;font-weight:400;color:var(--gold)}
-h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;color:var(--gold);margin:30px 0 8px}
-.lede{font-size:22px;line-height:1.4;margin:14px 0 24px;color:var(--ink2)}
-.chart{width:min(78vw,360px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
+.wrap{max-width:900px;margin:0 auto;padding:36px 22px 80px}
+.top{display:flex;align-items:center;gap:2px;font-family:var(--serif);font-size:14px;letter-spacing:0;white-space:nowrap;padding:6px 8px 6px 16px;border-radius:999px;background:rgba(14,11,38,.55);border:1px solid rgba(236,230,211,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.top .brand{font-family:var(--display);font-weight:600;font-size:13.5px;letter-spacing:.02em;color:var(--gold);margin-right:10px;text-decoration:none}
+.top a{color:var(--ink2);text-decoration:none;padding:7px 12px;border-radius:999px;transition:color .5s var(--ease),background .5s var(--ease)}
+.top a:hover{color:var(--ink);background:rgba(236,230,211,.06)}
+.top .alt{margin-left:auto;color:var(--gold)}
+@media(max-width:560px){.top .more{display:none}}
+.crumbs{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;margin:44px 0 0;font-family:var(--serif);font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--gold)}
+.crumbs a{color:inherit;text-decoration:none}.crumbs span{opacity:.55}.crumbs .cur{opacity:1;color:var(--ink2)}
+h1{font-family:var(--head);font-weight:500;font-size:clamp(34px,4.3vw,58px);line-height:1.04;letter-spacing:-.012em;text-wrap:balance;text-align:left;color:var(--ink);margin:14px 0 14px}
+h1 em,h1 b{font-family:var(--head);font-style:italic;font-weight:500;color:var(--gold)}
+@media(max-width:760px){h1,h2{white-space:normal!important}}
+h2{font-family:var(--head);font-weight:500;font-size:34px;letter-spacing:-.006em;line-height:1.12;text-align:left;color:var(--ink);margin:48px 0 12px;text-wrap:balance}
+main>h2::before,article>h2::before{content:'';display:block;width:34px;height:1px;background:var(--gold);margin:0 0 14px;opacity:.8}
+.facts h2::before{display:none}
+h3{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:-.01em;margin:24px 0 6px}
+.lede{font-size:20px;font-weight:400;line-height:1.55;margin:14px 0 26px;max-width:60ch;color:var(--ink2)}
+.chart{color:var(--ink);width:min(90vw,620px);aspect-ratio:1;margin:8px auto 28px;display:block;filter:drop-shadow(0 0 40px rgba(201,168,92,.14))}
 .why{font-size:18px;opacity:.94}
 .facts{padding:20px 22px;border-radius:18px;background:linear-gradient(180deg,rgba(20,16,52,.78),rgba(12,10,32,.78));border:1px solid rgba(236,230,211,.08);box-shadow:0 0 0 5px rgba(236,230,211,.035),inset 0 1px 0 rgba(255,255,255,.06);margin:30px 5px}
-.facts h2{font-size:20px;margin:0 0 10px}
-.dossier ol{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:d}.dossier li{position:relative;padding:12px 14px 12px 40px;border-radius:16px;background:rgba(236,230,211,.035);border:1px solid rgba(236,230,211,.07)}.dossier li::before{counter-increment:d;content:counter(d,decimal-leading-zero);position:absolute;left:14px;top:13px;font-family:var(--mono);font-size:10px;color:var(--gold)}.dossier li b{display:block;font-size:14px;margin:0 0 4px}.dossier li .tag{position:absolute;right:12px;top:12px}.dossier li p{margin:0;font-size:14px;line-height:1.45}.dossier li small{display:block;margin-top:5px;font-family:var(--mono);font-size:10px;opacity:.7}
-.facts ul{margin:0;padding:0}
-.facts li{list-style:none;font-family:var(--mono);font-size:14px;margin:8px 0;color:var(--ink)}
+.facts h2{font-size:27px;margin:0 0 10px;color:var(--gold)}
+.facts.razbor{border-color:rgba(201,168,92,.45);box-shadow:0 0 0 5px rgba(201,168,92,.07),0 0 60px rgba(201,168,92,.08),inset 0 1px 0 rgba(255,255,255,.06)}
+.facts.razbor h2{font-size:31px}.facts.razbor p{font-size:17.5px;line-height:1.7}.facts.razbor p.note{font-size:13px;line-height:1.5}
+.dossier ol{list-style:none;margin:0;padding:0;font-size:15px;line-height:1.7}.dossier li{display:inline}.dossier li+li::before{content:' · ';color:var(--gold)}.dossier li b{font-weight:500}.dossier li .tag{display:none}.dossier li p{display:inline;margin:0}.dossier li small{display:inline;margin-left:.4em;font-family:var(--mono);font-size:12.5px;opacity:.8}
+.facts ul{margin:0;padding:0;font-family:var(--serif);font-size:15px;line-height:1.75;color:var(--ink)}
+.facts li{list-style:none;display:inline}.facts li+li::before{content:' · ';color:var(--gold)}
 .facts li b{color:var(--gold);font-weight:400}
-.note{font-family:var(--mono);font-size:11px;opacity:.55;margin:8px 0 0}
+.note{font-family:var(--mono);font-size:12.5px;opacity:.72;margin:8px 0 0}
 .cta{display:inline-flex;align-items:center;gap:12px;margin:22px 0 10px;font-size:18px;font-weight:500;color:#120f2a;background:var(--gold);padding:8px 8px 8px 22px;border-radius:999px;text-decoration:none;transition:transform .6s var(--ease)}
 .cta::after{content:'→';width:34px;height:34px;border-radius:50%;background:rgba(10,8,32,.14);display:grid;place-items:center;font-family:var(--mono);font-size:14px}
 .cta:active{transform:scale(.98)}
-.privacy{font-family:var(--mono);font-size:11px;opacity:.6}
+.privacy{font-family:var(--mono);font-size:12.5px;opacity:.72}
 .days{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
-.days a{color:var(--ink2);font-family:var(--mono);font-size:12px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
+.days a{color:var(--ink2);font-family:var(--serif);font-size:14px;text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid rgba(236,230,211,.08);transition:color .5s var(--ease),border-color .5s var(--ease)}
 .days a:hover{color:var(--ink);border-color:var(--gold2)}
 .faq{margin:30px 0}
 .dates{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:26px 0 8px;font-size:14px}.dates a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(214,180,106,.35)}
@@ -209,12 +258,12 @@ h2{font-family:var(--display);font-weight:300;font-size:20px;text-align:center;c
 .faq summary{cursor:pointer;font-size:19px;font-weight:500}
 .faq p{font-size:17px;color:var(--ink2);margin:8px 0 0}
 section p{color:var(--ink2)}
-.tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.tag{font-family:var(--serif);font-size:12px;font-weight:500;letter-spacing:.02em;text-transform:none;color:var(--gold)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><a href="/">${BRAND[lang]}</a><a href="${s.altUrl}">${s.altLabel}</a></header><main>${s.inner}</main>
+  <header class="top"><a class="brand" href="/">Астроанализ</a><a class="more" href="/karta/">${lang === 'ru' ? 'Астропроцессор' : 'Chart tool'}</a><a class="more" href="${lang === 'ru' ? '/natalnaya-karta/' : '/en/natal-chart/'}">${lang === 'ru' ? 'По дате' : 'By date'}</a>${altNav}</header><main>${crumbsHtml}${s.inner}</main>
 </div>
 </body>
 </html>`;
@@ -280,11 +329,12 @@ export function signPage(signIndex: number, lang: Lang, entries: SignDay[]): str
     <h2>${t.decodeH}</h2>
     <p class="why">${t.decode}</p>
   </div>
+  ${lang === 'ru' ? signDeepHtml(signIndex, REF_YEAR, starCat, (m, d) => urlFor('ru', m, d), SIGNS[signIndex], SUN_IN_SIGN[signIndex], MOON_IN_SIGN[signIndex], ASC_IN_SIGN[signIndex], DIGNITY) : ''}
   <h2>${t.daysH}</h2>
   <div class="days">${dayLinks}</div>
   <a class="cta" href="/">${t.cta}</a>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Знаки' : 'Signs' });
 }
 
 // --- Хаб Змееносца — 13-й знак (§4.8-крючок под живой suggest-кластер «змееносец…»). ---
@@ -395,7 +445,7 @@ export function ophiuchusPage(lang: Lang, entries: SignDay[]): string {
   ${faqHtml}${faqLd}
   <a class="cta" href="/">${t.cta}</a>`;
 
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Знаки' : 'Signs' });
 }
 
 
@@ -424,7 +474,7 @@ export function neboPage(iso: string, lang: Lang): string {
   const sign = (lang === 'ru' ? SIGNS_RU : SIGNS_EN)[signIndex];
   const constellation = (lang === 'ru' ? CONST_RU : CONST_EN)[constellationLatin] ?? constellationLatin;
   const dateStr = lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]} ${y}` : `${MONTHS_EN[m - 1]} ${d}, ${y}`;
-  const svg = natalSVG({ sunLon, rotationDeg: 0, bodies: bodies.map((b) => ({ glyph: b.glyph, lon: b.lon, key: b.key })) });
+  const svg = natalSVG({ sunLon, rotationDeg: 0, bodies: bodies.map((b) => ({ glyph: b.glyph, lon: b.lon, key: b.key })), ...skyFor(y) });
   const selfUrl = SITE + neboUrl(lang, iso), altUrl = SITE + neboUrl(lang === 'ru' ? 'en' : 'ru', iso);
   const t = lang === 'ru' ? {
     title: `Небо ${dateStr}: где реально были Солнце, Луна и планеты`,
@@ -458,13 +508,13 @@ export function neboPage(iso: string, lang: Lang): string {
     <p class="note">${t.note}</p>
   </div>
   <section class="dossier"><h2>${lang === 'ru' ? 'Досье дня по реальным данным' : 'The day’s dossier, from real data'}</h2>
-    <p class="note">${lang === 'ru' ? 'Не толкования — проверяемые факты. У каждого тег и источник.' : 'No interpretations — checkable facts, each with a tag and a source.'}</p>
+    <p class="note">${lang === 'ru' ? 'Проверяемые факты с тегом и источником; разбор характера и пути по классике — в карте.' : 'Checkable facts with a tag and a source; the classical reading is in the chart.'}</p>
     <ol>${dossier(when, new Date(), undefined, 70, { mode: 'date', lang }).map((x) => `<li><b>${x.title}</b> <span class="tag">[${lang === 'ru' ? x.tag : x.tag === 'ТОЧНО' ? 'EXACT' : 'ESTIMATE'}]</span><p>${x.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" rel="noopener">$1</a>')}</p><small>${x.source}</small></li>`).join('')}</ol>
   </section>
   <section><h2>${t.hub}</h2><div class="days">${links} <a href="${dayPage}">${lang === 'ru' ? 'все родившиеся' : 'everyone born'} ${lang === 'ru' ? `${d} ${MONTHS_RU[m - 1]}` : `${MONTHS_EN[m - 1]} ${d}`}</a></div></section>
   <a class="cta" href="/?birth=${iso}">${t.cta}</a>
   <p class="privacy">${t.privacy}</p>`;
-  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner });
+  return shell(lang, { title: t.title, desc: t.desc, selfUrl, altUrl, altLabel: t.altLabel, inner, eyebrow: lang === 'ru' ? 'Небо по дням' : 'Sky by day' });
 }
 
 // Sitemap: индекс по годам + по 365/366 URL на год (оба языка) — тоже по запросу.

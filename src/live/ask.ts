@@ -83,7 +83,7 @@ export function buildContext(values: Value[]): string {
 }
 
 const SYSTEM = [
-  'Ты — часть проекта COSMOS о ЧЕСТНОЙ физике. Отвечай по-русски, коротко, спокойно.',
+  'Ты — часть проекта АСТРОАНАЛИЗ о ЧЕСТНОЙ физике. Отвечай по-русски, коротко, спокойно.',
   'ЖЕЛЕЗНОЕ ПРАВИЛО: не придумывай числа. Любую цифру бери ТОЛЬКО из списка фактов ниже.',
   'Если для ответа нужна цифра, которой в фактах нет, — так и скажи: «точного числа у меня нет».',
   'Говори о настоящем, сидерическом положении звёзд честно; не выдумывай предсказаний судьбы и характера.',
@@ -112,9 +112,11 @@ function loadPuter(): Promise<any> {
   return puterLoading;
 }
 
-export async function ask(question: string, values: Value[]): Promise<AskResult> {
-  const context = buildContext(values);
-  const prompt = `${SYSTEM}\n\nФАКТЫ НА ЭКРАНЕ:\n${context}\n\nВОПРОС: ${question}`;
+// extra — уже посчитанный текст (разбор карты, прошлые реплики разговора): его числа тоже считаются проверенными.
+export async function ask(question: string, values: Value[], extra = ''): Promise<AskResult> {
+  const context = buildContext(values) + (extra ? `\n\n${extra}` : '');
+  const rule = extra ? '\nТолкования бери ТОЛЬКО из разбора карты ниже, своими словами, и называй их традицией, а не фактом.' : '';
+  const prompt = `${SYSTEM}${rule}\n\nФАКТЫ НА ЭКРАНЕ:\n${context}\n\nВОПРОС: ${question}`;
   let raw: string;
   try {
     const puter = await loadPuter();
