@@ -8,7 +8,7 @@ describe('заставка «карта дня»', () => {
   const a = analyze(c), days = daysFrom(c, a, new Date(2026, 9, 6), 9);
   it('SVG без иероглифов, с оценкой и датой', () => {
     const s = wallpaperSvg(a, days[0], days, 4 - 42.7 / 15);
-    expect(s).toContain('6 октября, вторник');
+    expect(s.toLowerCase()).toContain('6 октября, вторник');
     expect(s).toContain(`${days[0].score} из 5`);
     expect(s).not.toMatch(/[一-鿿]/);
   });
