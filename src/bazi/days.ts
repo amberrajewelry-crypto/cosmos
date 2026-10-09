@@ -151,7 +151,7 @@ function natalPen(c: Chart, a: Analysis, idx: number): { pen: number; warn: stri
   const nat = c.pillars.map((p) => p.stem);
   if (c.pillars.some((p) => p.pos !== 'day' && Math.abs(p.stem - s) === 5) && nat.includes(s) && !c.pillars.some((p) => p.pos === 'day' && Math.abs(p.stem - s) === 5)) { score -= 0.5; warn.push('появляется соперник за деньги или партнёра — долей не делиться'); }
   if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
-  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('сырая земля дня защищает от лишнего слабее обычного'); }
+  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('запас прочности дня меньше обычного — не берите лишнего'); }
   // ствол дня уходит в союз со стволом карты (не с вами) и превращается во вредную стихию — сила дня слабее
   for (const p of c.pillars) if (p.pos !== 'day' && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
     score -= 0.5; warn.push('полезная стихия дня уходит в союз — действует слабее'); break;

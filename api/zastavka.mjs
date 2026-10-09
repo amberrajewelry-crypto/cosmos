@@ -2637,13 +2637,13 @@ function periodVerdict(b, idx, c, partner) {
       }
     }
   }
-  const t = s + r, byEl = verdictOf(s0, r0, s0 + r0), fin = verdictOf(s, r, t);
+  const t = s + r, one = se === be, byEl = verdictOf(s0, r0, s0 + r0, one), fin = verdictOf(s, r, t, one);
   const res0 = { tone: fin.tone, text: byEl.text + (fin.tone !== byEl.tone ? ", \u043D\u043E \u0443\u0434\u0430\u0440 \u043F\u043E \u0441\u0442\u043E\u043B\u043F\u0443 \u0434\u043D\u044F \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442" : "") };
   return { tone: res0.tone, text: res0.text + (bond ? "." + bond : "") + (swing ? "." + swing : "") + (extra ? "." + extra : ""), set, se, swung };
 }
-function verdictOf(s, r, t) {
-  if (s > 0 && r > 0) return { tone: "good", text: "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u044B \u2014 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
-  if (s < 0 && r < 0) return { tone: "bad", text: "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
+function verdictOf(s, r, t, one = false) {
+  if (s > 0 && r > 0) return { tone: "good", text: one ? "\u0441\u0442\u0438\u0445\u0438\u044F \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u0430 \u2014 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" : "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u044B \u2014 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
+  if (s < 0 && r < 0) return { tone: "bad", text: one ? "\u0441\u0442\u0438\u0445\u0438\u044F \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" : "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
   if (s * r < 0) return { tone: t > 0 ? "good" : t < 0 ? "bad" : "mixed", text: `\u043E\u0434\u043D\u0430 \u0441\u0442\u0438\u0445\u0438\u044F \u043F\u043E\u043B\u0435\u0437\u043D\u0430, \u0434\u0440\u0443\u0433\u0430\u044F \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430; \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442 ${Math.abs(s) > Math.abs(r) === s > 0 ? "\u043F\u043E\u043B\u044C\u0437\u0430" : "\u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430"}` };
   return { tone: t > 0 ? "good" : t < 0 ? "bad" : "calm", text: t > 0 ? "\u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0435 \u0431\u0435\u0437 \u0432\u0440\u0435\u0434\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0445\u043E\u0440\u043E\u0448\u043E" : t < 0 ? "\u0432\u0440\u0435\u0434\u043D\u043E\u0435 \u0431\u0435\u0437 \u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0442\u044F\u0436\u0435\u043B\u043E" : "\u043D\u0438 \u0437\u0430\u043C\u0435\u0442\u043D\u043E\u0439 \u043F\u043E\u043C\u043E\u0449\u0438, \u043D\u0438 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0438" };
 }
@@ -2975,7 +2975,7 @@ function natalPen(c, a, idx) {
   if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
   if (WET.includes(b) && bad(4) && fav(2)) {
     score -= 0.5;
-    warn.push("\u0437\u0435\u043C\u043B\u044F \u0434\u043D\u044F \u0432\u043B\u0430\u0436\u043D\u0430\u044F \u2014 \u0441\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0441\u043B\u0430\u0431\u0435\u0435");
+    warn.push("\u0437\u0430\u043F\u0430\u0441 \u043F\u0440\u043E\u0447\u043D\u043E\u0441\u0442\u0438 \u0434\u043D\u044F \u043C\u0435\u043D\u044C\u0448\u0435 \u043E\u0431\u044B\u0447\u043D\u043E\u0433\u043E \u2014 \u043D\u0435 \u0431\u0435\u0440\u0438\u0442\u0435 \u043B\u0438\u0448\u043D\u0435\u0433\u043E");
   }
   for (const p of c.pillars) if (p.pos !== "day" && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
     score -= 0.5;
@@ -3023,7 +3023,7 @@ function advice(c, a, idx, monthIdx, type, yi, bgAdj) {
   score += pen - meanPen(c, a);
   if (Math.abs(monthIdx % 12 - b) === 6) {
     score -= 1;
-    warn.push("\u0434\u0435\u043D\u044C \u0431\u044C\u0451\u0442 \u043C\u0435\u0441\u044F\u0446: \u043A\u0440\u0443\u043F\u043D\u043E \u043D\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044C, \u0432 \u0434\u043E\u043B\u0433 \u043D\u0435 \u0434\u0430\u0432\u0430\u0442\u044C, \u0434\u0430\u043B\u0435\u043A\u043E \u0437\u0430 \u0434\u0435\u043D\u044C\u0433\u0430\u043C\u0438 \u043D\u0435 \u0435\u0445\u0430\u0442\u044C");
+    warn.push("\u0434\u0435\u043D\u044C \u0438\u0434\u0451\u0442 \u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430: \u043A\u0440\u0443\u043F\u043D\u043E \u043D\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044C, \u0432 \u0434\u043E\u043B\u0433 \u043D\u0435 \u0434\u0430\u0432\u0430\u0442\u044C, \u0434\u0430\u043B\u0435\u043A\u043E \u0437\u0430 \u0434\u0435\u043D\u044C\u0433\u0430\u043C\u0438 \u043D\u0435 \u0435\u0445\u0430\u0442\u044C");
   }
   if (Math.abs(yi % 12 - b) === 6) score -= 0.5;
   score += bgAdj;
@@ -3049,7 +3049,13 @@ function bestHours(_a, d, shift = 0, from = 7, to = 23) {
   }
   res.sort((x, y) => x.a - y.a);
   const top = res.filter((r) => r.best);
-  return (top.length ? top : res).map((r) => r.t).slice(0, 3);
+  const pick = (top.length ? top : res).slice(0, 3), out = [];
+  for (const r of pick) {
+    const l = out[out.length - 1];
+    if (l && Math.abs(l.b - r.a) < 0.01) l.b = r.a + 2;
+    else out.push({ a: r.a, b: r.a + 2 });
+  }
+  return out.map((r) => `${fm(r.a)}\u2013${fm(r.b)}`);
 }
 function daysFrom(c, a, start, n) {
   const out = [];
@@ -3112,6 +3118,16 @@ function wrap(text, size, width, max = 4) {
     out[max - 1] = out[max - 1].replace(/[\s,;:—-]*\S*$/, "") + "\u2026";
   }
   return out;
+}
+function fit(text, size, width, max) {
+  const ok = (t2) => wrap(t2, size, width, 99).length <= max;
+  if (ok(text)) return wrap(text, size, width, max);
+  let t = text.replace(/\s*\([^)]*\)/g, "").replace(/\s+([,;])/g, "$1");
+  for (const sep of [";", " \u2014 ", ", \u043D\u043E ", ", \u0430 ", ", "]) {
+    if (ok(t)) break;
+    while (!ok(t) && t.lastIndexOf(sep) > 8) t = t.slice(0, t.lastIndexOf(sep));
+  }
+  return wrap(t.replace(/[,;:\s—-]+$/, ""), size, width, max);
 }
 function tzOffsetH(tz, at = /* @__PURE__ */ new Date()) {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }).formatToParts(at).map((x) => [x.type, x.value]));
@@ -3227,12 +3243,13 @@ function wallpaperSvg(a, d, days, shift, img) {
   const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
-  let y = img ? 1090 : 1e3;
+  const OY = 1050, OK = 0.7;
+  let y = 1458;
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, "#cbbf9f", y, 'letter-spacing="8"');
   y += 116;
-  text(HEAD[d.type], 112, 600, "url(#goldt)", y, "", "Cormorant");
-  y += 74;
+  text(HEAD[d.type], 104, 600, "url(#goldt)", y, "", "Cormorant");
+  y += 70;
   text(`\u0417\u043D\u0430\u043A \u0434\u043D\u044F: ${br.animal} \xB7 \u0441\u0442\u0438\u0445\u0438\u044F ${EL_OF[st.el]}`, 36, 600, col, y, 'letter-spacing="2"');
   y += 72;
   for (let i = 0; i < 5; i++) {
@@ -3242,20 +3259,23 @@ function wallpaperSvg(a, d, days, shift, img) {
   }
   t.push(`<line x1="${CX + 100}" y1="${y - 36}" x2="${CX + 100}" y2="${y + 8}" stroke="${gold}" stroke-opacity=".3" stroke-width="1.5"/>`);
   t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} \u0438\u0437 5</text>`);
-  y += 64;
+  const hh = bestHours(a, d, shift);
+  if (hh.length) {
+    y += 66;
+    t.push(`<g transform="translate(${CX - 200} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
+    t.push(`<text x="${CX - 156}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B: ${esc(hh[0])}</text>`);
+  }
+  y += 54;
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows = [];
-  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0422\u0435\u043C\u0430 \u0434\u043D\u044F \xB7 \u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(d.act), fill: "#f1ece0", max: 3 });
-  rows.push({ ic: "sup", head: d.heal ? "\u0412\u044B\u0440\u043E\u0432\u043D\u044F\u0442\u044C \u0434\u0435\u043D\u044C" : "\u041E\u043F\u043E\u0440\u0430 \u0434\u043D\u044F", body: cap(d.add.theory), fill: "#f1ece0", max: 3 });
-  const hh = bestHours(a, d, shift);
-  if (hh.length) rows.push({ ic: "hrs", head: "\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B", body: hh.slice(0, 2).join(", "), fill: "#f1ece0", max: 1 });
+  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(d.act), fill: "#f1ece0", max: [...d.notes, ...d.warn].length ? 2 : 3 });
   const risk = [...d.notes, ...d.warn][0];
-  if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: cap(risk), fill: "#f3c9bd", max: 2 });
+  if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: cap(risk.split(" \u2014 ")[0]), fill: "#f3c9bd", max: 1 });
   const body = [];
   y += 50;
   rows.forEach((rw, i) => {
-    const ls = wrap(rw.body, 36, TWc, rw.max), need = 54 + ls.length * 46;
-    if (y + need > 2232) return;
+    const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
+    if (y + need > 2195) return;
     if (i) {
       body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
       y += 12;
@@ -3266,8 +3286,8 @@ function wallpaperSvg(a, d, days, shift, img) {
     body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
     y += 56;
     for (const ln of ls) {
-      body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="36" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`);
-      y += 46;
+      body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="34" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`);
+      y += 44;
     }
     y += 26;
   });
@@ -3316,11 +3336,11 @@ function wallpaperSvg(a, d, days, shift, img) {
 <filter id="blurL" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="60"/></filter>
 </defs>
 <rect width="${w}" height="${h}" fill="url(#sky)"/>
-<ellipse cx="${CX}" cy="560" rx="620" ry="560" fill="url(#neb)"/>
+<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>
 ${stars.join("")}
-${img ? orbit(CX, 540, 400, st.el, d.idx % 12, img) : mandala(CX, 560, 410, st.el, d.idx % 12, br.el)}
+<g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
 <rect x="36" y="36" width="${w - 72}" height="${h - 72}" rx="64" fill="none" stroke="${gold}" stroke-opacity=".18" stroke-width="2"/>
 <rect x="52" y="52" width="${w - 104}" height="${h - 104}" rx="52" fill="none" stroke="${gold}" stroke-opacity=".08" stroke-width="1.5"/>
 ${t.join("\n")}
