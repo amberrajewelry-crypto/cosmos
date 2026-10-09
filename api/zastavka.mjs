@@ -3194,12 +3194,12 @@ function wallpaperSvg(a, d, days, shift) {
   orn(y);
   y += 80;
   const block = (head, body, fill = "#efe9da", max = 3) => {
-    if (!body || y > 2150) return;
+    if (!body || y > 2060) return;
     text(head.toUpperCase(), 30, 800, gold, y, 'letter-spacing="6"');
     y += 58;
-    for (const ln of wrap(body, 43, TW, max)) {
-      text(ln, 43, 400, fill);
-      y += 56;
+    for (const ln of wrap(body, 41, TW, max)) {
+      text(ln, 41, 400, fill);
+      y += 53;
     }
     y += 30;
   };
@@ -3213,15 +3213,27 @@ function wallpaperSvg(a, d, days, shift) {
   const top = week.reduce((m, x) => !m || x.score > m.score ? x : m, null);
   const BG = { good: "\u0431\u043B\u0430\u0433\u043E\u043F\u0440\u0438\u044F\u0442\u043D\u044B\u0439", bad: "\u0442\u044F\u0436\u0451\u043B\u044B\u0439", mixed: "\u0441\u043C\u0435\u0448\u0430\u043D\u043D\u044B\u0439", calm: "\u0441\u043F\u043E\u043A\u043E\u0439\u043D\u044B\u0439" };
   const BGN = { good: "\u0431\u043B\u0430\u0433\u043E\u043F\u0440\u0438\u044F\u0442\u043D\u043E\u0435", bad: "\u0442\u044F\u0436\u0451\u043B\u043E\u0435", mixed: "\u0441\u043C\u0435\u0448\u0430\u043D\u043D\u043E\u0435", calm: "\u0441\u043F\u043E\u043A\u043E\u0439\u043D\u043E\u0435" };
-  if (y < 2250) {
+  if (y < 2060) {
     orn(y - 6, 200);
     y += 58;
-  } else y += 10;
-  if (y < 2330) {
+  } else y += 4;
+  if (y < 2150) {
     text(`\u0424\u043E\u043D: ${d.bg.luck ? `\u0434\u0435\u0441\u044F\u0442\u0438\u043B\u0435\u0442\u0438\u0435 ${BGN[d.bg.luck]}, ` : ""}\u0433\u043E\u0434 ${BG[d.bg.year]}`, 34, 600, "#a79fbf");
     y += 52;
   }
-  if (top && y < 2390) text(`\u041B\u0443\u0447\u0448\u0438\u0439 \u0434\u0435\u043D\u044C \u043D\u0435\u0434\u0435\u043B\u0438: ${label(top.iso)} \xB7 ${top.score} \u0438\u0437 5`, 34, 600, "#a79fbf");
+  if (top && y < 2200) text(`\u041B\u0443\u0447\u0448\u0438\u0439 \u0434\u0435\u043D\u044C \u043D\u0435\u0434\u0435\u043B\u0438: ${label(top.iso)} \xB7 ${top.score} \u0438\u0437 5`, 34, 600, "#a79fbf");
+  const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2300;
+  const TC = { peak: "#6fd99a", "peak-hit": "#ecd08a", calm: "#9a93b8", heavy: "#6f9cf0" };
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
+  strip.forEach((x, i) => {
+    const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = TC[x.type], now = i === 0;
+    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
+    t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : "#8f88ad"}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
+    t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
+    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
+    t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
+    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="600" fill="#8f88ad">${x.score}/5</text>`);
+  });
   const r = rng(d.iso), stars = [];
   for (let i = 0; i < 260; i++) {
     const x = r() * w, yy = r() * h, s = r(), big = s > 0.975 && (yy < 960 || x < 110 || x > w - 110);

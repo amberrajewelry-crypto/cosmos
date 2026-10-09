@@ -98,9 +98,9 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   orn(y); y += 80;
 
   const block = (head: string, body: string, fill = '#efe9da', max = 3) => {
-    if (!body || y > 2150) return;
+    if (!body || y > 2060) return;
     text(head.toUpperCase(), 30, 800, gold, y, 'letter-spacing="6"'); y += 58;
-    for (const ln of wrap(body, 43, TW, max)) { text(ln, 43, 400, fill); y += 56; }
+    for (const ln of wrap(body, 41, TW, max)) { text(ln, 41, 400, fill); y += 53; }
     y += 30;
   };
   block(d.type === 'heavy' ? 'Тема дня · готовить, не решать' : 'Делать', cap(d.act));
@@ -114,9 +114,21 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const top = week.reduce<DayInfo | null>((m, x) => (!m || x.score > m.score ? x : m), null);
   const BG = { good: 'благоприятный', bad: 'тяжёлый', mixed: 'смешанный', calm: 'спокойный' } as const;
   const BGN = { good: 'благоприятное', bad: 'тяжёлое', mixed: 'смешанное', calm: 'спокойное' } as const;
-  if (y < 2250) { orn(y - 6, 200); y += 58; } else y += 10;
-  if (y < 2330) { text(`Фон: ${d.bg.luck ? `десятилетие ${BGN[d.bg.luck]}, ` : ''}год ${BG[d.bg.year]}`, 34, 600, '#a79fbf'); y += 52; }
-  if (top && y < 2390) text(`Лучший день недели: ${label(top.iso)} · ${top.score} из 5`, 34, 600, '#a79fbf');
+  if (y < 2060) { orn(y - 6, 200); y += 58; } else y += 4;
+  if (y < 2150) { text(`Фон: ${d.bg.luck ? `десятилетие ${BGN[d.bg.luck]}, ` : ''}год ${BG[d.bg.year]}`, 34, 600, '#a79fbf'); y += 52; }
+  if (top && y < 2200) text(`Лучший день недели: ${label(top.iso)} · ${top.score} из 5`, 34, 600, '#a79fbf');
+
+  // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
+  const WK = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'], strip = days.slice(k, k + 7), cw = 88, sx = CX - (strip.length * cw) / 2, sy = 2300;
+  const TC: Record<DayInfo['type'], string> = { peak: '#6fd99a', 'peak-hit': '#ecd08a', calm: '#9a93b8', heavy: '#6f9cf0' };
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
+  strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, c2 = TC[x.type], now = i === 0;
+    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
+    t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : '#8f88ad'}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
+    t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? '#fff3cf' : '#e6e1f2'}">${dd}</text>`);
+    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
+    t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
+    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="600" fill="#8f88ad">${x.score}/5</text>`); });
 
   // звёзды
   const r = rng(d.iso), stars: string[] = [];
