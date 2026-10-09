@@ -162,7 +162,9 @@ export function describe(c: Chart, a: Analysis): Description {
     detail.push('Удар по ветви дня от соседней ветви — 朱祖夏 (八字与用神, 冲): «内心动荡».');
   }
   // §6.6 нрав по тактам (МЛЮЯ «始正而终邪者…则行运使然耳»; Жэнь: «至岁运遇击神，亦能变为强弱»)
-  const ph = phases(c, a);
+  // первый отрезок короче 12 лет (детство до старта такта) про нрав ничего не говорит — «до 2 лет — ровнее» звучало как ошибка
+  let ph = phases(c, a);
+  if (ph.length > 1 && ph[1].age < 12) ph = [{ ...ph[1], age: 0 }, ...ph.slice(2)].filter((x, i, arr) => i === 0 || x.key !== arr[i - 1].key);
   if (ph.length > 1) {
     const W = { strong: 'напористее и резче', weak: 'осторожнее и мягче', balanced: 'ровнее, без крайностей' };
     const seg = ph.map((x, i) => `${i === 0 ? `до ${ph[1].age} лет` : i === ph.length - 1 ? `после ${x.age}` : `с ${x.age} до ${ph[i + 1].age}`} — ${W[x.key]}`);

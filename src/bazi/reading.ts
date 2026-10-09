@@ -218,6 +218,11 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
 
 /** Портрет «Кто вы» — по KB 18: тип силы, черта/тень, точка срыва, снаружи/внутри. Стих ствола (STEM_VERSE) — только в подробном разборе (08.10: без имён стволов в основном потоке). */
 export function portrait(c: Chart, a: Analysis): string[] {
-  // 08.10: не больше 4 строк — тип силы, черта и обратная сторона, точка срыва, снаружи/внутри; тема жизни — в «Расклад», вопрос 2.
-  return describe(c, a).lines.filter(Boolean).slice(0, 4);
+  // 09.10: одна строка — тип силы (напор/робость сходится с мастерами, bench_char 8/10). Остальные черты в виртуальном слепом тесте
+  // на 79 известных людях не узнавались (31% при случайных 33%, контроль по биографии 57% — tools/virtual/RESULTS.md) → portraitMore.
+  return describe(c, a).lines.filter(Boolean).slice(0, 1);
+}
+/** Черты по традиции (тень, срыв, снаружи/внутри, нрав по возрасту) — только в «глубже», с оговоркой. */
+export function portraitMore(c: Chart, a: Analysis): string[] {
+  return describe(c, a).lines.filter(Boolean).slice(1);
 }

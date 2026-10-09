@@ -18,7 +18,7 @@ import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, chartSummary } from './interp';
 import { describe, describeNote } from './describe';
 import { rasklad, raskladNote, bookBasis } from './rasklad';
-import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, type Note } from './reading';
+import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, portraitMore, type Note } from './reading';
 import { spheres } from './spheres';
 import { compat } from './compat';
 import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
@@ -180,9 +180,9 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
   const example = new URLSearchParams(location.search).has('ex');
-  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secRasklad(c, a), secForecast(c, a), secDays(c, a), secCompat(), example ? '' : pushCta(),
+  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), secForecast(c, a), secRasklad(c, a), secCompat(), example ? '' : pushCta(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
-    secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
+    secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
@@ -227,6 +227,15 @@ function secRasklad(c: Chart, a: Analysis) {
     <div class="rk-grid">${items}</div></section>`;
 }
 
+function secTrait(c: Chart, a: Analysis) {
+  const shown = new Set([...portrait(c, a), ...rasklad(c, a).flatMap((x) => x.a)]);
+  const ls = portraitMore(c, a).filter((l) => !shown.has(l));
+  if (!ls.length) return '';
+  return `<section class="block"><div class="bhead"><div><h2>Характер по традиции</h2></div>
+    <p>Так эти черты описывают старые толкования. Проверку на известных людях они не прошли — читайте как повод задуматься, а не как факт о вас.</p></div>
+    <div class="card pane">${ls.map((l) => `<p>${esc(l)}</p>`).join('')}</div></section>`;
+}
+
 function secWho(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], day = c.pillars.find((p) => p.pos === 'day')!, br = BRANCHES[day.branch], t = DM_TEXT[a.dm];
   const yr = c.pillars.find((p) => p.pos === 'year')!;
@@ -236,7 +245,7 @@ function secWho(c: Chart, a: Analysis) {
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
     <div class="who-txt"><p class="eyebrow">Кто вы</p>
       <h2>${t.title}</h2>
-      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · вам полезны: ${a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}</p>
+      <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · главная опора — ${EL[a.brain.yong].toLowerCase()}${a.brain.xi.length ? `, помогают также ${a.brain.xi.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}` : ''}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
       ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
