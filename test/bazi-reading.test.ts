@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeChart, analyze, DEFAULT_VARIANT } from '../src/bazi/calc';
-import { rootOf, axisNote, climateNote, bondNotes, comboNotes, luckDetail, portrait, strengthNote } from '../src/bazi/reading';
+import { rootOf, axisNote, climateNote, bondNotes, comboNotes, luckDetail, portrait, portraitMore, strengthNote } from '../src/bazi/reading';
 
 // 1991-11-10 00:37 Кутаиси: 甲子 甲申 己亥 辛未 — сверено с my-chart.md и KB 09 §5, KB 10 «Пример».
 const c = computeChart({ date: '1991-11-10', time: '00:37', timeKnown: true, tz: 'Asia/Tbilisi', lat: 42.27, lon: 42.7, male: true }, DEFAULT_VARIANT);
@@ -30,7 +30,7 @@ describe('разбор по KB', () => {
   it('формулы и портрет не падают, сила объясняет корни', () => {
     expect(Array.isArray(comboNotes(c, a))).toBe(true);
     expect(strengthNote(c, a).text).toContain('Свинья');
-    expect(portrait(c, a).length).toBeGreaterThanOrEqual(3);
+    expect(portrait(c, a).length).toBe(1); expect(portraitMore(c, a).length).toBeGreaterThanOrEqual(2); // 09.10: в «Кто вы» только тип силы
   });
   it('такт 庚寅 (2072) бьёт ветвь дня 申 и ствол 甲 — 天克地冲', () => {
     const l = c.luck.find((x) => x.idx % 10 === 6 && x.idx % 12 === 2)!;
