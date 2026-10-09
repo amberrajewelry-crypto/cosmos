@@ -16,7 +16,7 @@ import {
 } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, chartSummary } from './interp';
-import { describe, describeNote } from './describe';
+import { describe } from './describe';
 import { rasklad, raskladNote, bookBasis } from './rasklad';
 import { natureNote, strengthNote, axisNote, climateNote, comboNotes, bondNotes, godNatureNotes, luckDetail, portrait, portraitMore, type Note } from './reading';
 import { spheres } from './spheres';
@@ -143,6 +143,23 @@ function renderSaved() {
   });
   document.querySelectorAll<HTMLButtonElement>('.saved [data-del]').forEach((b) => (b.onclick = () => { const xs2 = loadSaved(); xs2.splice(+b.dataset.del!, 1); storeSaved(xs2); renderSaved(); }));
 }
+/** Значки разделов-плиток: линия 1.6, 24×24, цвет — от раздела (--ic). */
+const SEC_IC: [RegExp, string, string][] = [
+  [/дни/i, '#5fc98a', '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/>'],
+  [/год/i, '#e2c47c', '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/><path d="M12 12l4-3"/>'],
+  [/расклад/i, '#c9a85c', '<path d="M12 3l2.4 5.6L20 9.5l-4.3 3.9 1.2 5.9L12 16.4l-4.9 2.9 1.2-5.9L4 9.5l5.6-.9z"/>'],
+  [/совмест/i, '#ef7a8a', '<circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/>'],
+  [/характер/i, '#9dc0ff', '<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/>'],
+  [/сфер/i, '#5fc98a', '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>'],
+  [/такт/i, '#d6a64f', '<path d="M3 17l5-6 4 3 4-7 5 5"/><path d="M3 20.5h18"/>'],
+  [/сверк/i, '#9fe3b7', '<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
+  [/спрос/i, '#9dc0ff', '<path d="M4.5 5.5h15v10h-8l-4.5 4v-4h-2.5z"/>'],
+  [/столп/i, '#c9a85c', '<path d="M5 20V7M10 20V4M14 20V4M19 20V7M3 20.5h18"/>'],
+  [/стихи/i, '#ef5a3c', '<path d="M12 3.5l8 6-3 9.5H7l-3-9.5z"/>'],
+  [/сезон/i, '#4f8ef0', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
+  [/точност|вслепую/i, '#e2c47c', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>'],
+];
+const secIcon = (t: string) => { const m = SEC_IC.find(([r]) => r.test(t)); return m ? `<i class="f-ic" style="--ic:${m[1]}" aria-hidden="true"><svg viewBox="0 0 24 24">${m[2]}</svg></i>` : ''; };
 /** Разделы после «Кто вы» — свёрнутые плитки: заголовок + одна строка, содержимое по нажатию. */
 const openSecs = new Set<string>();
 let onToggle: ((e: Event) => void) | null = null;
@@ -154,7 +171,7 @@ function fold(out: HTMLElement) {
     const key = s.id || h2.textContent!;
     const d = document.createElement('details');
     d.className = 'fold'; d.dataset.key = key; d.open = openSecs.has(key);
-    d.innerHTML = `<summary><span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
+    d.innerHTML = `<summary>${secIcon(h2.textContent || '')}<span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
     const body = document.createElement('div'); body.className = 'f-body';
     head.remove(); if (acc) body.append(acc);
     while (s.firstChild) body.append(s.firstChild);
@@ -350,7 +367,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
   const bars = [0, 1, 2, 3, 4].map((e) => `<div class="bar" style="--rgb:${rgb(e)}"><div>${EL[e]}<small>${SEASON_STATE[seasonStateOf(e, a.monthEl)]}</small></div><div class="track"><div class="fill" data-w="${Math.round(a.pct[e] * 100)}%"></div></div><div class="v">${AMOUNT(a.pct[e])}</div></div>`).join('');
   const rs = charts.map((x) => x.a.ratio), lo = Math.min(...rs), hi = Math.max(...rs);
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
-  const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${u.fav.map((e) => EL[e]).join(', ')}.</div>`).join('');
+  const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${(u.fav.filter((e) => !a.avoid.includes(e)).length ? u.fav.filter((e) => !a.avoid.includes(e)) : u.fav).map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
   return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
@@ -431,7 +448,7 @@ function secForecast(c: Chart, a: Analysis) {
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
   // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
@@ -459,7 +476,7 @@ const VAPID_PUBLIC = 'BAtafqYtBLaVo0Hdz37tmWAPbdl4KsKLTImwFW3nXXCJU9BEjwhEWNrUQ0
 function pushCta() {
   return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
     <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
-    <button class="go" data-push type="button">Получать мой день каждое утро</button><p class="dhint" data-pushmsg></p>
+    <button class="go" data-push type="button">Мой день — каждое утро</button><p class="dhint" data-pushmsg></p>
     <div class="acts"><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
 }
 function chartQuery(): string {
@@ -478,7 +495,7 @@ async function wirePush() {
   const btns = [...document.querySelectorAll<HTMLButtonElement>('[data-push]')], msgs = [...document.querySelectorAll<HTMLElement>('[data-pushmsg]')];
   if (!btns.length) return;
   const say = (t: string) => msgs.forEach((m) => (m.textContent = t));
-  const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Получать мой день каждое утро'));
+  const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Мой день — каждое утро'));
   const ios = /iP(hone|ad|od)/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
     if (ios && !standalone) { btns.forEach((b) => (b.onclick = () => say('На iPhone уведомления работают из приложения: «Поделиться» → «На экран „Домой“», откройте сайт с иконки и нажмите эту кнопку там.'))); return; }
@@ -514,10 +531,10 @@ function secRazbor(c: Chart, a: Analysis) {
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
       <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
-        ${noteHtml(describeNote(c, a))}${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
+        ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3><p class="conf mid judge" id="judge" hidden></p>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}
-        <h4 class="sub">Полезный бог · ${esc(a.brain.frame.name)}</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
+        <h4 class="sub">Как выбран полезный бог (структура: ${esc(a.brain.frame.name.toLowerCase())})</h4>${a.brain.steps.map((st) => noteHtml({ title: st.title, text: st.text })).join('')}
         <h4 class="sub">Что вас питает: главное — ${EL[a.brain.yong]}</h4>${a.consensus.map((e) => `<p>${EL_NEED[e]}</p>`).join('')}
         ${a.avoid.length ? `<p><b>Меньше:</b> ${a.avoid.map((e) => EL[e]).join(', ')} — в избытке эта стихия давит на карту.</p>` : ''}</div>
       <div class="card pane"><h3>10 божеств: ${gp.top.map((t) => t.replace(/\s*\d+%/, '')).join(' и ').toLowerCase()}</h3><p>${gp.text}</p><ul class="list">${godsList}</ul>

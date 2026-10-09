@@ -11,6 +11,8 @@ import { wallpaperSvg, tzOffsetH } from '../src/bazi/wallpaper';
 import f400 from '../src/bazi/fonts/Manrope-400.ttf';
 import f600 from '../src/bazi/fonts/Manrope-600.ttf';
 import f800 from '../src/bazi/fonts/Manrope-800.ttf';
+import fc600 from '../src/bazi/fonts/Cormorant-600.ttf';
+import * as WPI from './zastavka-img';
 
 const { Resvg } = resvgPkg as unknown as typeof import('@resvg/resvg-js');
 interface Req { query: Record<string, string | string[] | undefined>; }
@@ -18,8 +20,8 @@ interface Res { setHeader(k: string, v: string): Res; status(n: number): Res; se
 
 // resvg-js 2.6 читает шрифты только с диска: вшитые в бандл TTF кладём во /tmp при холодном старте.
 let fontFiles: string[] | null = null;
-const fonts = () => fontFiles ??= ([[400, f400], [600, f600], [800, f800]] as const).map(([w, b]) => {
-  const f = join(tmpdir(), `zastavka-manrope-${w}.ttf`); if (!existsSync(f)) writeFileSync(f, b); return f; });
+const fonts = () => fontFiles ??= ([[400, f400], [600, f600], [800, f800], ['c600', fc600]] as const).map(([w, b]) => {
+  const f = join(tmpdir(), `zastavka-font-${w}.ttf`); if (!existsSync(f)) writeFileSync(f, b); return f; });
 
 const validTz = (tz: string) => { try { new Intl.DateTimeFormat('en', { timeZone: tz }); return true; } catch { return false; } };
 
@@ -34,7 +36,7 @@ export function render(q: Record<string, string>, now = new Date()): Buffer | nu
   const [Y, M, D] = new Intl.DateTimeFormat('en-CA', { timeZone: z }).format(now).split('-').map(Number);
   const days = daysFrom(c, a, new Date(Y, M - 1, D), 9);
   const shift = z === tz ? tzOffsetH(z, now) - +lon / 15 : 0;
-  const svg = wallpaperSvg(a, days[0], days, shift);
+  const svg = wallpaperSvg(a, days[0], days, shift, WPI.images());
   const png = new Resvg(svg, { font: { fontFiles: fonts(), loadSystemFonts: false, defaultFontFamily: 'Manrope' } }).render().asPng();
   return Buffer.from(png);
 }

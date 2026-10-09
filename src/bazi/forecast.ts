@@ -53,7 +53,7 @@ export function yearForecast(c: Chart, a: Analysis, Y: number): YearF {
 export function decade(c: Chart, a: Analysis, from: number): (Period & { year: number; detail: string[] })[] {
   return Array.from({ length: 10 }, (_, i) => {
     const y = from + i, idx = yearIdx(y);
-    return { year: y, ...period(c, a, idx, luckAt(c, y)?.idx), detail: luckDetail(c, a, idx) };
+    return { year: y, ...period(c, a, idx, luckAt(c, y)?.idx), detail: luckDetail(c, a, idx).filter((t) => !/^(Ваша стихия в этот период|Проявляется главная тема)/.test(t)) };
   });
 }
 

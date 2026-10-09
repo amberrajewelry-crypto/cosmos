@@ -151,7 +151,7 @@ function natalPen(c: Chart, a: Analysis, idx: number): { pen: number; warn: stri
   const nat = c.pillars.map((p) => p.stem);
   if (c.pillars.some((p) => p.pos !== 'day' && Math.abs(p.stem - s) === 5) && nat.includes(s) && !c.pillars.some((p) => p.pos === 'day' && Math.abs(p.stem - s) === 5)) { score -= 0.5; warn.push('появляется соперник за деньги или партнёра — долей не делиться'); }
   if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
-  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('земля дня влажная — сдерживает слабее'); }
+  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('сырая земля дня защищает от лишнего слабее обычного'); }
   // ствол дня уходит в союз со стволом карты (не с вами) и превращается во вредную стихию — сила дня слабее
   for (const p of c.pillars) if (p.pos !== 'day' && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
     score -= 0.5; warn.push('полезная стихия дня уходит в союз — действует слабее'); break;
@@ -190,7 +190,7 @@ function advice(c: Chart, a: Analysis, idx: number, monthIdx: number, type: DayT
   // и 刑 с четырьмя столпами срезали в среднем 0,7 балла каждый день и 57% дней выходили «нагрузкой» (вычитка 09.10).
   score += pen - meanPen(c, a);
   // 月破: ветвь дня бьёт ветвь месяца (协纪辨方)
-  if (Math.abs(monthIdx % 12 - b) === 6) { score -= 1; warn.push('день бьёт месяц: крупно не тратить, в долг не давать, далеко за деньгами не ехать'); }
+  if (Math.abs(monthIdx % 12 - b) === 6) { score -= 1; warn.push('день идёт против месяца: крупно не тратить, в долг не давать, далеко за деньгами не ехать'); }
   // 岁破: ветвь дня бьёт ветвь года (协纪辨方) — день против года
   if (Math.abs((yi % 12) - b) === 6) score -= 0.5;
   score += bgAdj;
@@ -215,7 +215,10 @@ export function bestHours(_a: Analysis, d: DayInfo, shift = 0, from = 7, to = 23
   }
   res.sort((x, y) => x.a - y.a);
   const top = res.filter((r) => r.best);
-  return (top.length ? top : res).map((r) => r.t).slice(0, 3);
+  // Соседние часы склеиваем: «15:00–17:00, 17:00–19:00» → «15:00–19:00».
+  const pick = (top.length ? top : res).slice(0, 3), out: { a: number; b: number }[] = [];
+  for (const r of pick) { const l = out[out.length - 1]; if (l && Math.abs(l.b - r.a) < 0.01) l.b = r.a + 2; else out.push({ a: r.a, b: r.a + 2 }); }
+  return out.map((r) => `${fm(r.a)}–${fm(r.b)}`);
 }
 
 export function daysFrom(c: Chart, a: Analysis, start: Date, n: number): DayInfo[] {
