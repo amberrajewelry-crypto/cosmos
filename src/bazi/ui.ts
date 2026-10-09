@@ -448,7 +448,7 @@ function secForecast(c: Chart, a: Analysis) {
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b><span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
   // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
@@ -476,7 +476,7 @@ const VAPID_PUBLIC = 'BAtafqYtBLaVo0Hdz37tmWAPbdl4KsKLTImwFW3nXXCJU9BEjwhEWNrUQ0
 function pushCta() {
   return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
     <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
-    <button class="go" data-push type="button">Получать мой день каждое утро</button><p class="dhint" data-pushmsg></p>
+    <button class="go" data-push type="button">Мой день — каждое утро</button><p class="dhint" data-pushmsg></p>
     <div class="acts"><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
 }
 function chartQuery(): string {
@@ -495,7 +495,7 @@ async function wirePush() {
   const btns = [...document.querySelectorAll<HTMLButtonElement>('[data-push]')], msgs = [...document.querySelectorAll<HTMLElement>('[data-pushmsg]')];
   if (!btns.length) return;
   const say = (t: string) => msgs.forEach((m) => (m.textContent = t));
-  const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Получать мой день каждое утро'));
+  const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Мой день — каждое утро'));
   const ios = /iP(hone|ad|od)/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
     if (ios && !standalone) { btns.forEach((b) => (b.onclick = () => say('На iPhone уведомления работают из приложения: «Поделиться» → «На экран „Домой“», откройте сайт с иконки и нажмите эту кнопку там.'))); return; }

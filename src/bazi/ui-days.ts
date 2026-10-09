@@ -60,9 +60,10 @@ export function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): str
 export const bigOk = (d: DayInfo) => d.type === 'peak' && d.score >= 3 && !d.notes.some((n) => n.includes('не начинать') || n.includes('не для решений'));
 export const WD = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 export const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const MON_S = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 export const dLabel = (d: DayInfo, wd = true) => { const [y, m, dd] = d.iso.split('-').map(Number); const w = new Date(y, m - 1, dd).getDay(); return `${dd} ${MON[m - 1]}${wd ? ', ' + WD[w] : ''}`; };
 export const dayCell = (d: DayInfo, today: boolean) => { const s = STEMS[d.idx % 10], b = BRANCHES[d.idx % 12], dd = +d.iso.slice(8);
-  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}"><b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSm(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
+  return `<button class="dc ${d.type}${today ? ' now' : ''}" data-iso="${d.iso}" title="${esc(DAY_TYPE[d.type].ru + ' · ' + d.god.short)}">${dd === 1 ? `<i class="dmon">${MON_S[+d.iso.slice(5, 7) - 1]}</i>` : ''}<b>${dd}</b><span style="color:${EL_COLOR[s.el]}">${elIcon(s.el, EL_COLOR[s.el], 11)}</span><img src="${animalSm(d.idx % 12)}" alt="${b.animal}" loading="lazy" /></button>`; };
 
 export function secDays(c: Chart, a: Analysis) {
   const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -86,7 +87,7 @@ export function secDays(c: Chart, a: Analysis) {
     <div class="dbest"><h3 style="margin-top:26px">Лучшие дни ближайших 45 дней</h3><div class="dlist">${best.map((d) => dayCard(d)).join('') || '<p>Чистых сильных дней нет — ставьте важное на ровные дни.</p>'}</div></div></div>
     ${pairs.length ? `<h3 style="margin-top:26px">Связка «покажи → закрой»</h3><p class="dhint">День выражения (показать работу, продать), за ним день денег (закрыть сделку, выставить счёт): ${pairs.map(([x, y]) => `<b>${dLabel(x, false)} → ${dLabel(y, false)}</b>`).join(' · ')}.</p>` : ''}
     <div class="saved" hidden></div>
-    <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Получать мой день каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
+    <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Мой день — каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
     <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
       <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
       <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>

@@ -743,3 +743,6 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 @media (prefers-reduced-motion: reduce) { .hero .form::after, .go::after, .who-fx::before, .who-fx::after, .who::after, .push-cta .card::after { animation: none !important; } }
 @media print { .f-ic, .hero .form::after, .go::after, .who-fx::before, .who-fx::after, .who::after, .push-cta .card::after, nav.top::after { display: none !important; } .who h2, .hero h1 { color: #111 !important; background: none !important; -webkit-text-fill-color: #111; } .dscore .dots { display: none; } }
 @media (max-width: 560px) { .who-row span { font-size: 11.5px; } .who-row b { font-size: 14.5px; } }
+
+/* 1-е число в календаре 8 недель — метка месяца (вычитка 09.10) */
+.dc .dmon { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font: 600 9px/1 var(--sans, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: #1b1630; background: #e6c77a; padding: 2px 4px; border-radius: 6px; font-style: normal; white-space: nowrap; z-index: 1; }
