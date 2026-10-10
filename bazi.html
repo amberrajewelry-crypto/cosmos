@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Бацзы онлайн — карта Четырёх столпов судьбы по дате рождения с разбором</title>
+    <meta name="description" content="Карта Бацзы (Четыре столпа, восемь знаков) по дате, времени и месту рождения: астрономические границы сезонов, истинное солнечное время, пять стихий, 10 божеств, такты удачи и честное сравнение школ." />
+    <link rel="canonical" href="https://astropro.tech/bazi/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Астроанализ" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:url" content="https://astropro.tech/bazi/" />
+    <meta property="og:title" content="Бацзы: что говорит о вас день рождения" />
+    <meta property="og:description" content="Характер, сильные годы и удачные дни — по дате, времени и месту рождения, простым языком. Бесплатно и без регистрации." />
+    <meta property="og:image" content="https://astropro.tech/og-bazi.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Пять стихий и двенадцать животных китайского календаря" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://astropro.tech/og-bazi.jpg" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Бацзы — карта судьбы по дате рождения","url":"https://astropro.tech/bazi/","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"ru","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"},"description":"Характер, сильные годы и удачные дни по дате, времени и месту рождения — простым языком."}</script>
+    <meta name="theme-color" content="#0a0820" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="manifest" href="/bazi.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/bazi-apple-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Бацзы" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/cormorant-var-cyrillic.woff2" />
+    <style>
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/cormorant-var-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-500i-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/Geistwght.woff2) format('woff2')}@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url(/fonts/Geist-Italicwght.woff2) format('woff2')}@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/Manropewght.woff2) format('woff2')}@font-face{font-family:'Geist Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/GeistMonowght.woff2) format('woff2')}@font-face{font-family:'Geist Fallback';src:local('Helvetica Neue'),local('Arial');size-adjust:98%;ascent-override:92%;descent-override:24%;line-gap-override:0%}@font-face{font-family:'Geist Mono Fallback';src:local('Menlo'),local('Courier New');size-adjust:94%}
+    </style>
+    <link rel="stylesheet" href="/src/bazi/bazi.css" />
+  </head>
+  <body>
+    <canvas id="qi" aria-hidden="true"></canvas>
+    <nav class="top">
+      <a class="brand" href="/">Астроанализ</a>
+      <div class="links"><a href="/karta/">Астропроцессор</a><a href="/bazi/" aria-current="page">Бацзы</a><a href="/bazi/?me" id="melink" hidden>Моя карта</a></div>
+    </nav>
+    <main>
+      <header class="hero">
+        <div class="orbit" id="orbit" aria-hidden="true"></div>
+        <p class="eyebrow">Китайская карта судьбы</p>
+        <h1>Бацзы: что говорит о вас день рождения</h1>
+        <p class="lead">Характер, сильные годы и удачные дни — по дате, времени и месту рождения, простым языком. Бесплатно и без регистрации.</p>
+        <form id="f" class="card form" autocomplete="off">
+          <label>Дата рождения<input id="fd" type="date" required min="1800-01-01" max="2100-12-31" /></label>
+          <label>Время<input id="ft" type="time" value="12:00" /><span class="chk"><input id="fnt" type="checkbox" aria-label="Время рождения не знаю" /> не знаю</span></label>
+          <label class="place">Место рождения<input id="fp" type="text" placeholder="Город" required /><ul id="fpl" class="sug" hidden></ul></label>
+          <fieldset class="seg"><legend>Пол</legend><label><input type="radio" name="g" value="m" checked /> <span>мужской</span></label><label><input type="radio" name="g" value="f" /> <span>женский</span></label></fieldset>
+          <div class="acts"><button class="go" type="submit">Построить карту</button><button id="voice" class="ghost" type="button" hidden>Сказать голосом</button></div>
+          <p class="demo">Сначала посмотреть, как это выглядит? <a href="/bazi/?d=1955-02-24&amp;t=19:15&amp;p=37.77,-122.42,America/Los_Angeles,San%20Francisco&amp;g=m&amp;ex=1" id="demo">Пример — разбор Стива Джобса</a> (24.02.1955, 19:15, Сан-Франциско)</p>
+          <p id="fmsg" class="msg" role="status"></p>
+        </form>
+      </header>
+      <section id="out" hidden></section>
+    </main>
+    <footer class="foot"><a href="/">Астроанализ</a> · <a href="/karta/">Астропроцессор</a> · календарь: astronomy-engine, города: GeoNames CC BY 4.0</footer>
+    <script type="module" src="/src/bazi/ui.ts"></script>
+  </body>
+</html>

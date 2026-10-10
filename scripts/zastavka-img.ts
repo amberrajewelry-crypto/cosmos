@@ -1,0 +1,27 @@
+// Картинки сайта для заставки (животные и шары стихий), вшиты в бандл как бинарь → data:-URI.
+import rat from '../src/bazi/img-wp/rat.png';
+import ox from '../src/bazi/img-wp/ox.png';
+import tiger from '../src/bazi/img-wp/tiger.png';
+import rabbit from '../src/bazi/img-wp/rabbit.png';
+import dragon from '../src/bazi/img-wp/dragon.png';
+import snake from '../src/bazi/img-wp/snake.png';
+import horse from '../src/bazi/img-wp/horse.png';
+import goat from '../src/bazi/img-wp/goat.png';
+import monkey from '../src/bazi/img-wp/monkey.png';
+import rooster from '../src/bazi/img-wp/rooster.png';
+import dog from '../src/bazi/img-wp/dog.png';
+import pig from '../src/bazi/img-wp/pig.png';
+import el0 from '../src/bazi/img-wp/el0.png';
+import el1 from '../src/bazi/img-wp/el1.png';
+import el2 from '../src/bazi/img-wp/el2.png';
+import el3 from '../src/bazi/img-wp/el3.png';
+import el4 from '../src/bazi/img-wp/el4.png';
+import bg0 from '../src/bazi/img-wp/bg0.jpg';
+import bg1 from '../src/bazi/img-wp/bg1.jpg';
+import bg2 from '../src/bazi/img-wp/bg2.jpg';
+import bg3 from '../src/bazi/img-wp/bg3.jpg';
+import bg4 from '../src/bazi/img-wp/bg4.jpg';
+const u = (b: Uint8Array) => 'data:image/png;base64,' + Buffer.from(b).toString('base64');
+const uj = (b: Uint8Array) => 'data:image/jpeg;base64,' + Buffer.from(b).toString('base64');
+let cache: { an: string[]; el: string[]; bg: string[] } | null = null;
+export const images = () => cache ??= { an: [rat, ox, tiger, rabbit, dragon, snake, horse, goat, monkey, rooster, dog, pig].map(u), el: [el0, el1, el2, el3, el4].map(u), bg: [bg0, bg1, bg2, bg3, bg4].map(uj) };
