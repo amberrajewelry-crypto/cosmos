@@ -27,7 +27,7 @@ import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, type DayInfo, dayInfo } from './days';
 
 import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
-import { dayCard, dayMore, dLabel, secDays } from './ui-days';
+import { dayCard, dayMore, dLabel, secDays, WP_SHORTCUT } from './ui-days';
 // ——— Фон: поток ци ———
 const qi = (() => {
   const cv = $<HTMLCanvasElement>('qi'), ctx = cv.getContext('2d')!;
@@ -595,6 +595,8 @@ function wireDays(c: Chart, a: Analysis) {
   const wurl = `${location.origin}/bazi/zastavka.png?${wp}`, wo = document.getElementById('wpopen') as HTMLAnchorElement | null, wc = document.getElementById('wpcopy');
   if (wo) wo.href = wurl;
   if (wc) wc.onclick = async () => { try { await navigator.clipboard.writeText(wurl); wc.textContent = 'Ссылка скопирована'; } catch { prompt('Ссылка на заставку', wurl); } };
+  const wi = document.getElementById('wpinstall');
+  if (wi) wi.onclick = async () => { try { await navigator.clipboard.writeText(wurl); } catch { prompt('Скопируйте ссылку на заставку', wurl); } location.href = WP_SHORTCUT; };
   void wireJournal(c, a, days[0]);
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {

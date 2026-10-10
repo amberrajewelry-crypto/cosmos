@@ -1,6 +1,6 @@
 // Текст утреннего уведомления «мой день» (Web Push, tools/push_worker.ts). Тот же расчёт, что у заставки (scripts/zastavka-fn.ts).
 import { computeChart, analyze, DEFAULT_VARIANT } from './calc';
-import { daysFrom, bestHours, DAY_TYPE } from './days';
+import { daysFrom, bestHours, DAY_TYPE, jcHint, prepOnly } from './days';
 import { applyHypo, decodeSet } from './calibrate';
 import { tzOffsetH } from './wallpaper';
 
@@ -25,7 +25,8 @@ export function pushMessage(q: Record<string, string>, z: string, now = new Date
   const hh = bestHours(a, day, shift).slice(0, 2);
   const next = days.slice(1).filter((x) => x.type === 'peak').sort((x, y) => y.score - x.score)[0];
   const lines = [
-    day.type === 'heavy' ? `Тема дня: ${clean(day.act)} — готовить, а не решать.` : `Что делать: ${clean(day.act)}.`,
+    prepOnly(day) ? `Тема дня: ${clean(day.act)} — готовить, а не решать.` : `Что делать: ${clean(day.act)}.`,
+    ((h) => h ? `По календарю: ${clean(h)}.` : '')(jcHint(day)),
     day.type === 'peak' ? '' : `${clean(DAY_TYPE[day.type].hint)}.`,
     day.heal ? `Чем выровнять: ${EL_NOM[day.med]}.` : '',
     hh.length ? `Лучшие часы: ${hh.join(', ')}.` : '',

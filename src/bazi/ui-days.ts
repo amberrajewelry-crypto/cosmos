@@ -6,7 +6,10 @@ import {
    type Chart, type Analysis,
 } from './calc';
 import { elIcon } from './fx';
-import { daysFrom, showThenClose, bestHours, DAY_TYPE, type DayInfo } from './days';
+import { daysFrom, showThenClose, bestHours, DAY_TYPE, JIANCHU, jcHint, prepOnly, type DayInfo } from './days';
+
+/** iCloud-ссылка на готовую команду iPhone «Карта дня» (вопрос при импорте — ссылка на заставку). Пусто — ручная инструкция. */
+export const WP_SHORTCUT = '';
 import { esc, lay, animalSm, thumb, ME_KEY } from './ui-kit';
 
 export function dayCard(d: DayInfo, big = false, extra = '') {
@@ -14,8 +17,9 @@ export function dayCard(d: DayInfo, big = false, extra = '') {
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
     <div class="dhead"><p class="ddate">${dLabel(d)}</p><span class="dscore ${d.type}" aria-label="${dayRu(d)} · ${d.score} из 5"><span class="dots" aria-hidden="true">${[1, 2, 3, 4, 5].map((k) => `<i${k <= d.score ? ' class="f"' : ''}></i>`).join('')}</span>${dayRu(d)} · ${d.score} из 5</span></div>
     <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
-    <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? '. Сегодня готовить и обдумывать, а не решать' : ''}.</p>
+    <p><b>${prepOnly(d) ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${prepOnly(d) ? '. Сегодня готовить и обдумывать, а не решать' : ''}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
+    ${((h) => h ? `<p class="dhint">По календарю — день ${JIANCHU[d.jc].ru}: ${esc(h)}.</p>` : '')(jcHint(d))}
     ${((w) => w.length ? `<p class="dnote">Осторожно: ${w.map(esc).join('; ')}.</p>` : '')([...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean))}
     ${big && d.good.length ? `<p class="dgood">Плюс дня: ${d.good.map(esc).join('; ')}.</p>` : ''}
     ${big && extra ? extra : ''}
@@ -89,12 +93,17 @@ export function secDays(c: Chart, a: Analysis) {
     <div class="saved" hidden></div>
     <div class="acts dacts" style="margin-top:20px"><button class="ghost" data-push type="button">Мой день — каждое утро</button><button class="ghost" id="ics" type="button">Сильные дни — в календарь телефона</button><button class="ghost" id="addlist" type="button">Добавить в «Мои карты»</button><button class="ghost" id="saveme" type="button">${localStorage.getItem(ME_KEY) ? 'Обновить главную карту' : 'Сделать главной («Моя карта»)'}</button><span class="dhint" id="savemsg"></span></div>
     <details class="card pane wp" style="margin-top:16px"><summary><b>Заставка на телефон</b> — карта дня сама меняется каждое утро</summary>
-      <p class="dhint">Картинка на сегодня по этой карте: оценка дня, что делать, чем выровнять, лучшие часы. Сверху оставлено место под часы.</p>
-      <div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Открыть картинку</a></div>
+      <p class="dhint">Экран блокировки на сегодня: оценка дня, лучшие часы, что делать и чего беречься, неделя вперёд. Часы и кнопки телефона ничего не закрывают.</p>
+      ${WP_SHORTCUT ? `<div class="acts"><button class="primary" id="wpinstall" type="button">Поставить на iPhone</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Посмотреть картинку</a></div>
+      <ol class="list"><li>Нажмите «Поставить на iPhone» — ссылка скопируется, откроется команда «Карта дня». «Добавить команду», в поле ссылки — «Вставить».</li>
+        <li>«Команды» → «Автоматизация» → «+» → «Время суток»: 6:00, ежедневно, «Запускать сразу» → команда «Карта дня».</li>
+        <li>Всё: каждое утро заставка обновляется сама.</li></ol>
+      <p class="dhint"><button class="linkbtn" id="wpcopy" type="button">Только скопировать ссылку</button></p>`
+      : `<div class="acts"><button class="ghost" id="wpcopy" type="button">Скопировать ссылку на заставку</button><a class="ghost" id="wpopen" target="_blank" rel="noopener">Посмотреть картинку</a></div>
       <ol class="list"><li>iPhone: «Команды» → «Автоматизация» → «+» → «Время суток»: 6:00, ежедневно, «Запускать сразу».</li>
         <li>Действие «Получить содержимое URL» — вставить скопированную ссылку.</li>
         <li>Действие «Установить обои» — экран блокировки; «Показать предпросмотр» выключить.</li>
-        <li>Готово: каждое утро заставка обновится сама. Разово — откройте картинку, «Поделиться» → «Сделать обоями».</li></ol>
+        <li>Готово: каждое утро заставка обновится сама. Разово — откройте картинку, «Поделиться» → «Сделать обоями».</li></ol>`}
     </details>
   </section>`;
 }

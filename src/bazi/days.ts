@@ -9,7 +9,36 @@ export type DayType = 'peak' | 'peak-hit' | 'calm' | 'heavy';
 export type BgTone = 'good' | 'bad' | 'mixed' | 'calm';
 /** Фон дня: такт и год (KB 11; день — перенос метода, KB 17 §6). fav/avoid — набор, действующий в этом такте. */
 export interface DayBg { luck: BgTone | null; year: BgTone; adj: number; swung: boolean }
-export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; type: DayType; kind: DayType; god: God; act: string; notes: string[]; bg: DayBg; fav: El[]; avoid: El[] }
+export interface DayInfo extends DayAdvice { iso: string; idx: number; monthIdx: number; jc: number; type: DayType; kind: DayType; god: God; act: string; notes: string[]; bg: DayBg; fav: El[]; avoid: El[] }
+
+/** 建除十二神 — тип дня по календарю (от ветви месяца: 建 = ветвь месяца, дальше по кругу). Что делать — 协纪辨方书 卷10 «宜忌»
+ *  (建日…闭日), переведено на современные дела. Сам 协纪 (卷4 建除十二神): «止以建除论吉凶未甚彰显» — один тип дня удачу не решает,
+ *  поэтому на оценку не влияет (кроме 破 = 月破, он уже в оценке); это подсказка «какое дело к дню», а не прогноз. */
+export const JIANCHU: { ru: string; act: string; no?: string; go?: true }[] = [
+  { go: true, ru: 'начала', act: 'брать руководство, раздавать поручения' },                          // 建: 上官赴任 临政亲民 遣使
+  { ru: 'очищения', act: 'убрать лишнее, разобрать завалы, к врачу' },              // 除: 解除 沐浴 整容 求医疗病 扫舍宇
+  { go: true, ru: 'полноты', act: 'сделки, продажи, получать деньги' },                         // 满: 开市 立劵交易 纳财 开仓库
+  { ru: 'выравнивания', act: 'доводка, мелкий ремонт', no: 'крупное не начинать' },         // 平: 修饰垣墙 平治道涂
+  { ru: 'устойчивости', act: 'планировать, считать, строить стратегию' },                                             // 定: 冠带; 时阴 运谋算画计策
+  { ru: 'хватки', act: 'взыскать долги, проверить работу' },                              // 执: 捕捉
+  { ru: 'разлома', act: 'лечиться, рвать отжившее', no: 'новое не начинать' },                        // 破: 求医疗病 破屋坏垣
+  { ru: 'осторожности', act: 'укреплять дом и безопасность', no: 'без риска' },                // 危: 安抚边境 训兵 安牀
+  { go: true, ru: 'завершения', act: 'подписать, открыть, переехать, учиться' },                    // 成: 入学 般移 开市 结婚姻; 天医
+  { go: true, ru: 'сбора', act: 'собрать деньги и долги, нанять людей' },                                     // 收: 进人口 纳财 捕捉 纳畜
+  { go: true, ru: 'открытия', act: 'запускать новое: старт, переезд, учёба' },                               // 开: «其日最吉» — 兴造 般移 入学 求医…
+  { ru: 'закрытия', act: 'закрывать хвосты', no: 'новое не открывать' },     // 闭: 筑隄防 补垣塞穴
+];
+// День смены месяца (节) берёт новый месяц — так значение повторяет вчерашнее: «每月交节则叠两值日» (协纪 卷4); граница — конец суток по Пекину, как в китайских календарях (сверено с lunar-python).
+/** Подсказка календаря к дню (≤ 1 строки заставки). В день нагрузки «действенные» типы не показываем — карта говорит «готовить»;
+ *  запрет типа (破闭平危) — первым, но не в сильный день: личная сила дня весит больше (协纪 卷10 — 情 и 力 складываются). */
+export const jcHint = (d: { jc: number; type: DayType }): string | null => {
+  const j = JIANCHU[d.jc];
+  if (d.type === 'heavy' && j.go) return null;
+  return j.no && d.type !== 'peak' ? `${j.no}; ${j.act}` : j.act;
+};
+/** «Готовить, не решать»: день нагрузки или день разлома (破 = ветвь дня бьёт ветвь месяца, 协纪: 破日 — только 求医疗病 破屋坏垣), кроме сильного. */
+export const prepOnly = (d: { jc: number; type: DayType }) => d.type === 'heavy' || (d.jc === 6 && d.type !== 'peak');
+export const jianchu = (monthIdx: number, idx: number) => (((idx % 12) - (monthIdx % 12)) % 12 + 12) % 12;
 
 export const DAY_TYPE: Record<DayType, { ru: string; hint: string }> = {
   peak: { ru: 'Сильный', hint: 'главные шаги: переговоры, запуски, оплаты, публикации' },
@@ -101,7 +130,7 @@ export function dayInfo(c: Chart, a0: Analysis, y: number, m: number, d: number)
   // Ярлык дня не спорит с оценкой: «сильный» — полезная стихия и ≥4 из 5, «нагрузка» — ≤2, остальное — «ровный».
   // Стихия задаёт лишь кандидата: удары, пустота и фон года/такта могут опустить или поднять день (иначе было «нагрузка · 4 из 5»).
   const shown: DayType = adv.score >= 4 ? (type === 'peak' || type === 'peak-hit' ? type : 'calm') : adv.score <= 2 ? 'heavy' : 'calm';
-  return { iso, idx, monthIdx, type: shown, kind: type, god, act: god.key === 'JC' && a.consensus.includes(STEMS[idx % 10].el) ? JC_FAV : GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...adv };
+  return { iso, idx, monthIdx, jc: jianchu(monthIdxAt(new Date(Date.UTC(y, m - 1, d, 15, 59))), idx), type: shown, kind: type, god, act: god.key === 'JC' && a.consensus.includes(STEMS[idx % 10].el) ? JC_FAV : GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...adv };
 }
 
 // ——— Подсказка дня (KB 17 §5; tools/today.py) ———
@@ -151,7 +180,7 @@ function natalPen(c: Chart, a: Analysis, idx: number): { pen: number; warn: stri
   const nat = c.pillars.map((p) => p.stem);
   if (c.pillars.some((p) => p.pos !== 'day' && Math.abs(p.stem - s) === 5) && nat.includes(s) && !c.pillars.some((p) => p.pos === 'day' && Math.abs(p.stem - s) === 5)) { score -= 0.5; warn.push('появляется соперник за деньги или партнёра — долей не делиться'); }
   if (a.voids.includes(b) && !c.pillars.some((p) => p.branch === b)) score -= 0.25;
-  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('сырая земля дня защищает от лишнего слабее обычного'); }
+  if (WET.includes(b) && bad(4) && fav(2)) { score -= 0.5; warn.push('запас прочности дня меньше обычного — не берите лишнего'); }
   // ствол дня уходит в союз со стволом карты (не с вами) и превращается во вредную стихию — сила дня слабее
   for (const p of c.pillars) if (p.pos !== 'day' && Math.abs(p.stem - s) === 5 && fav(se) && bad((Math.min(p.stem, s) % 5 + 2) % 5)) {
     score -= 0.5; warn.push('полезная стихия дня уходит в союз — действует слабее'); break;

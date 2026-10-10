@@ -746,3 +746,5 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 
 /* 1-е число в календаре 8 недель — метка месяца (вычитка 09.10) */
 .dc .dmon { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font: 600 9px/1 var(--sans, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: #1b1630; background: #e6c77a; padding: 2px 4px; border-radius: 6px; font-style: normal; white-space: nowrap; z-index: 1; }
+
+.linkbtn{background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
