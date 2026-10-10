@@ -36,6 +36,8 @@ export const jcHint = (d: { jc: number; type: DayType }): string | null => {
   if (d.type === 'heavy' && j.go) return null;
   return j.no && d.type !== 'peak' ? `${j.no}; ${j.act}` : j.act;
 };
+/** «Готовить, не решать»: день нагрузки или день разлома (破 = ветвь дня бьёт ветвь месяца, 协纪: 破日 — только 求医疗病 破屋坏垣), кроме сильного. */
+export const prepOnly = (d: { jc: number; type: DayType }) => d.type === 'heavy' || (d.jc === 6 && d.type !== 'peak');
 export const jianchu = (monthIdx: number, idx: number) => (((idx % 12) - (monthIdx % 12)) % 12 + 12) % 12;
 
 export const DAY_TYPE: Record<DayType, { ru: string; hint: string }> = {

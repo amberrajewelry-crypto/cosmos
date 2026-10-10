@@ -2868,6 +2868,7 @@ var jcHint = (d) => {
   if (d.type === "heavy" && j.go) return null;
   return j.no && d.type !== "peak" ? `${j.no}; ${j.act}` : j.act;
 };
+var prepOnly = (d) => d.type === "heavy" || d.jc === 6 && d.type !== "peak";
 var jianchu = (monthIdx, idx) => ((idx % 12 - monthIdx % 12) % 12 + 12) % 12;
 var GOD_ACT = {
   SS: "\u0441\u043E\u0437\u0434\u0430\u0432\u0430\u0442\u044C \u2014 \u043F\u0440\u043E\u0434\u0443\u043A\u0442, \u043A\u043E\u043D\u0442\u0435\u043D\u0442, \u043E\u0431\u0443\u0447\u0435\u043D\u0438\u0435, \u0442\u043E, \u0447\u0442\u043E \u0434\u0435\u043B\u0430\u0435\u0442\u0435 \u0440\u0443\u043A\u0430\u043C\u0438 \u0438 \u0433\u043E\u043B\u043E\u0432\u043E\u0439",
@@ -3303,7 +3304,7 @@ function wallpaperSvg(a, d, days, shift, img) {
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows = [];
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(act), fill: "#f1ece0", max: 2 });
+  rows.push({ ic: "act", head: prepOnly(d) ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(act), fill: "#f1ece0", max: 2 });
   const jh = jcHint(d);
   if (jh) rows.push({ ic: "sup", head: `\u0414\u0435\u043D\u044C ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: "#e6dcc0", max: 1 });
   if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: cap(risk.split(" \u2014 ")[0]), fill: "#f3c9bd", max: 1 });

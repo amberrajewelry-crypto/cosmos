@@ -1,7 +1,7 @@
 // Заставка телефона «карта дня» (SVG → PNG в api/zastavka). Чистая функция: день + часы → SVG.
 // Зоны экрана блокировки iPhone: верх до ~760 px — часы и виджеты (только небо), низ от ~2250 — фонарик/камера
 // (между ними полоса недели). Орбита в середине, текст коротко: оценка, что делать, часы, одно предупреждение.
-import { bestHours, JIANCHU, jcHint, type DayInfo } from './days';
+import { bestHours, JIANCHU, jcHint, prepOnly, type DayInfo } from './days';
 import type { Analysis } from './calc';
 import { STEMS, BRANCHES } from './core';
 
@@ -177,7 +177,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows: { ic: string; head: string; body: string; fill: string; max: number }[] = [];
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: 'act', head: d.type === 'heavy' ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
+  rows.push({ ic: 'act', head: prepOnly(d) ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
   const jh = jcHint(d);
   if (jh) rows.push({ ic: 'sup', head: `День ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: '#e6dcc0', max: 1 });
   if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: cap(risk.split(' — ')[0]), fill: '#f3c9bd', max: 1 });

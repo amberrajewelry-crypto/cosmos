@@ -6,7 +6,7 @@ import {
    type Chart, type Analysis,
 } from './calc';
 import { elIcon } from './fx';
-import { daysFrom, showThenClose, bestHours, DAY_TYPE, JIANCHU, jcHint, type DayInfo } from './days';
+import { daysFrom, showThenClose, bestHours, DAY_TYPE, JIANCHU, jcHint, prepOnly, type DayInfo } from './days';
 
 /** iCloud-ссылка на готовую команду iPhone «Карта дня» (вопрос при импорте — ссылка на заставку). Пусто — ручная инструкция. */
 export const WP_SHORTCUT = '';
@@ -17,7 +17,7 @@ export function dayCard(d: DayInfo, big = false, extra = '') {
   return `<div class="dcard ${d.type}${big ? ' big' : ''}">${thumb(d.idx % 12, big ? 64 : 44)}<div>
     <div class="dhead"><p class="ddate">${dLabel(d)}</p><span class="dscore ${d.type}" aria-label="${dayRu(d)} · ${d.score} из 5"><span class="dots" aria-hidden="true">${[1, 2, 3, 4, 5].map((k) => `<i${k <= d.score ? ' class="f"' : ''}></i>`).join('')}</span>${dayRu(d)} · ${d.score} из 5</span></div>
     <h3><span style="color:${EL_COLOR[s.el]}">${b.animal}</span></h3>
-    <p><b>${d.type === 'heavy' ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${d.type === 'heavy' ? '. Сегодня готовить и обдумывать, а не решать' : ''}.</p>
+    <p><b>${prepOnly(d) ? 'Тема дня' : 'Что делать'}:</b> ${esc(lay(d.act))}${prepOnly(d) ? '. Сегодня готовить и обдумывать, а не решать' : ''}.</p>
     ${d.type === 'peak' ? '' : `<p class="dhint">${DAY_TYPE[d.type].hint[0].toUpperCase() + DAY_TYPE[d.type].hint.slice(1)}.</p>`}
     ${((h) => h ? `<p class="dhint">По календарю — день ${JIANCHU[d.jc].ru}: ${esc(h)}.</p>` : '')(jcHint(d))}
     ${((w) => w.length ? `<p class="dnote">Осторожно: ${w.map(esc).join('; ')}.</p>` : '')([...d.notes, ...(big ? d.warn : [])].map(lay).filter(Boolean))}
