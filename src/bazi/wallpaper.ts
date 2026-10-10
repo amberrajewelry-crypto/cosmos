@@ -1,7 +1,7 @@
 // Заставка телефона «карта дня» (SVG → PNG в api/zastavka). Чистая функция: день + часы → SVG.
 // Зоны экрана блокировки iPhone: верх до ~760 px — часы и виджеты (только небо), низ от ~2250 — фонарик/камера
 // (между ними полоса недели). Орбита в середине, текст коротко: оценка, что делать, часы, одно предупреждение.
-import { bestHours, type DayInfo } from './days';
+import { bestHours, JIANCHU, jcHint, type DayInfo } from './days';
 import type { Analysis } from './calc';
 import { STEMS, BRANCHES } from './core';
 
@@ -152,15 +152,15 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const { w, h } = WP, CX = w / 2, acc = ACC[d.score] ?? ACC[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
-  const OY = 1050, OK = 0.7; // центр и масштаб орбиты
-  let y = 1458;
+  const OY = 990, OK = 0.64; // центр и масштаб орбиты
+  let y = 1352;
   const text = (s: string, size: number, weight: number, fill: string, yy = y, extra = '', fam = 'Manrope') =>
     t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
 
-  text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 116;
-  text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 70;
+  text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 102;
+  text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 62;
   const mine = (d.fav as number[]).includes(st.el) ? ' — ваша стихия' : (d.avoid as number[]).includes(st.el) ? ' — не ваша стихия' : '';
-  text(`Знак дня: ${br.animal} · ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 72;
+  text(`Знак дня: ${br.animal} · ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
   // оценка: пять ромбов и подпись в одну строку
   for (let i = 0; i < 5; i++) { const x = CX - 226 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
@@ -168,21 +168,23 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   t.push(`<line x1="${CX + 100}" y1="${y - 36}" x2="${CX + 100}" y2="${y + 8}" stroke="${gold}" stroke-opacity=".3" stroke-width="1.5"/>`);
   t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} из 5</text>`);
   const hh = bestHours(a, d, shift);
-  if (hh.length) { y += 66; const s = `Лучшие часы: ${hh[0]}`, tw = s.length * 34 * 0.56, x0 = CX - (tw + 50) / 2;
+  if (hh.length) { y += 60; const s = `Лучшие часы: ${hh[0]}`, tw = s.length * 34 * 0.56, x0 = CX - (tw + 50) / 2;
     t.push(`<g transform="translate(${f1(x0)} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
     t.push(`<text x="${f1(x0 + 50)}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">${esc(s)}</text>`); }
-  y += 54;
+  y += 48;
 
   // стеклянная карточка: строки со значками, тонкие разделители
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows: { ic: string; head: string; body: string; fill: string; max: number }[] = [];
   const risk = [...d.notes, ...d.warn][0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: 'act', head: d.type === 'heavy' ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: risk ? 2 : 3 });
+  rows.push({ ic: 'act', head: d.type === 'heavy' ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
+  const jh = jcHint(d);
+  if (jh) rows.push({ ic: 'sup', head: `День ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: '#e6dcc0', max: 1 });
   if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: cap(risk.split(' — ')[0]), fill: '#f3c9bd', max: 1 });
   const body: string[] = []; y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2170) return;
+    if (y + need > 2200) return;
     if (i) { body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`); y += 12; }
     const ic = rw.ic === 'risk' ? '#f0907a' : gold;
     body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
@@ -239,7 +241,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <radialGradient id="vig" cx="0.5" cy="0.45" r="0.75"><stop offset=".55" stop-color="#05040f" stop-opacity="0"/><stop offset="1" stop-color="#05040f" stop-opacity=".7"/></radialGradient>
 <linearGradient id="low" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07051a" stop-opacity="0"/><stop offset=".3" stop-color="#07051a" stop-opacity=".45"/><stop offset="1" stop-color="#07051a" stop-opacity=".25"/></linearGradient>
-<radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#06041a" stop-opacity=".62"/><stop offset=".6" stop-color="#06041a" stop-opacity=".4"/><stop offset="1" stop-color="#06041a" stop-opacity="0"/></radialGradient>
+<radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#06041a" stop-opacity=".72"/><stop offset=".6" stop-color="#06041a" stop-opacity=".5"/><stop offset="1" stop-color="#06041a" stop-opacity="0"/></radialGradient>
 <filter id="blur" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="14"/></filter>
 <filter id="blurL" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="60"/></filter>
 </defs>
@@ -247,7 +249,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>
 <rect width="${w}" height="${h}" fill="url(#vig)"/>
 <rect y="${h - 1180}" width="${w}" height="1180" fill="url(#low)"/>
-<ellipse cx="${CX}" cy="1560" rx="600" ry="250" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
+<ellipse cx="${CX}" cy="1450" rx="640" ry="300" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
 ${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}

@@ -2837,6 +2837,37 @@ function analyze(c) {
 var DEFAULT_VARIANT = { solar: true, zi: "23", south: false };
 
 // src/bazi/days.ts
+var JIANCHU = [
+  { go: true, ru: "\u043D\u0430\u0447\u0430\u043B\u0430", act: "\u0432\u0441\u0442\u0443\u043F\u0438\u0442\u044C \u0432 \u0440\u043E\u043B\u044C, \u0432\u0437\u044F\u0442\u044C \u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E, \u0432\u0441\u0442\u0440\u0435\u0447\u0438 \u0438 \u043F\u043E\u0440\u0443\u0447\u0435\u043D\u0438\u044F \u043B\u044E\u0434\u044F\u043C" },
+  // 建: 上官赴任 临政亲民 遣使
+  { ru: "\u043E\u0447\u0438\u0449\u0435\u043D\u0438\u044F", act: "\u0443\u0431\u0440\u0430\u0442\u044C \u043B\u0438\u0448\u043D\u0435\u0435, \u0440\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C \u0437\u0430\u0432\u0430\u043B\u044B, \u043F\u0440\u0438\u0432\u0435\u0441\u0442\u0438 \u0441\u0435\u0431\u044F \u0432 \u043F\u043E\u0440\u044F\u0434\u043E\u043A, \u0441\u0445\u043E\u0434\u0438\u0442\u044C \u043A \u0432\u0440\u0430\u0447\u0443" },
+  // 除: 解除 沐浴 整容 求医疗病 扫舍宇
+  { go: true, ru: "\u043F\u043E\u043B\u043D\u043E\u0442\u044B", act: "\u0442\u043E\u0440\u0433\u043E\u0432\u0430\u0442\u044C, \u0437\u0430\u043A\u043B\u044E\u0447\u0430\u0442\u044C \u0441\u0434\u0435\u043B\u043A\u0438, \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u044C \u0434\u0435\u043D\u044C\u0433\u0438, \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0442\u044C \u043F\u0440\u043E\u0434\u0430\u0436\u0438" },
+  // 满: 开市 立劵交易 纳财 开仓库
+  { ru: "\u0432\u044B\u0440\u0430\u0432\u043D\u0438\u0432\u0430\u043D\u0438\u044F", act: "\u043C\u0435\u043B\u043A\u0438\u0439 \u0440\u0435\u043C\u043E\u043D\u0442 \u0438 \u0434\u043E\u0432\u043E\u0434\u043A\u0430, \u0440\u0430\u0441\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0434\u043E\u0440\u043E\u0433\u0443 \u0434\u0435\u043B\u0443", no: "\u043A\u0440\u0443\u043F\u043D\u043E\u0435 \u043D\u0435 \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C" },
+  // 平: 修饰垣墙 平治道涂
+  { ru: "\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u0438", act: "\u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u0442\u044C, \u0441\u0447\u0438\u0442\u0430\u0442\u044C, \u0441\u0442\u0440\u043E\u0438\u0442\u044C \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044E" },
+  // 定: 冠带; 时阴 运谋算画计策
+  { ru: "\u0445\u0432\u0430\u0442\u043A\u0438", act: "\u0432\u0437\u044B\u0441\u043A\u0430\u0442\u044C \u0434\u043E\u043B\u0433\u0438, \u043F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0438 \u043F\u043E\u0439\u043C\u0430\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438, \u0434\u043E\u0432\u0435\u0441\u0442\u0438 \u043D\u0430\u0447\u0430\u0442\u043E\u0435" },
+  // 执: 捕捉
+  { ru: "\u0440\u0430\u0437\u043B\u043E\u043C\u0430", act: "\u043B\u0435\u0447\u0438\u0442\u044C\u0441\u044F, \u0441\u043D\u043E\u0441\u0438\u0442\u044C \u0441\u0442\u0430\u0440\u043E\u0435, \u0440\u0432\u0430\u0442\u044C \u043E\u0442\u0436\u0438\u0432\u0448\u0435\u0435", no: "\u043D\u043E\u0432\u043E\u0435 \u043D\u0435 \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C" },
+  // 破: 求医疗病 破屋坏垣
+  { ru: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E\u0441\u0442\u0438", act: "\u0443\u043A\u0440\u0435\u043F\u043B\u044F\u0442\u044C: \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C, \u0434\u043E\u043C, \u0442\u0440\u0435\u043D\u0438\u0440\u043E\u0432\u043A\u0438", no: "\u0431\u0435\u0437 \u0440\u0438\u0441\u043A\u0430 \u0438 \u0432\u044B\u0441\u043E\u0442\u044B" },
+  // 危: 安抚边境 训兵 安牀
+  { go: true, ru: "\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F", act: "\u043F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C, \u043E\u0442\u043A\u0440\u044B\u0442\u044C, \u043F\u0435\u0440\u0435\u0435\u0445\u0430\u0442\u044C, \u043D\u0430\u0447\u0430\u0442\u044C \u0443\u0447\u0451\u0431\u0443, \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u0442\u044C\u0441\u044F \u043E \u0441\u043E\u044E\u0437\u0435" },
+  // 成: 入学 般移 开市 结婚姻; 天医
+  { go: true, ru: "\u0441\u0431\u043E\u0440\u0430", act: "\u0441\u043E\u0431\u0440\u0430\u0442\u044C \u0434\u0435\u043D\u044C\u0433\u0438 \u0438 \u0434\u043E\u043B\u0433\u0438, \u043D\u0430\u043D\u044F\u0442\u044C \u043B\u044E\u0434\u0435\u0439, \u0441\u0434\u0435\u043B\u0430\u0442\u044C \u0437\u0430\u043A\u0443\u043F\u043A\u0438" },
+  // 收: 进人口 纳财 捕捉 纳畜
+  { go: true, ru: "\u043E\u0442\u043A\u0440\u044B\u0442\u0438\u044F", act: "\u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u043D\u043E\u0432\u043E\u0435: \u0441\u0442\u0430\u0440\u0442, \u043F\u0435\u0440\u0435\u0435\u0437\u0434, \u0443\u0447\u0451\u0431\u0430, \u0441\u0442\u0440\u043E\u0439\u043A\u0430, \u043B\u0435\u0447\u0435\u043D\u0438\u0435" },
+  // 开: «其日最吉» — 兴造 般移 入学 求医…
+  { ru: "\u0437\u0430\u043A\u0440\u044B\u0442\u0438\u044F", act: "\u0437\u0430\u043A\u0440\u044B\u0442\u044C \u0445\u0432\u043E\u0441\u0442\u044B, \u0437\u0430\u043B\u0430\u0442\u0430\u0442\u044C \u0441\u043B\u0430\u0431\u044B\u0435 \u043C\u0435\u0441\u0442\u0430, \u0443\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0437\u0430\u0449\u0438\u0442\u0443", no: "\u043D\u043E\u0432\u043E\u0435 \u043D\u0435 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0442\u044C" }
+  // 闭: 筑隄防 补垣塞穴
+];
+var jcHint = (d) => {
+  const j = JIANCHU[d.jc];
+  return d.type === "heavy" && j.go ? null : `${j.act}${j.no ? `; ${j.no}` : ""}`;
+};
+var jianchu = (monthIdx, idx) => ((idx % 12 - monthIdx % 12) % 12 + 12) % 12;
 var GOD_ACT = {
   SS: "\u0441\u043E\u0437\u0434\u0430\u0432\u0430\u0442\u044C \u2014 \u043F\u0440\u043E\u0434\u0443\u043A\u0442, \u043A\u043E\u043D\u0442\u0435\u043D\u0442, \u043E\u0431\u0443\u0447\u0435\u043D\u0438\u0435, \u0442\u043E, \u0447\u0442\u043E \u0434\u0435\u043B\u0430\u0435\u0442\u0435 \u0440\u0443\u043A\u0430\u043C\u0438 \u0438 \u0433\u043E\u043B\u043E\u0432\u043E\u0439",
   SG: "\u043F\u0440\u043E\u0434\u0430\u0432\u0430\u0442\u044C \u0438 \u0432\u044B\u0441\u0442\u0443\u043F\u0430\u0442\u044C (\u043F\u0438\u0442\u0447\u0438, \u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B, \u0440\u0435\u043A\u043B\u0430\u043C\u0430, \u0441\u043B\u043E\u0432\u043E \u043E\u0442 \u043F\u0435\u0440\u0432\u043E\u0433\u043E \u043B\u0438\u0446\u0430), \u043D\u043E \u043D\u0435 \u0441\u043F\u043E\u0440\u0438\u0442\u044C \u0441 \u043D\u0430\u0447\u0430\u043B\u044C\u0441\u0442\u0432\u043E\u043C \u0438 \u0437\u0430\u043A\u043E\u043D\u043E\u043C",
@@ -2922,7 +2953,7 @@ function dayInfo(c, a0, y, m, d) {
   const monthIdx = monthIdxAt(new Date(Date.UTC(y, m - 1, d, 12)));
   const adv = advice(c, a, idx, monthIdx, type, yi, bg.adj);
   const shown = adv.score >= 4 ? type === "peak" || type === "peak-hit" ? type : "calm" : adv.score <= 2 ? "heavy" : "calm";
-  return { iso, idx, monthIdx, type: shown, kind: type, god, act: god.key === "JC" && a.consensus.includes(STEMS[idx % 10].el) ? JC_FAV : GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...adv };
+  return { iso, idx, monthIdx, jc: jianchu(monthIdxAt(new Date(Date.UTC(y, m - 1, d, 15, 59))), idx), type: shown, kind: type, god, act: god.key === "JC" && a.consensus.includes(STEMS[idx % 10].el) ? JC_FAV : GOD_ACT[god.key], notes, bg, fav: a.consensus, avoid: a.avoid, ...adv };
 }
 var BRANCH_POS_W = { day: 1, month: 0.5, year: 0.25, hour: 0.25 };
 var SIX2 = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]];
@@ -3243,16 +3274,16 @@ function wallpaperSvg(a, d, days, shift, img) {
   const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
-  const OY = 1050, OK = 0.7;
-  let y = 1458;
+  const OY = 990, OK = 0.64;
+  let y = 1352;
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, "#cbbf9f", y, 'letter-spacing="8"');
-  y += 116;
+  y += 102;
   text(HEAD[d.type], 104, 600, "url(#goldt)", y, "", "Cormorant");
-  y += 70;
+  y += 62;
   const mine = d.fav.includes(st.el) ? " \u2014 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : d.avoid.includes(st.el) ? " \u2014 \u043D\u0435 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : "";
   text(`\u0417\u043D\u0430\u043A \u0434\u043D\u044F: ${br.animal} \xB7 ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"');
-  y += 72;
+  y += 66;
   for (let i = 0; i < 5; i++) {
     const x = CX - 226 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
@@ -3262,22 +3293,24 @@ function wallpaperSvg(a, d, days, shift, img) {
   t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} \u0438\u0437 5</text>`);
   const hh = bestHours(a, d, shift);
   if (hh.length) {
-    y += 66;
+    y += 60;
     const s = `\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B: ${hh[0]}`, tw = s.length * 34 * 0.56, x0 = CX - (tw + 50) / 2;
     t.push(`<g transform="translate(${f1(x0)} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
     t.push(`<text x="${f1(x0 + 50)}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">${esc(s)}</text>`);
   }
-  y += 54;
+  y += 48;
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows = [];
   const risk = [...d.notes, ...d.warn][0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(act), fill: "#f1ece0", max: risk ? 2 : 3 });
+  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(act), fill: "#f1ece0", max: 2 });
+  const jh = jcHint(d);
+  if (jh) rows.push({ ic: "sup", head: `\u0414\u0435\u043D\u044C ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: "#e6dcc0", max: 1 });
   if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: cap(risk.split(" \u2014 ")[0]), fill: "#f3c9bd", max: 1 });
   const body = [];
   y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2170) return;
+    if (y + need > 2200) return;
     if (i) {
       body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
       y += 12;
@@ -3339,7 +3372,7 @@ function wallpaperSvg(a, d, days, shift, img) {
 <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <radialGradient id="vig" cx="0.5" cy="0.45" r="0.75"><stop offset=".55" stop-color="#05040f" stop-opacity="0"/><stop offset="1" stop-color="#05040f" stop-opacity=".7"/></radialGradient>
 <linearGradient id="low" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07051a" stop-opacity="0"/><stop offset=".3" stop-color="#07051a" stop-opacity=".45"/><stop offset="1" stop-color="#07051a" stop-opacity=".25"/></linearGradient>
-<radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#06041a" stop-opacity=".62"/><stop offset=".6" stop-color="#06041a" stop-opacity=".4"/><stop offset="1" stop-color="#06041a" stop-opacity="0"/></radialGradient>
+<radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#06041a" stop-opacity=".72"/><stop offset=".6" stop-color="#06041a" stop-opacity=".5"/><stop offset="1" stop-color="#06041a" stop-opacity="0"/></radialGradient>
 <filter id="blur" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="14"/></filter>
 <filter id="blurL" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="60"/></filter>
 </defs>
@@ -3347,7 +3380,7 @@ function wallpaperSvg(a, d, days, shift, img) {
 ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>
 <rect width="${w}" height="${h}" fill="url(#vig)"/>
 <rect y="${h - 1180}" width="${w}" height="1180" fill="url(#low)"/>
-<ellipse cx="${CX}" cy="1560" rx="600" ry="250" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
+<ellipse cx="${CX}" cy="1450" rx="640" ry="300" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
 ${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join("")}
