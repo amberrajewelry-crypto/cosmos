@@ -92,7 +92,7 @@ function mandala(cx: number, cy: number, R: number, stemEl: number, branch: numb
 }
 
 /** Картинки сайта для заставки: data:-URI животных (12, порядок ветвей) и шаров стихий (5). Без них — векторная мандала. */
-export interface WpImages { an: string[]; el: string[] }
+export interface WpImages { an: string[]; el: string[]; bg?: string[] }
 const EL_RU = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'];
 /** Орбита как в шапке сайта, но собранная в композицию: медальоны под животными, лучи от центра, инь-ян,
  *  у знака и стихии дня — золотой ореол с лучами. */
@@ -237,14 +237,20 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241b52" stop-opacity=".62"/><stop offset="1" stop-color="#0d0a24" stop-opacity=".72"/></linearGradient>
 <linearGradient id="glassb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2c47c" stop-opacity=".5"/><stop offset=".5" stop-color="#e2c47c" stop-opacity=".1"/><stop offset="1" stop-color="#e2c47c" stop-opacity=".3"/></linearGradient>
 <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.45" r="0.75"><stop offset=".55" stop-color="#05040f" stop-opacity="0"/><stop offset="1" stop-color="#05040f" stop-opacity=".7"/></radialGradient>
+<linearGradient id="low" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07051a" stop-opacity="0"/><stop offset=".3" stop-color="#07051a" stop-opacity=".45"/><stop offset="1" stop-color="#07051a" stop-opacity=".25"/></linearGradient>
+<radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#06041a" stop-opacity=".62"/><stop offset=".6" stop-color="#06041a" stop-opacity=".4"/><stop offset="1" stop-color="#06041a" stop-opacity="0"/></radialGradient>
 <filter id="blur" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="14"/></filter>
 <filter id="blurL" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="60"/></filter>
 </defs>
 <rect width="${w}" height="${h}" fill="url(#sky)"/>
-<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
+${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>
+<rect width="${w}" height="${h}" fill="url(#vig)"/>
+<rect y="${h - 1180}" width="${w}" height="1180" fill="url(#low)"/>
+<ellipse cx="${CX}" cy="1560" rx="600" ry="250" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
-<ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>
-${stars.join('')}
+<ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
+${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}
 <g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
 <rect x="36" y="36" width="${w - 72}" height="${h - 72}" rx="64" fill="none" stroke="${gold}" stroke-opacity=".18" stroke-width="2"/>
 <rect x="52" y="52" width="${w - 104}" height="${h - 104}" rx="52" fill="none" stroke="${gold}" stroke-opacity=".08" stroke-width="1.5"/>
