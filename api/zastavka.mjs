@@ -3134,7 +3134,7 @@ function tzOffsetH(tz, at = /* @__PURE__ */ new Date()) {
   return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - Math.floor(at.getTime() / 6e4) * 6e4) / 36e5 * 4) / 4;
 }
 var EL_GLOW = ["#5fc98a", "#ff6a3d", "#e0ad52", "#e6ebf3", "#4f8ef0"];
-var EL_OF = ["\u0434\u0435\u0440\u0435\u0432\u0430", "\u043E\u0433\u043D\u044F", "\u0437\u0435\u043C\u043B\u0438", "\u043C\u0435\u0442\u0430\u043B\u043B\u0430", "\u0432\u043E\u0434\u044B"];
+var EL_OF2 = ["\u0434\u0435\u0440\u0435\u0432\u043E", "\u043E\u0433\u043E\u043D\u044C", "\u0437\u0435\u043C\u043B\u044F", "\u043C\u0435\u0442\u0430\u043B\u043B", "\u0432\u043E\u0434\u0430"];
 function rng(seed) {
   let h = 2166136261;
   for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
@@ -3250,7 +3250,8 @@ function wallpaperSvg(a, d, days, shift, img) {
   y += 116;
   text(HEAD[d.type], 104, 600, "url(#goldt)", y, "", "Cormorant");
   y += 70;
-  text(`\u0417\u043D\u0430\u043A \u0434\u043D\u044F: ${br.animal} \xB7 \u0441\u0442\u0438\u0445\u0438\u044F ${EL_OF[st.el]}`, 36, 600, col, y, 'letter-spacing="2"');
+  const mine = d.fav.includes(st.el) ? " \u2014 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : d.avoid.includes(st.el) ? " \u2014 \u043D\u0435 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : "";
+  text(`\u0417\u043D\u0430\u043A \u0434\u043D\u044F: ${br.animal} \xB7 ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"');
   y += 72;
   for (let i = 0; i < 5; i++) {
     const x = CX - 226 + i * 64, on = i < d.score;
@@ -3262,20 +3263,21 @@ function wallpaperSvg(a, d, days, shift, img) {
   const hh = bestHours(a, d, shift);
   if (hh.length) {
     y += 66;
-    t.push(`<g transform="translate(${CX - 200} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
-    t.push(`<text x="${CX - 156}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B: ${esc(hh[0])}</text>`);
+    const s = `\u041B\u0443\u0447\u0448\u0438\u0435 \u0447\u0430\u0441\u044B: ${hh[0]}`, tw = s.length * 34 * 0.56, x0 = CX - (tw + 50) / 2;
+    t.push(`<g transform="translate(${f1(x0)} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
+    t.push(`<text x="${f1(x0 + 50)}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">${esc(s)}</text>`);
   }
   y += 54;
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows = [];
-  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(d.act), fill: "#f1ece0", max: [...d.notes, ...d.warn].length ? 2 : 3 });
-  const risk = [...d.notes, ...d.warn][0];
+  const risk = [...d.notes, ...d.warn][0], act = risk ? d.act.split(/,? но /)[0] : d.act;
+  rows.push({ ic: "act", head: d.type === "heavy" ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C", body: cap(act), fill: "#f1ece0", max: risk ? 2 : 3 });
   if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: cap(risk.split(" \u2014 ")[0]), fill: "#f3c9bd", max: 1 });
   const body = [];
   y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2195) return;
+    if (y + need > 2170) return;
     if (i) {
       body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
       y += 12;
@@ -3300,6 +3302,9 @@ function wallpaperSvg(a, d, days, shift, img) {
   const k = days.findIndex((x) => x.iso === d.iso);
   const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2338;
   const TC = { peak: "#6fd99a", "peak-hit": "#ecd08a", calm: "#9a93b8", heavy: "#6f9cf0" };
+  const best = strip.slice(1).filter((x) => x.score >= 4 && x.score === Math.max(...strip.slice(1).map((z) => z.score)));
+  const cap2 = best.length ? `${best.length > 1 ? "\u041B\u0443\u0447\u0448\u0438\u0435 \u0434\u043D\u0438 \u043D\u0435\u0434\u0435\u043B\u0438" : "\u041B\u0443\u0447\u0448\u0438\u0439 \u0434\u0435\u043D\u044C \u043D\u0435\u0434\u0435\u043B\u0438"}: ${best.slice(0, 3).map((x) => `${WK[(/* @__PURE__ */ new Date(x.iso + "T12:00Z")).getUTCDay()]} ${+x.iso.slice(8)}`).join(", ")}` : "\u0421\u0438\u043B\u044C\u043D\u044B\u0445 \u0434\u043D\u0435\u0439 \u043D\u0430 \u043D\u0435\u0434\u0435\u043B\u0435 \u043D\u0435\u0442 \u2014 \u0440\u043E\u0432\u043D\u044B\u0439 \u0445\u043E\u0434";
+  t.push(`<text x="${CX}" y="${sy - 84}" text-anchor="middle" font-family="Manrope" font-size="27" font-weight="600" fill="#cbbf9f" letter-spacing="1">${esc(cap2)}</text>`);
   t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
   strip.forEach((x, i) => {
     const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = TC[x.type], now = i === 0;
@@ -3308,11 +3313,11 @@ function wallpaperSvg(a, d, days, shift, img) {
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
     if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
     t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
-    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="600" fill="#8f88ad">${x.score}/5</text>`);
+    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="23" font-weight="700" fill="${x.score >= 4 ? c2 : "#a29bc0"}">${x.score}/5</text>`);
   });
   const r = rng(d.iso), stars = [];
   for (let i = 0; i < 260; i++) {
-    const x = r() * w, yy = r() * h, s = r(), big = s > 0.975 && (yy < 960 || x < 110 || x > w - 110);
+    const x = 50 + r() * (w - 100), yy = 50 + r() * (h - 100), s = r(), big = s > 0.975 && (yy < 960 || x < 110 || x > w - 110);
     stars.push(big ? `<path d="M${f1(x)} ${f1(yy - 9)}L${f1(x + 1.6)} ${f1(yy - 1.6)}L${f1(x + 9)} ${f1(yy)}L${f1(x + 1.6)} ${f1(yy + 1.6)}L${f1(x)} ${f1(yy + 9)}L${f1(x - 1.6)} ${f1(yy + 1.6)}L${f1(x - 9)} ${f1(yy)}L${f1(x - 1.6)} ${f1(yy - 1.6)}Z" fill="#fff6dc" opacity=".85"/>` : `<circle cx="${f1(x)}" cy="${f1(yy)}" r="${f1(0.7 + s * 1.9)}" fill="${s > 0.8 ? "#f3dfa8" : "#cfd6ff"}" opacity="${(0.15 + s * 0.55).toFixed(2)}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
