@@ -19,6 +19,7 @@ describe('建除十二神', () => {
   it('в день нагрузки «действенные» типы скрыты', () => {
     expect(jcHint({ jc: 2, type: 'heavy' })).toBeNull();
     expect(jcHint({ jc: 1, type: 'heavy' })).toContain('убрать лишнее');
-    expect(jcHint({ jc: 11, type: 'calm' })).toContain('новое не открывать');
+    expect(jcHint({ jc: 11, type: 'calm' })).toMatch(/^новое не открывать/);
+    expect(jcHint({ jc: 11, type: 'peak' })).not.toContain('не открывать');
   });
 });

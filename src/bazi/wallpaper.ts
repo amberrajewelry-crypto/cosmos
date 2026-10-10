@@ -176,7 +176,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   // стеклянная карточка: строки со значками, тонкие разделители
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows: { ic: string; head: string; body: string; fill: string; max: number }[] = [];
-  const risk = [...d.notes, ...d.warn][0], act = risk ? d.act.split(/,? но /)[0] : d.act;
+  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = risk ? d.act.split(/,? но /)[0] : d.act;
   rows.push({ ic: 'act', head: d.type === 'heavy' ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
   const jh = jcHint(d);
   if (jh) rows.push({ ic: 'sup', head: `День ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: '#e6dcc0', max: 1 });
