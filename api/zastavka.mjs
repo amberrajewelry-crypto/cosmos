@@ -3097,55 +3097,21 @@ var MON = ["\u044F\u043D\u0432\u0430\u0440\u044F", "\u0444\u0435\u0432\u0440\u04
 var WDF = ["\u0432\u043E\u0441\u043A\u0440\u0435\u0441\u0435\u043D\u044C\u0435", "\u043F\u043E\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u0438\u043A", "\u0432\u0442\u043E\u0440\u043D\u0438\u043A", "\u0441\u0440\u0435\u0434\u0430", "\u0447\u0435\u0442\u0432\u0435\u0440\u0433", "\u043F\u044F\u0442\u043D\u0438\u0446\u0430", "\u0441\u0443\u0431\u0431\u043E\u0442\u0430"];
 var ACC2 = { 1: "#d6604f", 2: "#e2964f", 3: "#dcc878", 4: "#8cc882", 5: "#6ec8aa" };
 var HEAD = { peak: "\u0414\u0435\u043D\u044C \u0441\u0438\u043B\u044B", "peak-hit": "\u0421\u0438\u043B\u0430 \u0441 \u0438\u0437\u043B\u043E\u043C\u043E\u043C", calm: "\u0420\u043E\u0432\u043D\u043E\u0435 \u0442\u0435\u0447\u0435\u043D\u0438\u0435", heavy: "\u0412\u0440\u0435\u043C\u044F \u043A\u043E\u043F\u0438\u0442\u044C" };
-var WP_ACT = {
-  SS: "\u0422\u0432\u043E\u0440\u0438\u0442\u044C: \u043F\u0440\u043E\u0434\u0443\u043A\u0442, \u0442\u0435\u043A\u0441\u0442\u044B, \u0440\u0430\u0431\u043E\u0442\u0430 \u0440\u0443\u043A\u0430\u043C\u0438",
-  SG: "\u0413\u043E\u0432\u043E\u0440\u0438\u0442\u044C \u0438 \u043F\u0440\u043E\u0434\u0430\u0432\u0430\u0442\u044C: \u043F\u0438\u0442\u0447\u0438, \u0440\u0435\u043A\u043B\u0430\u043C\u0430",
-  PC: "\u041B\u043E\u0432\u0438\u0442\u044C \u0434\u0435\u043D\u044C\u0433\u0438: \u043A\u043B\u0438\u0435\u043D\u0442\u044B, \u0441\u0434\u0435\u043B\u043A\u0438, \u043F\u043E\u043A\u0443\u043F\u043A\u0438",
-  ZC: "\u0421\u0447\u0438\u0442\u0430\u0442\u044C \u0434\u0435\u043D\u044C\u0433\u0438: \u0441\u0447\u0435\u0442\u0430, \u0434\u043E\u043B\u0433\u0438, \u0431\u044E\u0434\u0436\u0435\u0442",
-  QS: "\u0411\u0440\u0430\u0442\u044C \u0442\u0440\u0443\u0434\u043D\u043E\u0435, \u043D\u043E \u0431\u0435\u0437 \u043B\u043E\u0431\u043E\u0432\u044B\u0445 \u0441\u0442\u044B\u0447\u0435\u043A",
-  ZG: "\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B, \u0441\u0442\u0430\u0442\u0443\u0441, \u043E\u0444\u0438\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0435 \u0434\u0435\u043B\u0430",
-  PY: "\u0418\u0441\u043A\u0430\u0442\u044C \u043D\u0435\u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u043E\u0435, \u043F\u043E\u0431\u044B\u0442\u044C \u043E\u0434\u043D\u043E\u043C\u0443",
-  ZY: "\u0423\u0447\u0438\u0442\u044C\u0441\u044F, \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u0442\u044C\u0441\u044F, \u043F\u0440\u043E\u0441\u0438\u0442\u044C \u043F\u043E\u043C\u043E\u0449\u0438",
-  BJ: "\u0420\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0439, \u0434\u0435\u0440\u0436\u0430\u0442\u044C \u0441\u0432\u043E\u044E \u043B\u0438\u043D\u0438\u044E",
-  JC: "\u0414\u0435\u043D\u044C\u0433\u0438 \u0431\u0435\u0440\u0435\u0447\u044C: \u0440\u044F\u0434\u043E\u043C \u0441\u043E\u043F\u0435\u0440\u043D\u0438\u043A \u0438 \u0430\u0437\u0430\u0440\u0442"
-};
-var WP_FAV = "\u041E\u043F\u0435\u0440\u0435\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u043E\u0438\u0445: \u043A\u043E\u043C\u0430\u043D\u0434\u0430 \u0438 \u043F\u0430\u0440\u0442\u043D\u0451\u0440\u044B";
+var ACT_W = { SS: "\u0422\u0432\u043E\u0440\u0438\u0442\u044C", SG: "\u0413\u043E\u0432\u043E\u0440\u0438\u0442\u044C", PC: "\u0414\u0435\u043D\u044C\u0433\u0438", ZC: "\u0421\u0447\u0451\u0442", QS: "\u0412\u044B\u0437\u043E\u0432", ZG: "\u0421\u0442\u0430\u0442\u0443\u0441", PY: "\u0422\u0438\u0448\u0438\u043D\u0430", ZY: "\u0423\u0447\u0451\u0431\u0430", BJ: "\u041A\u043E\u043C\u0430\u043D\u0434\u0430", JC: "\u0411\u0435\u0440\u0435\u0447\u044C", FAV: "\u0421\u0432\u043E\u0438" };
+var ACT_IC = { SS: "pen", SG: "talk", PC: "bag", ZC: "bag", QS: "peak", ZG: "crown", PY: "eye", ZY: "book", BJ: "ppl", JC: "shield", FAV: "ppl" };
+function riskWord(r) {
+  const m = r.match(/«([^,»]+)/);
+  if (m && r.includes("\u0441\u0444\u0435\u0440\u0435")) return cap(m[1] === "\u0440\u043E\u0434" ? "\u0441\u0442\u0430\u0440\u0448\u0438\u0435" : m[1]);
+  const W = [[/против месяца/, "\u0422\u0440\u0430\u0442\u044B"], [/недопоним/, "\u0421\u043B\u043E\u0432\u0430"], [/документ/, "\u0411\u0443\u043C\u0430\u0433\u0438"], [/с текущим годом/, "\u041A\u0440\u0443\u043F\u043D\u043E\u0435"], [/двойной удар|на вас лично/, "\u0420\u0435\u0448\u0435\u043D\u0438\u044F"], [/соперник/, "\u0421\u043E\u043F\u0435\u0440\u043D\u0438\u043A"], [/запас прочности/, "\u0421\u0438\u043B\u044B"], [/неполным|в союз/, "\u0418\u0442\u043E\u0433"]];
+  return W.find(([re]) => re.test(r))?.[1] ?? "\u0421\u043F\u0435\u0448\u043A\u0430";
+}
 var AN_GEN = ["\u041A\u0440\u044B\u0441\u044B", "\u0411\u044B\u043A\u0430", "\u0422\u0438\u0433\u0440\u0430", "\u041A\u0440\u043E\u043B\u0438\u043A\u0430", "\u0414\u0440\u0430\u043A\u043E\u043D\u0430", "\u0417\u043C\u0435\u0438", "\u041B\u043E\u0448\u0430\u0434\u0438", "\u041A\u043E\u0437\u044B", "\u041E\u0431\u0435\u0437\u044C\u044F\u043D\u044B", "\u041F\u0435\u0442\u0443\u0445\u0430", "\u0421\u043E\u0431\u0430\u043A\u0438", "\u0421\u0432\u0438\u043D\u044C\u0438"];
-var wpRisk = (r) => r.startsWith("\u0434\u0435\u043D\u044C \u0438\u0434\u0451\u0442 \u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430") ? "\u041F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430: \u043A\u0440\u0443\u043F\u043D\u043E \u043D\u0435 \u0442\u0440\u0430\u0442\u0438\u0442\u044C" : cap(r.split(" \u2014 ")[0].replace(/ в сфере «(.+?)»/, ": $1").replace(/, без резких шагов$/, ""));
 var esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 var cap = (s) => s ? s[0].toUpperCase() + s.slice(1) : s;
 var label = (iso, wd = false) => {
   const [y, m, d] = iso.split("-").map(Number);
   return `${d} ${MON[m - 1]}${wd ? ", " + WDF[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] : ""}`;
 };
-function wrap(text, size, width, max = 4) {
-  const per = Math.floor(width / (size * 0.56)), out = [];
-  let cur = "";
-  for (const w of text.split(/\s+/)) {
-    const t = cur ? `${cur} ${w}` : w;
-    if (t.length <= per || !cur) cur = t;
-    else {
-      out.push(cur);
-      cur = w;
-    }
-  }
-  if (cur) out.push(cur);
-  if (out.length > max) {
-    out.length = max;
-    out[max - 1] = out[max - 1].replace(/[\s,;:—-]*\S*$/, "") + "\u2026";
-  }
-  return out;
-}
-function fit(text, size, width, max) {
-  const ok = (t2) => wrap(t2, size, width, 99).length <= max;
-  if (ok(text)) return wrap(text, size, width, max);
-  let t = text.replace(/\s*\([^)]*\)/g, "").replace(/\s+([,;])/g, "$1");
-  for (const sep of [";", " \u2014 ", ", \u043D\u043E ", ", \u0430 ", ", "]) {
-    if (ok(t)) break;
-    while (!ok(t) && t.lastIndexOf(sep) > 8) t = t.slice(0, t.lastIndexOf(sep));
-  }
-  return wrap(t.replace(/[,;:\s—-]+$/, ""), size, width, max);
-}
 function tzOffsetH(tz, at = /* @__PURE__ */ new Date()) {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }).formatToParts(at).map((x) => [x.type, x.value]));
   return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - Math.floor(at.getTime() / 6e4) * 6e4) / 36e5 * 4) / 4;
@@ -3268,6 +3234,14 @@ var ICON = {
   sup: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
   hrs: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2.5"/>',
   risk: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+  pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  talk: '<path d="M4 5h16v10H10l-5 4v-4H4z"/>',
+  peak: '<path d="M2.5 20l6.5-11 4 6 3-4 5.5 9z"/><path d="M9 9V3.5l4.5 1.8L9 7"/>',
+  crown: '<path d="M3 18l1.5-10 5 4.5L12 5l2.5 7.5 5-4.5L21 18z"/><path d="M3 20.5h18"/>',
+  eye: '<path d="M2 12s4-6.5 10-6.5S22 12 22 12s-4 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  book: '<path d="M3 5.5c3-1.2 6-1 9 .8 3-1.8 6-2 9-.8v13.5c-3-1.2-6-1-9 .8-3-1.8-6-2-9-.8z"/><path d="M12 6.3v14"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.6 8-8 9-4.4-1-8-4-8-9V6z"/>',
+  bag: '<path d="M5 10h14l-1.5 10h-11z"/><path d="M9 10V7.5a3 3 0 0 1 6 0V10"/><path d="M12 13v4M10.5 14.5h3"/>',
   coin: '<circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6"/>',
   ppl: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M16 14.2c2.6.1 4.4 1.6 5 4.3"/>'
 };
@@ -3275,73 +3249,55 @@ function wallpaperSvg(a, d, days, shift, img) {
   const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
-  const OY = 1115, OK = 0.56;
-  let y = 1450;
+  const OY = 1250, OK = 0.76;
+  let y = 1702;
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
-  text(cap(label(d.iso, true)).toUpperCase(), 32, 600, "#cbbf9f", y, 'letter-spacing="8"');
-  y += 102;
-  text(HEAD[d.type], 104, 600, "url(#goldt)", y, "", "Cormorant");
-  y += 62;
+  text(cap(label(d.iso, true)).toUpperCase(), 30, 600, "#cbbf9f", y, 'letter-spacing="8"');
+  y += 98;
+  text(HEAD[d.type], 108, 600, "url(#goldt)", y, "", "Cormorant");
+  y += 58;
   const mine = d.fav.includes(st.el) ? "\u043F\u0438\u0442\u0430\u0435\u0442 \u0432\u0430\u0441" : d.avoid.includes(st.el) ? "\u0434\u0430\u0432\u0438\u0442 \u043D\u0430 \u0432\u0430\u0441" : "\u0438\u0434\u0451\u0442 \u043C\u0438\u043C\u043E \u0432\u0430\u0441";
   text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"');
-  y += 66;
+  y += 62;
   for (let i = 0; i < 5; i++) {
-    const x = CX - 226 + i * 64, on = i < d.score;
+    const x = CX - 128 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
     t.push(diamond(x, y - 14, 21, on ? acc : "none", on ? "" : 'stroke="#5a5470" stroke-width="2.5"'));
   }
-  t.push(`<line x1="${CX + 100}" y1="${y - 36}" x2="${CX + 100}" y2="${y + 8}" stroke="${gold}" stroke-opacity=".3" stroke-width="1.5"/>`);
-  t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} \u0438\u0437 5</text>`);
-  const hh = bestHours(a, d, shift);
-  y += 44;
-  const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
-  const rows = [];
-  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
-  rows.push({ ic: "act", head: (prepOnly(d) ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C") + (hh.length ? ` \xB7 ${hh[0].replace(/\s/g, "")}` : ""), body: act, fill: "#f1ece0", max: 1 });
-  const tl = talisman(a, st.el, br.el, prepOnly(d));
-  rows.push({ ic: "coin", head: tl.head, body: tl.step, fill: "#f1e3b8", max: 1, sw: tl.sw });
-  if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: wpRisk(risk), fill: "#f3c9bd", max: 1 });
-  const body = [];
-  y += 50;
-  rows.forEach((rw, i) => {
-    const ls = fit(rw.body, 36, TWc, rw.max), need = 50 + ls.length * 42;
-    if (y + need > 2250) return;
-    if (i) {
-      body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
-      y += 12;
+  const prep = prepOnly(d), hh = bestHours(a, d, shift), tl = talisman(a, st.el, br.el, prep);
+  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0];
+  const gk = d.act === JC_FAV ? "FAV" : d.god.key;
+  const am = [
+    { ic: "", word: cap(tl.head.split(" \xB7 ")[1].split(",")[0]), cap: tl.money ? "\u0446\u0432\u0435\u0442 \u0434\u0435\u043D\u0435\u0433" : "\u043E\u0431\u0435\u0440\u0435\u0433", c: gold, sw: tl.sw, coin: tl.money },
+    { ic: ACT_IC[gk] ?? "act", word: ACT_W[gk] ?? "\u0414\u0435\u043B\u043E", cap: prep ? "\u043A\u043E\u043F\u0438\u0442\u044C" : "\u0434\u0435\u043B\u043E \u0434\u043D\u044F", c: gold }
+  ];
+  if (hh.length) am.push({ ic: "hrs", word: hh[0].replace(/:\d\d/g, "").replace(/\s/g, ""), cap: "\u0447\u0430\u0441\u044B \u0443\u0434\u0430\u0447\u0438", c: gold });
+  if (risk) am.push({ ic: "risk", word: riskWord(risk), cap: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", c: "#f0907a" });
+  const AY = 2072, gap = am.length > 3 ? 252 : 290;
+  am.forEach((m, i) => {
+    const x = CX + (i - (am.length - 1) / 2) * gap, r2 = 64;
+    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2 + 26}" fill="${m.sw ? m.sw[0] : m.c}" opacity=".28" filter="url(#blur)"/>`);
+    if (m.sw) {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#sw${i})" stroke="#f3dc9c" stroke-width="3"/><circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#shine)"/>`);
+      t.push(`<radialGradient id="sw${i}" cx="0.4" cy="0.35" r="0.75">${m.sw.map((c, j) => `<stop offset="${(j / Math.max(1, m.sw.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join("")}</radialGradient>`);
+      if (m.coin) t.push(`<circle cx="${f1(x)}" cy="${AY}" r="34" fill="none" stroke="#fff3cf" stroke-opacity=".9" stroke-width="3"/><rect x="${f1(x - 13)}" y="${AY - 13}" width="26" height="26" fill="#1a1230" stroke="#fff3cf" stroke-width="2.5"/>`);
+    } else {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/><circle cx="${f1(x)}" cy="${AY}" r="${r2 - 9}" fill="none" stroke="${m.c}" stroke-opacity=".3" stroke-width="1.2"/>`);
+      t.push(`<g transform="translate(${f1(x - 31)} ${AY - 31}) scale(2.6)" fill="none" stroke="${m.c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON[m.ic]}</g>`);
     }
-    const ic = rw.ic === "risk" ? "#f0907a" : gold;
-    body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
-    body.push(`<g transform="translate(${IX - 15} ${y - 11}) scale(1.25)" fill="none" stroke="${ic}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[rw.ic]}</g>`);
-    body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
-    if (rw.sw) rw.sw.forEach((c, j) => {
-      const sx2 = R2 - 150 + j * 40, sy2 = y + 3;
-      body.push(`<circle cx="${sx2}" cy="${sy2}" r="16" fill="${c}" stroke="#f3dc9c" stroke-opacity=".7" stroke-width="2"/><circle cx="${sx2 - 5}" cy="${sy2 - 5}" r="5" fill="#fff" opacity=".25"/>`);
-    });
-    y += 54;
-    for (const ln of ls) {
-      body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="36" font-weight="500" fill="${rw.fill}">${esc(ln)}</text>`);
-      y += 44;
-    }
-    y += 34;
+    t.push(`<text x="${f1(x)}" y="${AY + r2 + 50}" text-anchor="middle" font-family="Manrope" font-size="36" font-weight="700" fill="${m.c === gold ? "#f3e7c4" : "#f6c7ba"}">${esc(m.word)}</text>`);
+    t.push(`<text x="${f1(x)}" y="${AY + r2 + 84}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="4">${esc(m.cap.toUpperCase())}</text>`);
   });
-  y += 4;
-  t.push(`<rect x="${L}" y="${top0}" width="${R2 - L}" height="${y - top0}" rx="44" fill="url(#glass)" stroke="url(#glassb)" stroke-width="2"/>`);
-  t.push(`<rect x="${L + 1}" y="${top0 + 1}" width="${R2 - L - 2}" height="120" rx="43" fill="url(#gloss)"/>`);
-  t.push(diamond(CX, top0, 10, gold));
-  t.push(`<line x1="${CX - 120}" y1="${top0}" x2="${CX - 24}" y2="${top0}" stroke="url(#fadeL)" stroke-width="2"/><line x1="${CX + 24}" y1="${top0}" x2="${CX + 120}" y2="${top0}" stroke="url(#fadeR)" stroke-width="2"/>`);
-  t.push(...body);
   const k = days.findIndex((x) => x.iso === d.iso);
   const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2338;
-  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
   strip.forEach((x, i) => {
     const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = ACC2[x.score] ?? ACC2[3], now = i === 0;
-    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
+    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="144" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : "#8f88ad"}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
     if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
     t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
-    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="23" font-weight="700" fill="${x.score >= 4 ? c2 : "#a29bc0"}">${x.score}/5</text>`);
   });
   const r = rng(d.iso), stars = [];
   for (let i = 0; i < 260; i++) {
