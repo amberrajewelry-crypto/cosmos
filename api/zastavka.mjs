@@ -3167,7 +3167,6 @@ function tzOffsetH(tz, at = /* @__PURE__ */ new Date()) {
   return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - Math.floor(at.getTime() / 6e4) * 6e4) / 36e5 * 4) / 4;
 }
 var EL_GLOW = ["#5fc98a", "#ff6a3d", "#e0ad52", "#e6ebf3", "#4f8ef0"];
-var EL_OF2 = ["\u0434\u0435\u0440\u0435\u0432\u043E", "\u043E\u0433\u043E\u043D\u044C", "\u0437\u0435\u043C\u043B\u044F", "\u043C\u0435\u0442\u0430\u043B\u043B", "\u0432\u043E\u0434\u0430"];
 function rng(seed) {
   let h = 2166136261;
   for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
@@ -3262,7 +3261,7 @@ function orbit(cx, cy, R, stemEl, branch, img) {
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? 0.95 : 0.55}" stroke-width="${on ? 3.5 : 2}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2 + 10}" fill="none" stroke="${c}" stroke-opacity="${on ? 0.45 : 0.18}" stroke-width="1.2" stroke-dasharray="${on ? "2 6" : "1 7"}"/>`);
-    o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 40)}" text-anchor="middle" font-family="Manrope" font-size="${on ? 28 : 22}" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`);
+    if (on) o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 52)}" text-anchor="middle" font-family="Manrope" font-size="44" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`);
   }
   return o.join("");
 }
@@ -3284,7 +3283,7 @@ function wallpaperSvg(a, d, days, shift, img) {
   text(HEAD[d.type], 104, 600, "url(#goldt)", y, "", "Cormorant");
   y += 62;
   const mine = d.fav.includes(st.el) ? " \u2014 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : d.avoid.includes(st.el) ? " \u2014 \u043D\u0435 \u0432\u0430\u0448\u0430 \u0441\u0442\u0438\u0445\u0438\u044F" : "";
-  text(`\u0417\u043D\u0430\u043A \u0434\u043D\u044F: ${br.animal} \xB7 ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"');
+  text(`${br.animal} \xB7 ${EL_RU[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"');
   y += 66;
   for (let i = 0; i < 5; i++) {
     const x = CX - 226 + i * 64, on = i < d.score;

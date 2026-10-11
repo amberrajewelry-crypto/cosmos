@@ -48,7 +48,6 @@ export function tzOffsetH(tz: string, at = new Date()): number {
 }
 
 const EL_GLOW = ['#5fc98a', '#ff6a3d', '#e0ad52', '#e6ebf3', '#4f8ef0'];
-const EL_OF2 = ['дерево', 'огонь', 'земля', 'металл', 'вода'];
 /** Детерминированный шум по дате: звёзды одного дня не прыгают при перерисовке. */
 function rng(seed: string) { let h = 2166136261; for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296; }
 const f1 = (n: number) => n.toFixed(1);
@@ -136,7 +135,7 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? .95 : .55}" stroke-width="${on ? 3.5 : 2}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2 + 10}" fill="none" stroke="${c}" stroke-opacity="${on ? .45 : .18}" stroke-width="1.2" stroke-dasharray="${on ? '2 6' : '1 7'}"/>`);
-    o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 40)}" text-anchor="middle" font-family="Manrope" font-size="${on ? 28 : 22}" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`); }
+    if (on) o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 52)}" text-anchor="middle" font-family="Manrope" font-size="44" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`); }
   return o.join('');
 }
 
@@ -160,7 +159,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 102;
   text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 62;
   const mine = (d.fav as number[]).includes(st.el) ? ' — ваша стихия' : (d.avoid as number[]).includes(st.el) ? ' — не ваша стихия' : '';
-  text(`Знак дня: ${br.animal} · ${EL_OF2[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
+  text(`${br.animal} · ${EL_RU[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
   // оценка: пять ромбов и подпись в одну строку
   for (let i = 0; i < 5; i++) { const x = CX - 226 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
