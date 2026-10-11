@@ -134,7 +134,7 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
   o.push(`<circle cx="${cx}" cy="${cy - r / 2}" r="${f1(r / 7)}" fill="#0a0818"/><circle cx="${cx}" cy="${cy + r / 2}" r="${f1(r / 7)}" fill="#e8c97e"/>`);
   // знаки на медальонах
   for (let i = 0; i < 12; i++) { const on = i === branch, [x, y] = pt(cx, cy, R, i * 30), c = EL_GLOW[BR_EL[i]], rr = on ? 74 : 58, sz = on ? 132 : 100;
-    if (on) { o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="110" fill="${c}" opacity=".38" filter="url(#blur)"/>`);
+    if (on) { o.push(`<circle class="wp-pulse" cx="${f1(x)}" cy="${f1(y)}" r="110" fill="${c}" opacity=".38" filter="url(#blur)"/>`);
       for (let k = 0; k < 16; k++) { const [x1, y1] = pt(x, y, rr + 10, k * 22.5), [x2, y2] = pt(x, y, rr + (k % 2 ? 22 : 34), k * 22.5);
         o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${gold}" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round"/>`); } }
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${rr}" fill="url(#med)" stroke="${on ? '#e8c97e' : c}" stroke-opacity="${on ? .95 : .3}" stroke-width="${on ? 3 : 1.5}"/>`);
@@ -142,7 +142,7 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
     o.push(`<image href="${img.an[i]}" x="${f1(x - sz / 2)}" y="${f1(y - sz / 2)}" width="${sz}" height="${sz}" opacity="${on ? 1 : .72}"/>`); }
   // шары стихий с ободком
   for (let e = 0; e < 5; e++) { const [x, y] = pos[e], on = e === stemEl, sz = on ? 190 : 128, c = EL_GLOW[e];
-    o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${on ? 130 : 80}" fill="${c}" opacity="${on ? .5 : .2}" filter="url(#blur)"/>`);
+    o.push(`<circle class="${on ? 'wp-pulse' : ''}" cx="${f1(x)}" cy="${f1(y)}" r="${on ? 130 : 80}" fill="${c}" opacity="${on ? .5 : .2}" filter="url(#blur)"/>`);
     o.push(`<image href="${img.el[e]}" x="${f1(x - sz / 2)}" y="${f1(y - sz / 2)}" width="${sz}" height="${sz}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? .95 : .55}" stroke-width="${on ? 3.5 : 2}"/>`);
@@ -220,9 +220,9 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   if (risk) am.push({ ic: 'risk', word: riskWord(risk), cap: 'осторожно', c: '#e3a08e' });
   const AY = 2068, gap = am.length > 4 ? 212 : am.length > 3 ? 252 : 290;
   am.forEach((m, i) => { const x = CX + (i - (am.length - 1) / 2) * gap, r = am.length > 4 ? 56 : 64;
-    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
+    t.push(`<circle class="wp-pulse" style="animation-delay:${i * 0.7}s" cx="${f1(x)}" cy="${AY}" r="${r + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
     if (m.stone) {
-      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image href="${m.stone}" x="${f1(x - r + 4)}" y="${AY - r + 4}" width="${2 * r - 8}" height="${2 * r - 8}"/>`);
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image class="wp-stone" href="${m.stone}" x="${f1(x - r + 4)}" y="${AY - r + 4}" width="${2 * r - 8}" height="${2 * r - 8}"/>`);
       if (false) t.push(`<g transform="translate(${f1(x + r * .72)} ${f1(AY - r * .72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
     } else if (m.dir !== undefined) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/>`);
@@ -230,7 +230,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
         t.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${m.c}" stroke-opacity="${q % 2 ? .35 : .7}" stroke-width="2"/>`); }
       t.push(`<text x="${f1(x)}" y="${AY - r + 34}" text-anchor="middle" font-family="Manrope" font-size="15" font-weight="800" fill="${m.c}" fill-opacity=".8">С</text>`);
       const two = m.dir === 45;
-      t.push(`<g transform="rotate(${m.dir} ${f1(x)} ${AY})"><path d="M${f1(x)} ${AY - r + 22}L${f1(x + 9)} ${AY}L${f1(x)} ${AY + (two ? r - 22 : 8)}L${f1(x - 9)} ${AY}Z" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1"/>${two ? '' : `<path d="M${f1(x)} ${AY + 8}L${f1(x + 7)} ${AY}L${f1(x)} ${AY + r - 26}L${f1(x - 7)} ${AY}Z" fill="#5a5470"/>`}</g><circle cx="${f1(x)}" cy="${AY}" r="5" fill="#fff3cf"/>`);
+      t.push(`<g class="wp-needle"><g transform="rotate(${m.dir} ${f1(x)} ${AY})"><path d="M${f1(x)} ${AY - r + 22}L${f1(x + 9)} ${AY}L${f1(x)} ${AY + (two ? r - 22 : 8)}L${f1(x - 9)} ${AY}Z" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1"/>${two ? '' : `<path d="M${f1(x)} ${AY + 8}L${f1(x + 7)} ${AY}L${f1(x)} ${AY + r - 26}L${f1(x - 7)} ${AY}Z" fill="#5a5470"/>`}</g></g><circle cx="${f1(x)}" cy="${AY}" r="5" fill="#fff3cf"/>`);
     } else if (m.sw) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#sw${i})" stroke="#f3dc9c" stroke-width="3"/><circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#shine)"/>`);
       t.push(`<radialGradient id="sw${i}" cx="0.4" cy="0.35" r="0.75">${m.sw.map((c, j) => `<stop offset="${(j / Math.max(1, m.sw!.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join('')}</radialGradient>`);
@@ -257,7 +257,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   // звёзды
   const r = rng(d.iso), stars: string[] = [];
   for (let i = 0; i < 260; i++) { const x = 50 + r() * (w - 100), yy = 50 + r() * (h - 100), s = r(), big = s > .975 && (yy < 960 || x < 110 || x > w - 110);
-    stars.push(big ? `<path d="M${f1(x)} ${f1(yy - 9)}L${f1(x + 1.6)} ${f1(yy - 1.6)}L${f1(x + 9)} ${f1(yy)}L${f1(x + 1.6)} ${f1(yy + 1.6)}L${f1(x)} ${f1(yy + 9)}L${f1(x - 1.6)} ${f1(yy + 1.6)}L${f1(x - 9)} ${f1(yy)}L${f1(x - 1.6)} ${f1(yy - 1.6)}Z" fill="#fff6dc" opacity=".85"/>`
+    stars.push(big ? `<path class="tw" style="animation-delay:${(r() * 6).toFixed(1)}s" d="M${f1(x)} ${f1(yy - 9)}L${f1(x + 1.6)} ${f1(yy - 1.6)}L${f1(x + 9)} ${f1(yy)}L${f1(x + 1.6)} ${f1(yy + 1.6)}L${f1(x)} ${f1(yy + 9)}L${f1(x - 1.6)} ${f1(yy + 1.6)}L${f1(x - 9)} ${f1(yy)}L${f1(x - 1.6)} ${f1(yy - 1.6)}Z" fill="#fff6dc" opacity=".85"/>`
       : `<circle cx="${f1(x)}" cy="${f1(yy)}" r="${f1(.7 + s * 1.9)}" fill="${s > .8 ? '#f3dfa8' : '#cfd6ff'}" opacity="${(.15 + s * .55).toFixed(2)}"/>`); }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -290,8 +290,8 @@ ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h
 <ellipse cx="${CX}" cy="1450" rx="640" ry="300" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
-${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}
-<g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img, (a.dmEl + 2) % 5) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
+<g class="wp-stars">${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}</g>
+<g class="wp-orb"><g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img, (a.dmEl + 2) % 5) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g></g>
 ${t.join('\n')}
 </svg>`;
 }
