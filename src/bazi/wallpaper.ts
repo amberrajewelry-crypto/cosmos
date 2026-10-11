@@ -148,8 +148,8 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? .95 : .55}" stroke-width="${on ? 3.5 : 2}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2 + 10}" fill="none" stroke="${c}" stroke-opacity="${on ? .45 : .18}" stroke-width="1.2" stroke-dasharray="${on ? '2 6' : '1 7'}"/>`);
-    if (e === wealth) { const bx = x + sz * 0.36, by = y - sz * 0.36;
-      o.push(`<circle cx="${f1(bx)}" cy="${f1(by)}" r="40" fill="#e8c97e" opacity=".45" filter="url(#blur)"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="27" fill="url(#goldv)" stroke="#fff3cf" stroke-width="2"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="21" fill="none" stroke="#7a5420" stroke-opacity=".6" stroke-width="1.5"/><rect x="${f1(bx - 8)}" y="${f1(by - 8)}" width="16" height="16" fill="#1a1230" stroke="#7a5420" stroke-width="1.5"/>`); }
+    if (e === wealth) { const bx = x + sz * 0.42, by = y - sz * 0.42;
+      o.push(`<circle cx="${f1(bx)}" cy="${f1(by)}" r="70" fill="#e8c97e" opacity=".55" filter="url(#blur)"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="50" fill="url(#goldv)" stroke="#fff3cf" stroke-width="2"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="40" fill="none" stroke="#7a5420" stroke-opacity=".6" stroke-width="1.5"/><rect x="${f1(bx - 14)}" y="${f1(by - 14)}" width="28" height="28" fill="#1a1230" stroke="#7a5420" stroke-width="1.5"/>`); }
     if (on) o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 52)}" text-anchor="middle" font-family="Manrope" font-size="44" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`); }
   return o.join('');
 }
@@ -157,15 +157,16 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
 /** Оберег дня (五行大义: 木青 火赤 土黄 金白 水黑). Стихия дня полезна → её цвет (усилить);
  *  вредна → полезная стихия, что её сдерживает или забирает (порядок полезных), иначе первая полезная.
  *  Люди — по роли стихии оберега к господину дня (十神) и знакам года этой стихии. */
-const EL_COL = ['Зелёный, бирюза', 'Красный, бордо', 'Жёлтый, охра, беж', 'Белый, серебро', 'Чёрный, тёмно-синий'];
+const EL_COL = ['зелёный, бирюза', 'красный, бордо', 'жёлтый, охра', 'белый, серебро', 'чёрный, синий'];
 const EL_SW = [['#2f8f5b', '#2fb3a6'], ['#c8322b', '#7a1f2b'], ['#e0b84a', '#b07a3a', '#d9c3a0'], ['#f2f2ee', '#b9c0c8'], ['#141420', '#1f3566']];
-const EL_AN = ['Тигр, Кролик', 'Змея, Лошадь', 'Бык, Дракон, Коза, Собака', 'Обезьяна, Петух', 'Крыса, Свинья'];
-const ROLE = ['Партнёры', 'Аудитория', 'Покупатели', 'Заказчики, власть', 'Наставники'];
-export function talisman(a: Analysis, dayEl: number): { el: number; money: boolean; colors: string; people: string; sw: string[] } {
-  const fav = a.consensus as number[];
-  const el = fav.includes(dayEl) ? dayEl : fav.find((f) => (f + 2) % 5 === dayEl || (dayEl + 1) % 5 === f) ?? fav[0] ?? dayEl;
-  const rel = ((el - a.dmEl) % 5 + 5) % 5;
-  return { el, money: rel === 2, colors: EL_COL[el], people: `${ROLE[rel]} · ${EL_AN[el]}`, sw: EL_SW[el] };
+/** Шаг к деньгам по роли стихии оберега к господину дня: 比劫 食伤 财 官杀 印. */
+const STEP = ['Звать партнёров в общее дело', 'Показать работу: пост, демо, витрина', 'Звонить тем, кто уже покупал', 'Писать заказчикам и руководству', 'Спросить совета у наставника'];
+export function talisman(a: Analysis, stemEl: number, brEl: number, prep: boolean): { el: number; money: boolean; head: string; step: string; sw: string[] } {
+  const fav = a.consensus as number[], bad = [stemEl, brEl].filter((e) => !fav.includes(e));
+  const cure = (h: number) => fav.find((f) => (f + 2) % 5 === h || (h + 1) % 5 === f);
+  const el = !bad.length ? stemEl : bad.map(cure).find((x) => x !== undefined) ?? fav[0] ?? stemEl;
+  const rel = ((el - a.dmEl) % 5 + 5) % 5, money = rel === 2 && !prep;
+  return { el, money, head: `${money ? 'Цвет денег' : 'Оберег'} · ${EL_COL[el]}`, step: prep ? 'Свои и наставники, новых сделок нет' : STEP[rel], sw: EL_SW[el] };
 }
 
 /** Значки строк карточки (24×24, линия). */
@@ -182,8 +183,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const { w, h } = WP, CX = w / 2, acc = ACC[d.score] ?? ACC[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
-  const OY = 1085, OK = 0.56; // центр и масштаб орбиты
-  let y = 1418;
+  const OY = 1115, OK = 0.56; // центр и масштаб орбиты
+  let y = 1450;
   const text = (s: string, size: number, weight: number, fill: string, yy = y, extra = '', fam = 'Manrope') =>
     t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
 
@@ -205,24 +206,23 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const rows: { ic: string; head: string; body: string; fill: string; max: number; sw?: string[] }[] = [];
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
   rows.push({ ic: 'act', head: (prepOnly(d) ? 'Готовить, не решать' : 'Делать') + (hh.length ? ` · ${hh[0].replace(/\s/g, '')}` : ''), body: act, fill: '#f1ece0', max: 1 });
-  const tl = talisman(a, st.el);
-  rows.push({ ic: 'coin', head: tl.money ? 'Цвет денег' : 'Цвет-оберег', body: tl.colors, fill: '#f1e3b8', max: 1, sw: tl.sw });
-  rows.push({ ic: 'ppl', head: 'Люди дня', body: tl.people, fill: '#e6dcc0', max: 1 });
+  const tl = talisman(a, st.el, br.el, prepOnly(d));
+  rows.push({ ic: 'coin', head: tl.head, body: tl.step, fill: '#f1e3b8', max: 1, sw: tl.sw });
   if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: wpRisk(risk), fill: '#f3c9bd', max: 1 });
   const body: string[] = []; y += 50;
   rows.forEach((rw, i) => {
-    const ls = fit(rw.body, 34, rw.sw ? TWc - 130 : TWc, rw.max), need = 50 + ls.length * 42;
+    const ls = fit(rw.body, 36, TWc, rw.max), need = 50 + ls.length * 42;
     if (y + need > 2250) return;
     if (i) { body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`); y += 12; }
     const ic = rw.ic === 'risk' ? '#f0907a' : gold;
     body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
     body.push(`<g transform="translate(${IX - 15} ${y - 11}) scale(1.25)" fill="none" stroke="${ic}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[rw.ic]}</g>`);
     body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
-    if (rw.sw) rw.sw.forEach((c, j) => { const sx2 = R2 - 150 + j * 40, sy2 = y + 34;
+    if (rw.sw) rw.sw.forEach((c, j) => { const sx2 = R2 - 150 + j * 40, sy2 = y + 3;
       body.push(`<circle cx="${sx2}" cy="${sy2}" r="16" fill="${c}" stroke="#f3dc9c" stroke-opacity=".7" stroke-width="2"/><circle cx="${sx2 - 5}" cy="${sy2 - 5}" r="5" fill="#fff" opacity=".25"/>`); });
-    y += 50;
-    for (const ln of ls) { body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="34" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`); y += 42; }
-    y += 22;
+    y += 54;
+    for (const ln of ls) { body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="36" font-weight="500" fill="${rw.fill}">${esc(ln)}</text>`); y += 44; }
+    y += 34;
   });
   y += 4;
   t.push(`<rect x="${L}" y="${top0}" width="${R2 - L}" height="${y - top0}" rx="44" fill="url(#glass)" stroke="url(#glassb)" stroke-width="2"/>`);
