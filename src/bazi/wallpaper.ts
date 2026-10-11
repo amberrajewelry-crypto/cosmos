@@ -10,15 +10,15 @@ const MON = ['января', 'февраля', 'марта', 'апреля', 'м
 const WDF = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const ACC: Record<number, string> = { 1: '#d6604f', 2: '#e2964f', 3: '#dcc878', 4: '#8cc882', 5: '#6ec8aa' };
 const HEAD: Record<DayInfo['type'], string> = { peak: 'День силы', 'peak-hit': 'Сила с изломом', calm: 'Ровное течение', heavy: 'Время копить' };
-/** Голос заставки: коротко, одной строкой (≈40 знаков), глагол первым. Сайт и пуш — на полных текстах days.ts. */
-const WP_ACT: Record<string, string> = {
-  SS: 'Творить: продукт, тексты, работа руками', SG: 'Говорить и продавать: питчи, реклама',
-  PC: 'Ловить деньги: клиенты, сделки, покупки', ZC: 'Считать деньги: счета, долги, бюджет',
-  QS: 'Брать трудное, но без лобовых стычек', ZG: 'Документы, статус, официальные дела',
-  PY: 'Искать нестандартное, побыть одному', ZY: 'Учиться, восстанавливаться, просить помощи',
-  BJ: 'Работать с командой, держать свою линию', JC: 'Деньги беречь: рядом соперник и азарт',
-};
-const WP_FAV = 'Опереться на своих: команда и партнёры';
+/** Дело дня одним словом и символом — по богу дня (十神). */
+const ACT_W: Record<string, string> = { SS: 'Творить', SG: 'Говорить', PC: 'Деньги', ZC: 'Счёт', QS: 'Вызов', ZG: 'Статус', PY: 'Тишина', ZY: 'Учёба', BJ: 'Команда', JC: 'Беречь', FAV: 'Свои' };
+const ACT_IC: Record<string, string> = { SS: 'pen', SG: 'talk', PC: 'bag', ZC: 'bag', QS: 'peak', ZG: 'crown', PY: 'eye', ZY: 'book', BJ: 'ppl', JC: 'shield', FAV: 'ppl' };
+/** Риск одним словом. */
+export function riskWord(r: string): string {
+  const m = r.match(/«([^,»]+)/); if (m && r.includes('сфере')) return cap(m[1] === 'род' ? 'старшие' : m[1]);
+  const W: [RegExp, string][] = [[/против месяца/, 'Траты'], [/недопоним/, 'Слова'], [/документ/, 'Бумаги'], [/с текущим годом/, 'Крупное'], [/двойной удар|на вас лично/, 'Решения'], [/соперник/, 'Соперник'], [/запас прочности/, 'Силы'], [/неполным|в союз/, 'Итог']];
+  return W.find(([re]) => re.test(r))?.[1] ?? 'Спешка';
+}
 const AN_GEN = ['Крысы', 'Быка', 'Тигра', 'Кролика', 'Дракона', 'Змеи', 'Лошади', 'Козы', 'Обезьяны', 'Петуха', 'Собаки', 'Свиньи'];
 /** Риск — в одну строку: «в сфере «X»» → «: X», хвост после тире и лишние советы срезаны. */
 export const wpRisk = (r: string) => r.startsWith('день идёт против месяца') ? 'Против месяца: крупно не тратить'
@@ -175,6 +175,14 @@ const ICON: Record<string, string> = {
   sup: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
   hrs: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2.5"/>',
   risk: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+  pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  talk: '<path d="M4 5h16v10H10l-5 4v-4H4z"/>',
+  peak: '<path d="M2.5 20l6.5-11 4 6 3-4 5.5 9z"/><path d="M9 9V3.5l4.5 1.8L9 7"/>',
+  crown: '<path d="M3 18l1.5-10 5 4.5L12 5l2.5 7.5 5-4.5L21 18z"/><path d="M3 20.5h18"/>',
+  eye: '<path d="M2 12s4-6.5 10-6.5S22 12 22 12s-4 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  book: '<path d="M3 5.5c3-1.2 6-1 9 .8 3-1.8 6-2 9-.8v13.5c-3-1.2-6-1-9 .8-3-1.8-6-2-9-.8z"/><path d="M12 6.3v14"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.6 8-8 9-4.4-1-8-4-8-9V6z"/>',
+  bag: '<path d="M5 10h14l-1.5 10h-11z"/><path d="M9 10V7.5a3 3 0 0 1 6 0V10"/><path d="M12 13v4M10.5 14.5h3"/>',
   coin: '<circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6"/>',
   ppl: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M16 14.2c2.6.1 4.4 1.6 5 4.3"/>',
 };
@@ -183,64 +191,54 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const { w, h } = WP, CX = w / 2, acc = ACC[d.score] ?? ACC[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
-  const OY = 1115, OK = 0.56; // центр и масштаб орбиты
-  let y = 1450;
+  const OY = 1250, OK = 0.76; // центр и масштаб орбиты — круг главный герой
+  let y = 1702;
   const text = (s: string, size: number, weight: number, fill: string, yy = y, extra = '', fam = 'Manrope') =>
     t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
 
-  text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 102;
-  text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 62;
+  text(cap(label(d.iso, true)).toUpperCase(), 30, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 98;
+  text(HEAD[d.type], 108, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 58;
   const mine = (d.fav as number[]).includes(st.el) ? 'питает вас' : (d.avoid as number[]).includes(st.el) ? 'давит на вас' : 'идёт мимо вас';
-  text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
-  // оценка: пять ромбов и подпись в одну строку
-  for (let i = 0; i < 5; i++) { const x = CX - 226 + i * 64, on = i < d.score;
+  text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 62;
+  for (let i = 0; i < 5; i++) { const x = CX - 128 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
     t.push(diamond(x, y - 14, 21, on ? acc : 'none', on ? '' : 'stroke="#5a5470" stroke-width="2.5"')); }
-  t.push(`<line x1="${CX + 100}" y1="${y - 36}" x2="${CX + 100}" y2="${y + 8}" stroke="${gold}" stroke-opacity=".3" stroke-width="1.5"/>`);
-  t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} из 5</text>`);
-  const hh = bestHours(a, d, shift);
-  y += 44;
 
-  // стеклянная карточка: строки со значками, тонкие разделители
-  const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
-  const rows: { ic: string; head: string; body: string; fill: string; max: number; sw?: string[] }[] = [];
-  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
-  rows.push({ ic: 'act', head: (prepOnly(d) ? 'Готовить, не решать' : 'Делать') + (hh.length ? ` · ${hh[0].replace(/\s/g, '')}` : ''), body: act, fill: '#f1ece0', max: 1 });
-  const tl = talisman(a, st.el, br.el, prepOnly(d));
-  rows.push({ ic: 'coin', head: tl.head, body: tl.step, fill: '#f1e3b8', max: 1, sw: tl.sw });
-  if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: wpRisk(risk), fill: '#f3c9bd', max: 1 });
-  const body: string[] = []; y += 50;
-  rows.forEach((rw, i) => {
-    const ls = fit(rw.body, 36, TWc, rw.max), need = 50 + ls.length * 42;
-    if (y + need > 2250) return;
-    if (i) { body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`); y += 12; }
-    const ic = rw.ic === 'risk' ? '#f0907a' : gold;
-    body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
-    body.push(`<g transform="translate(${IX - 15} ${y - 11}) scale(1.25)" fill="none" stroke="${ic}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[rw.ic]}</g>`);
-    body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
-    if (rw.sw) rw.sw.forEach((c, j) => { const sx2 = R2 - 150 + j * 40, sy2 = y + 3;
-      body.push(`<circle cx="${sx2}" cy="${sy2}" r="16" fill="${c}" stroke="#f3dc9c" stroke-opacity=".7" stroke-width="2"/><circle cx="${sx2 - 5}" cy="${sy2 - 5}" r="5" fill="#fff" opacity=".25"/>`); });
-    y += 54;
-    for (const ln of ls) { body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="36" font-weight="500" fill="${rw.fill}">${esc(ln)}</text>`); y += 44; }
-    y += 34;
-  });
-  y += 4;
-  t.push(`<rect x="${L}" y="${top0}" width="${R2 - L}" height="${y - top0}" rx="44" fill="url(#glass)" stroke="url(#glassb)" stroke-width="2"/>`);
-  t.push(`<rect x="${L + 1}" y="${top0 + 1}" width="${R2 - L - 2}" height="120" rx="43" fill="url(#gloss)"/>`);
-  t.push(diamond(CX, top0, 10, gold)); t.push(`<line x1="${CX - 120}" y1="${top0}" x2="${CX - 24}" y2="${top0}" stroke="url(#fadeL)" stroke-width="2"/><line x1="${CX + 24}" y1="${top0}" x2="${CX + 120}" y2="${top0}" stroke="url(#fadeR)" stroke-width="2"/>`);
-  t.push(...body);
+  // амулеты дня: символ + одно слово
+  const prep = prepOnly(d), hh = bestHours(a, d, shift), tl = talisman(a, st.el, br.el, prep);
+  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0];
+  const gk = d.act === JC_FAV ? 'FAV' : d.god.key;
+  const am: { ic: string; word: string; cap: string; c: string; sw?: string[]; coin?: boolean }[] = [
+    { ic: '', word: cap(tl.head.split(' · ')[1].split(',')[0]), cap: tl.money ? 'цвет денег' : 'оберег', c: gold, sw: tl.sw, coin: tl.money },
+    { ic: ACT_IC[gk] ?? 'act', word: ACT_W[gk] ?? 'Дело', cap: prep ? 'копить' : 'дело дня', c: gold },
+  ];
+  if (hh.length) am.push({ ic: 'hrs', word: hh[0].replace(/:\d\d/g, '').replace(/\s/g, ''), cap: 'часы удачи', c: gold });
+  if (risk) am.push({ ic: 'risk', word: riskWord(risk), cap: 'осторожно', c: '#f0907a' });
+  const AY = 2072, gap = am.length > 3 ? 252 : 290;
+  am.forEach((m, i) => { const x = CX + (i - (am.length - 1) / 2) * gap, r = 64;
+    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r + 26}" fill="${m.sw ? m.sw[0] : m.c}" opacity=".28" filter="url(#blur)"/>`);
+    if (m.sw) {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#sw${i})" stroke="#f3dc9c" stroke-width="3"/><circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#shine)"/>`);
+      t.push(`<radialGradient id="sw${i}" cx="0.4" cy="0.35" r="0.75">${m.sw.map((c, j) => `<stop offset="${(j / Math.max(1, m.sw!.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join('')}</radialGradient>`);
+      if (m.coin) t.push(`<circle cx="${f1(x)}" cy="${AY}" r="34" fill="none" stroke="#fff3cf" stroke-opacity=".9" stroke-width="3"/><rect x="${f1(x - 13)}" y="${AY - 13}" width="26" height="26" fill="#1a1230" stroke="#fff3cf" stroke-width="2.5"/>`);
+    } else {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/><circle cx="${f1(x)}" cy="${AY}" r="${r - 9}" fill="none" stroke="${m.c}" stroke-opacity=".3" stroke-width="1.2"/>`);
+      t.push(`<g transform="translate(${f1(x - 31)} ${AY - 31}) scale(2.6)" fill="none" stroke="${m.c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON[m.ic]}</g>`);
+    }
+    t.push(`<text x="${f1(x)}" y="${AY + r + 50}" text-anchor="middle" font-family="Manrope" font-size="36" font-weight="700" fill="${m.c === gold ? '#f3e7c4' : '#f6c7ba'}">${esc(m.word)}</text>`);
+    t.push(`<text x="${f1(x)}" y="${AY + r + 84}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="4">${esc(m.cap.toUpperCase())}</text>`); });
   const k = days.findIndex((x) => x.iso === d.iso);
 
   // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
   const WK = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'], strip = days.slice(k, k + 7), cw = 88, sx = CX - (strip.length * cw) / 2, sy = 2338;
-  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
   strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, c2 = ACC[x.score] ?? ACC[3], now = i === 0;
-    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
+    if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="144" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : '#8f88ad'}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? '#fff3cf' : '#e6e1f2'}">${dd}</text>`);
     if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
     t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
-    t.push(`<text x="${cx}" y="${sy + 122}" text-anchor="middle" font-family="Manrope" font-size="23" font-weight="700" fill="${x.score >= 4 ? c2 : '#a29bc0'}">${x.score}/5</text>`); });
+  });
 
   // звёзды
   const r = rng(d.iso), stars: string[] = [];
