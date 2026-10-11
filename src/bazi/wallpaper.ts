@@ -104,7 +104,7 @@ function mandala(cx: number, cy: number, R: number, stemEl: number, branch: numb
 }
 
 /** Картинки сайта для заставки: data:-URI животных (12, порядок ветвей) и шаров стихий (5). Без них — векторная мандала. */
-export interface WpImages { an: string[]; el: string[]; bg?: string[] }
+export interface WpImages { an: string[]; el: string[]; bg?: string[]; st?: string[] }
 const EL_RU = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'];
 /** Орбита как в шапке сайта, но собранная в композицию: медальоны под животными, лучи от центра, инь-ян,
  *  у знака и стихии дня — золотой ореол с лучами. */
@@ -157,6 +157,9 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
 /** Оберег дня (五行大义: 木青 火赤 土黄 金白 水黑). Стихия дня полезна → её цвет (усилить);
  *  вредна → полезная стихия, что её сдерживает или забирает (порядок полезных), иначе первая полезная.
  *  Люди — по роли стихии оберега к господину дня (十神) и знакам года этой стихии. */
+/** Камень стихии и сторона света (五行: 木东 火南 土中/艮坤 金西 水北); Земле — ось СВ–ЮЗ (艮 и 坤 — земляные триграммы). */
+const STONE = ['Нефрит', 'Гранат', 'Цитрин', 'Хрусталь', 'Обсидиан'];
+const DIR_W = ['Восток', 'Юг', 'СВ–ЮЗ', 'Запад', 'Север'], DIR_A = [90, 180, 45, 270, 0];
 const EL_COL = ['зелёный, бирюза', 'красный, бордо', 'жёлтый, охра', 'белый, серебро', 'чёрный, синий'];
 const EL_SW = [['#2f8f5b', '#2fb3a6'], ['#c8322b', '#7a1f2b'], ['#e0b84a', '#b07a3a', '#d9c3a0'], ['#f2f2ee', '#b9c0c8'], ['#141420', '#1f3566']];
 /** Шаг к деньгам по роли стихии оберега к господину дня: 比劫 食伤 财 官杀 印. */
@@ -208,16 +211,28 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const prep = prepOnly(d), hh = bestHours(a, d, shift), tl = talisman(a, st.el, br.el, prep);
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0];
   const gk = d.act === JC_FAV ? 'FAV' : d.god.key;
-  const am: { ic: string; word: string; cap: string; c: string; sw?: string[]; coin?: boolean }[] = [
-    { ic: '', word: cap(tl.head.split(' · ')[1].split(',')[0]), cap: tl.money ? 'цвет денег' : 'оберег', c: gold, sw: tl.sw, coin: tl.money },
+  const am: { ic: string; word: string; cap: string; c: string; sw?: string[]; coin?: boolean; stone?: string; dir?: number }[] = [
+    img?.st ? { ic: '', word: STONE[tl.el], cap: tl.money ? 'камень денег' : 'оберег', c: gold, stone: img.st[tl.el], coin: tl.money }
+      : { ic: '', word: cap(tl.head.split(' · ')[1].split(',')[0]), cap: tl.money ? 'цвет денег' : 'оберег', c: gold, sw: tl.sw, coin: tl.money },
     { ic: ACT_IC[gk] ?? 'act', word: ACT_W[gk] ?? 'Дело', cap: prep ? 'копить' : 'дело дня', c: gold },
   ];
   if (hh.length) am.push({ ic: 'hrs', word: hh[0].replace(/:\d\d/g, '').replace(/\s/g, ''), cap: 'часы удачи', c: gold });
+  am.push({ ic: '', word: DIR_W[tl.el], cap: 'сторона', c: gold, dir: DIR_A[tl.el], coin: false });
   if (risk) am.push({ ic: 'risk', word: riskWord(risk), cap: 'осторожно', c: '#f0907a' });
-  const AY = 2072, gap = am.length > 3 ? 252 : 290;
-  am.forEach((m, i) => { const x = CX + (i - (am.length - 1) / 2) * gap, r = 64;
+  const AY = 2068, gap = am.length > 4 ? 212 : am.length > 3 ? 252 : 290;
+  am.forEach((m, i) => { const x = CX + (i - (am.length - 1) / 2) * gap, r = am.length > 4 ? 56 : 64;
     t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r + 26}" fill="${m.sw ? m.sw[0] : m.c}" opacity=".28" filter="url(#blur)"/>`);
-    if (m.sw) {
+    if (m.stone) {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image href="${m.stone}" x="${f1(x - r + 4)}" y="${AY - r + 4}" width="${2 * r - 8}" height="${2 * r - 8}"/>`);
+      if (m.coin) t.push(`<g transform="translate(${f1(x + r * .72)} ${f1(AY - r * .72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
+    } else if (m.dir !== undefined) {
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/>`);
+      for (let q = 0; q < 8; q++) { const [x1, y1] = pt(x, AY, r - 6, q * 45), [x2, y2] = pt(x, AY, r - (q % 2 ? 12 : 18), q * 45);
+        t.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${m.c}" stroke-opacity="${q % 2 ? .35 : .7}" stroke-width="2"/>`); }
+      t.push(`<text x="${f1(x)}" y="${AY - r + 34}" text-anchor="middle" font-family="Manrope" font-size="15" font-weight="800" fill="${m.c}" fill-opacity=".8">С</text>`);
+      const two = m.dir === 45;
+      t.push(`<g transform="rotate(${m.dir} ${f1(x)} ${AY})"><path d="M${f1(x)} ${AY - r + 22}L${f1(x + 9)} ${AY}L${f1(x)} ${AY + (two ? r - 22 : 8)}L${f1(x - 9)} ${AY}Z" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1"/>${two ? '' : `<path d="M${f1(x)} ${AY + 8}L${f1(x + 7)} ${AY}L${f1(x)} ${AY + r - 26}L${f1(x - 7)} ${AY}Z" fill="#5a5470"/>`}</g><circle cx="${f1(x)}" cy="${AY}" r="5" fill="#fff3cf"/>`);
+    } else if (m.sw) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#sw${i})" stroke="#f3dc9c" stroke-width="3"/><circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#shine)"/>`);
       t.push(`<radialGradient id="sw${i}" cx="0.4" cy="0.35" r="0.75">${m.sw.map((c, j) => `<stop offset="${(j / Math.max(1, m.sw!.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join('')}</radialGradient>`);
       if (m.coin) t.push(`<circle cx="${f1(x)}" cy="${AY}" r="34" fill="none" stroke="#fff3cf" stroke-opacity=".9" stroke-width="3"/><rect x="${f1(x - 13)}" y="${AY - 13}" width="26" height="26" fill="#1a1230" stroke="#fff3cf" stroke-width="2.5"/>`);
@@ -225,8 +240,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/><circle cx="${f1(x)}" cy="${AY}" r="${r - 9}" fill="none" stroke="${m.c}" stroke-opacity=".3" stroke-width="1.2"/>`);
       t.push(`<g transform="translate(${f1(x - 31)} ${AY - 31}) scale(2.6)" fill="none" stroke="${m.c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON[m.ic]}</g>`);
     }
-    t.push(`<text x="${f1(x)}" y="${AY + r + 50}" text-anchor="middle" font-family="Manrope" font-size="36" font-weight="700" fill="${m.c === gold ? '#f3e7c4' : '#f6c7ba'}">${esc(m.word)}</text>`);
-    t.push(`<text x="${f1(x)}" y="${AY + r + 84}" text-anchor="middle" font-family="Manrope" font-size="20" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="4">${esc(m.cap.toUpperCase())}</text>`); });
+    t.push(`<text x="${f1(x)}" y="${AY + r + 50}" text-anchor="middle" font-family="Manrope" font-size="${r < 60 ? 32 : 36}" font-weight="700" fill="${m.c === gold ? '#f3e7c4' : '#f6c7ba'}">${esc(m.word)}</text>`);
+    t.push(`<text x="${f1(x)}" y="${AY + r + 84}" text-anchor="middle" font-family="Manrope" font-size="${r < 60 ? 18 : 20}" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="${r < 60 ? 2 : 4}">${esc(m.cap.toUpperCase())}</text>`); });
   const k = days.findIndex((x) => x.iso === d.iso);
 
   // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
