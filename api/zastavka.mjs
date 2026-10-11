@@ -3171,6 +3171,7 @@ function orbit(cx, cy, R, stemEl, branch, img, wealth = -1) {
     const [x, y] = pt(cx, cy, R - 62, i * 30), [x0, y0] = pt(cx, cy, 70, i * 30);
     o.push(`<line x1="${f1(x0)}" y1="${f1(y0)}" x2="${f1(x)}" y2="${f1(y)}" stroke="${i === branch ? EL_GLOW[BR_EL[i]] : gold}" stroke-opacity="${i === branch ? 0.55 : 0.1}" stroke-width="${i === branch ? 2.5 : 1.2}"/>`);
   }
+  o.push('<g class="wp-ring">');
   o.push(`<circle cx="${cx}" cy="${cy}" r="${R + 78}" fill="none" stroke="url(#ringg)" stroke-width="2.5"/>`);
   o.push(`<circle cx="${cx}" cy="${cy}" r="${R + 64}" fill="none" stroke="${gold}" stroke-opacity=".14" stroke-width="1.2"/>`);
   for (let i = 0; i < 120; i++) {
@@ -3178,6 +3179,7 @@ function orbit(cx, cy, R, stemEl, branch, img, wealth = -1) {
     o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${gold}" stroke-opacity="${big ? 0.5 : 0.18}" stroke-width="${big ? 2.2 : 1}"/>`);
   }
   o.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${gold}" stroke-opacity=".2" stroke-width="1.5" stroke-dasharray="2 10"/>`);
+  o.push("</g>");
   const rE = R * 0.53, pos = [288, 0, 72, 144, 216].map((a) => pt(cx, cy, rE, a));
   o.push(`<circle cx="${cx}" cy="${cy}" r="${f1(rE)}" fill="none" stroke="${gold}" stroke-opacity=".28" stroke-width="1.6" stroke-dasharray="5 9"/>`);
   for (let e = 0; e < 5; e++) {
@@ -3193,7 +3195,7 @@ function orbit(cx, cy, R, stemEl, branch, img, wealth = -1) {
   for (let i = 0; i < 12; i++) {
     const on = i === branch, [x, y] = pt(cx, cy, R, i * 30), c = EL_GLOW[BR_EL[i]], rr = on ? 74 : 58, sz = on ? 132 : 100;
     if (on) {
-      o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="110" fill="${c}" opacity=".38" filter="url(#blur)"/>`);
+      o.push(`<circle class="wp-pulse" cx="${f1(x)}" cy="${f1(y)}" r="110" fill="${c}" opacity=".38" filter="url(#blur)"/>`);
       for (let k = 0; k < 16; k++) {
         const [x1, y1] = pt(x, y, rr + 10, k * 22.5), [x2, y2] = pt(x, y, rr + (k % 2 ? 22 : 34), k * 22.5);
         o.push(`<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${gold}" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round"/>`);
@@ -3205,7 +3207,7 @@ function orbit(cx, cy, R, stemEl, branch, img, wealth = -1) {
   }
   for (let e = 0; e < 5; e++) {
     const [x, y] = pos[e], on = e === stemEl, sz = on ? 190 : 128, c = EL_GLOW[e];
-    o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${on ? 130 : 80}" fill="${c}" opacity="${on ? 0.5 : 0.2}" filter="url(#blur)"/>`);
+    o.push(`<circle class="${on ? "wp-pulse" : ""}" cx="${f1(x)}" cy="${f1(y)}" r="${on ? 130 : 80}" fill="${c}" opacity="${on ? 0.5 : 0.2}" filter="url(#blur)"/>`);
     o.push(`<image href="${img.el[e]}" x="${f1(x - sz / 2)}" y="${f1(y - sz / 2)}" width="${sz}" height="${sz}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? 0.95 : 0.55}" stroke-width="${on ? 3.5 : 2}"/>`);
@@ -3256,7 +3258,7 @@ function wallpaperSvg(a, d, days, shift, img) {
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   text(cap(label(d.iso, true)).toUpperCase(), 30, 600, "#cbbf9f", y, 'letter-spacing="8"');
   y += 98;
-  text(HEAD[d.type], 108, 600, "url(#goldt)", y, "", "Cormorant");
+  text(HEAD[d.type], 108, 600, "url(#goldt)", y, 'class="wp-head"', "Cormorant");
   y += 58;
   const mine = d.fav.includes(st.el) ? "\u043F\u0438\u0442\u0430\u0435\u0442 \u0432\u0430\u0441" : d.avoid.includes(st.el) ? "\u0434\u0430\u0432\u0438\u0442 \u043D\u0430 \u0432\u0430\u0441" : "\u0438\u0434\u0451\u0442 \u043C\u0438\u043C\u043E \u0432\u0430\u0441";
   text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"');
@@ -3270,18 +3272,19 @@ function wallpaperSvg(a, d, days, shift, img) {
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0];
   const gk = d.act === JC_FAV ? "FAV" : d.god.key;
   const am = [
-    img?.st ? { ic: "", word: STONE[tl.el], cap: tl.money ? "\u043A\u0430\u043C\u0435\u043D\u044C \u0434\u0435\u043D\u0435\u0433" : "\u043E\u0431\u0435\u0440\u0435\u0433", c: gold, stone: img.st[tl.el], coin: tl.money } : { ic: "", word: cap(tl.head.split(" \xB7 ")[1].split(",")[0]), cap: tl.money ? "\u0446\u0432\u0435\u0442 \u0434\u0435\u043D\u0435\u0433" : "\u043E\u0431\u0435\u0440\u0435\u0433", c: gold, sw: tl.sw, coin: tl.money },
-    { ic: ACT_IC[gk] ?? "act", word: ACT_W[gk] ?? "\u0414\u0435\u043B\u043E", cap: prep ? "\u043A\u043E\u043F\u0438\u0442\u044C" : "\u0434\u0435\u043B\u043E \u0434\u043D\u044F", c: gold }
+    img?.st ? { k: "stone", ic: "", word: STONE[tl.el], cap: tl.money ? "\u043A\u0430\u043C\u0435\u043D\u044C \u0434\u0435\u043D\u0435\u0433" : "\u043E\u0431\u0435\u0440\u0435\u0433", c: gold, stone: img.st[tl.el], coin: tl.money } : { k: "stone", ic: "", word: cap(tl.head.split(" \xB7 ")[1].split(",")[0]), cap: tl.money ? "\u0446\u0432\u0435\u0442 \u0434\u0435\u043D\u0435\u0433" : "\u043E\u0431\u0435\u0440\u0435\u0433", c: gold, sw: tl.sw, coin: tl.money },
+    { k: "act", ic: ACT_IC[gk] ?? "act", word: ACT_W[gk] ?? "\u0414\u0435\u043B\u043E", cap: prep ? "\u043A\u043E\u043F\u0438\u0442\u044C" : "\u0434\u0435\u043B\u043E \u0434\u043D\u044F", c: gold }
   ];
-  if (hh.length) am.push({ ic: "hrs", word: hh[0].replace(/:\d\d/g, "").replace(/\s/g, ""), cap: "\u0447\u0430\u0441\u044B \u0443\u0434\u0430\u0447\u0438", c: gold });
-  am.push({ ic: "", word: DIR_W[tl.el], cap: "\u0441\u0442\u043E\u0440\u043E\u043D\u0430", c: gold, dir: DIR_A[tl.el], coin: false });
-  if (risk) am.push({ ic: "risk", word: riskWord(risk), cap: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", c: "#e3a08e" });
+  if (hh.length) am.push({ k: "hrs", ic: "hrs", word: hh[0].replace(/:\d\d/g, "").replace(/\s/g, ""), cap: "\u0447\u0430\u0441\u044B \u0443\u0434\u0430\u0447\u0438", c: gold });
+  am.push({ k: "dir", ic: "", word: DIR_W[tl.el], cap: "\u0441\u0442\u043E\u0440\u043E\u043D\u0430", c: gold, dir: DIR_A[tl.el], coin: false });
+  if (risk) am.push({ k: "risk", ic: "risk", word: riskWord(risk), cap: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", c: "#e3a08e" });
   const AY = 2068, gap = am.length > 4 ? 212 : am.length > 3 ? 252 : 290;
   am.forEach((m, i) => {
     const x = CX + (i - (am.length - 1) / 2) * gap, r2 = am.length > 4 ? 56 : 64;
-    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2 + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
+    t.push(`<g class="wp-am" data-k="${m.k}" style="animation-delay:${(0.35 + i * 0.12).toFixed(2)}s"><rect x="${f1(x - gap / 2)}" y="${AY - r2 - 20}" width="${gap}" height="${2 * r2 + 130}" fill="transparent"/>`);
+    t.push(`<circle class="wp-pulse" style="animation-delay:${i * 0.7}s" cx="${f1(x)}" cy="${AY}" r="${r2 + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
     if (m.stone) {
-      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image href="${m.stone}" x="${f1(x - r2 + 4)}" y="${AY - r2 + 4}" width="${2 * r2 - 8}" height="${2 * r2 - 8}"/>`);
+      t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image class="wp-stone" href="${m.stone}" x="${f1(x - r2 + 4)}" y="${AY - r2 + 4}" width="${2 * r2 - 8}" height="${2 * r2 - 8}"/>`);
       if (false) t.push(`<g transform="translate(${f1(x + r2 * 0.72)} ${f1(AY - r2 * 0.72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
     } else if (m.dir !== void 0) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/>`);
@@ -3291,7 +3294,7 @@ function wallpaperSvg(a, d, days, shift, img) {
       }
       t.push(`<text x="${f1(x)}" y="${AY - r2 + 34}" text-anchor="middle" font-family="Manrope" font-size="15" font-weight="800" fill="${m.c}" fill-opacity=".8">\u0421</text>`);
       const two = m.dir === 45;
-      t.push(`<g transform="rotate(${m.dir} ${f1(x)} ${AY})"><path d="M${f1(x)} ${AY - r2 + 22}L${f1(x + 9)} ${AY}L${f1(x)} ${AY + (two ? r2 - 22 : 8)}L${f1(x - 9)} ${AY}Z" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1"/>${two ? "" : `<path d="M${f1(x)} ${AY + 8}L${f1(x + 7)} ${AY}L${f1(x)} ${AY + r2 - 26}L${f1(x - 7)} ${AY}Z" fill="#5a5470"/>`}</g><circle cx="${f1(x)}" cy="${AY}" r="5" fill="#fff3cf"/>`);
+      t.push(`<g class="wp-needle"><g transform="rotate(${m.dir} ${f1(x)} ${AY})"><path d="M${f1(x)} ${AY - r2 + 22}L${f1(x + 9)} ${AY}L${f1(x)} ${AY + (two ? r2 - 22 : 8)}L${f1(x - 9)} ${AY}Z" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1"/>${two ? "" : `<path d="M${f1(x)} ${AY + 8}L${f1(x + 7)} ${AY}L${f1(x)} ${AY + r2 - 26}L${f1(x - 7)} ${AY}Z" fill="#5a5470"/>`}</g></g><circle cx="${f1(x)}" cy="${AY}" r="5" fill="#fff3cf"/>`);
     } else if (m.sw) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#sw${i})" stroke="#f3dc9c" stroke-width="3"/><circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#shine)"/>`);
       t.push(`<radialGradient id="sw${i}" cx="0.4" cy="0.35" r="0.75">${m.sw.map((c, j) => `<stop offset="${(j / Math.max(1, m.sw.length - 1)).toFixed(2)}" stop-color="${c}"/>`).join("")}</radialGradient>`);
@@ -3301,23 +3304,25 @@ function wallpaperSvg(a, d, days, shift, img) {
       t.push(`<g transform="translate(${f1(x - 31)} ${AY - 31}) scale(2.6)" fill="none" stroke="${m.c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICON[m.ic]}</g>`);
     }
     t.push(`<text x="${f1(x)}" y="${AY + r2 + 50}" text-anchor="middle" font-family="Manrope" font-size="${r2 < 60 ? 32 : 36}" font-weight="700" fill="${m.c === gold ? "#f3e7c4" : "#f6c7ba"}">${esc(m.word)}</text>`);
-    t.push(`<text x="${f1(x)}" y="${AY + r2 + 84}" text-anchor="middle" font-family="Manrope" font-size="${r2 < 60 ? 18 : 20}" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="${r2 < 60 ? 2 : 4}">${esc(m.cap.toUpperCase())}</text>`);
+    t.push(`<text x="${f1(x)}" y="${AY + r2 + 84}" text-anchor="middle" font-family="Manrope" font-size="${r2 < 60 ? 18 : 20}" font-weight="700" fill="${m.c}" fill-opacity=".75" letter-spacing="${r2 < 60 ? 2 : 4}">${esc(m.cap.toUpperCase())}</text></g>`);
   });
   const k = days.findIndex((x) => x.iso === d.iso);
   const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2338;
   t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".35" stroke="${gold}" stroke-opacity=".12" stroke-width="1.2"/>`);
   strip.forEach((x, i) => {
     const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, now = i === 0;
+    t.push(`<g class="wp-day" data-iso="${x.iso}"><rect x="${cx - cw / 2}" y="${sy - 58}" width="${cw}" height="172" fill="transparent"/>`);
     if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="144" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : "#8f88ad"}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
     if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${gold}" opacity="${x.score === 5 ? 0.5 : 0.3}" filter="url(#blur)"/>`);
     t.push(diamond(cx, sy + 86, 6 + x.score * 2, x.score >= 4 ? "url(#goldv)" : "none", x.score >= 4 ? "" : `stroke="${gold}" stroke-opacity="${x.score === 3 ? 0.6 : 0.3}" stroke-width="2"`));
+    t.push("</g>");
   });
   const r = rng(d.iso), stars = [];
   for (let i = 0; i < 260; i++) {
     const x = 50 + r() * (w - 100), yy = 50 + r() * (h - 100), s = r(), big = s > 0.975 && (yy < 960 || x < 110 || x > w - 110);
-    stars.push(big ? `<path d="M${f1(x)} ${f1(yy - 9)}L${f1(x + 1.6)} ${f1(yy - 1.6)}L${f1(x + 9)} ${f1(yy)}L${f1(x + 1.6)} ${f1(yy + 1.6)}L${f1(x)} ${f1(yy + 9)}L${f1(x - 1.6)} ${f1(yy + 1.6)}L${f1(x - 9)} ${f1(yy)}L${f1(x - 1.6)} ${f1(yy - 1.6)}Z" fill="#fff6dc" opacity=".85"/>` : `<circle cx="${f1(x)}" cy="${f1(yy)}" r="${f1(0.7 + s * 1.9)}" fill="${s > 0.8 ? "#f3dfa8" : "#cfd6ff"}" opacity="${(0.15 + s * 0.55).toFixed(2)}"/>`);
+    stars.push(big ? `<path class="tw" style="animation-delay:${(r() * 6).toFixed(1)}s" d="M${f1(x)} ${f1(yy - 9)}L${f1(x + 1.6)} ${f1(yy - 1.6)}L${f1(x + 9)} ${f1(yy)}L${f1(x + 1.6)} ${f1(yy + 1.6)}L${f1(x)} ${f1(yy + 9)}L${f1(x - 1.6)} ${f1(yy + 1.6)}L${f1(x - 9)} ${f1(yy)}L${f1(x - 1.6)} ${f1(yy - 1.6)}Z" fill="#fff6dc" opacity=".85"/>` : `<circle cx="${f1(x)}" cy="${f1(yy)}" r="${f1(0.7 + s * 1.9)}" fill="${s > 0.8 ? "#f3dfa8" : "#cfd6ff"}" opacity="${(0.15 + s * 0.55).toFixed(2)}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
 <defs>
@@ -3349,8 +3354,8 @@ ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h
 <ellipse cx="${CX}" cy="1450" rx="640" ry="300" fill="url(#halo)"/>` : `<ellipse cx="${CX}" cy="${OY}" rx="560" ry="500" fill="url(#neb)"/>
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
-${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join("")}
-<g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img, (a.dmEl + 2) % 5) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
+<g class="wp-stars">${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join("")}</g>
+<g class="wp-orb"><g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img, (a.dmEl + 2) % 5) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g></g>
 ${t.join("\n")}
 </svg>`;
 }
