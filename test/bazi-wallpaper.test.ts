@@ -6,10 +6,10 @@ import { wallpaperSvg, wrap, tzOffsetH } from '../src/bazi/wallpaper';
 describe('заставка «карта дня»', () => {
   const c = computeChart({ date: '1991-11-10', time: '00:37', timeKnown: true, tz: 'Asia/Tbilisi', lat: 42.27, lon: 42.7, male: true }, DEFAULT_VARIANT);
   const a = analyze(c), days = daysFrom(c, a, new Date(2026, 9, 6), 9);
-  it('SVG без иероглифов, с оценкой и датой', () => {
+  it('SVG без иероглифов, с амулетами и датой', () => {
     const s = wallpaperSvg(a, days[0], days, 4 - 42.7 / 15);
     expect(s.toLowerCase()).toContain('6 октября, вторник');
-    expect(s).toContain(`${days[0].score} из 5`);
+    expect(s).toMatch(/ОБЕРЕГ|ЦВЕТ ДЕНЕГ/);
     expect(s).not.toMatch(/[一-鿿]/);
   });
   it('перенос строк не длиннее ширины и с обрезкой', () => {
