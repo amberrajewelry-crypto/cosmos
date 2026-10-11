@@ -8,7 +8,6 @@ import { STEMS, BRANCHES } from './core';
 export const WP = { w: 1179, h: 2556 };
 const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const WDF = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
-const ACC: Record<number, string> = { 1: '#d6604f', 2: '#e2964f', 3: '#dcc878', 4: '#8cc882', 5: '#6ec8aa' };
 const HEAD: Record<DayInfo['type'], string> = { peak: 'День силы', 'peak-hit': 'Сила с изломом', calm: 'Ровное течение', heavy: 'Время копить' };
 /** Дело дня одним словом и символом — по богу дня (十神). */
 const ACT_W: Record<string, string> = { SS: 'Творить', SG: 'Говорить', PC: 'Деньги', ZC: 'Счёт', QS: 'Вызов', ZG: 'Статус', PY: 'Тишина', ZY: 'Учёба', BJ: 'Команда', JC: 'Беречь', FAV: 'Свои' };
@@ -191,7 +190,7 @@ const ICON: Record<string, string> = {
 };
 
 export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: number, img?: WpImages): string {
-  const { w, h } = WP, CX = w / 2, acc = ACC[d.score] ?? ACC[3];
+  const { w, h } = WP, CX = w / 2;
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
   const OY = 1250, OK = 0.76; // центр и масштаб орбиты — круг главный герой
@@ -204,8 +203,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const mine = (d.fav as number[]).includes(st.el) ? 'питает вас' : (d.avoid as number[]).includes(st.el) ? 'давит на вас' : 'идёт мимо вас';
   text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 62;
   for (let i = 0; i < 5; i++) { const x = CX - 128 + i * 64, on = i < d.score;
-    if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
-    t.push(diamond(x, y - 14, 21, on ? acc : 'none', on ? '' : 'stroke="#5a5470" stroke-width="2.5"')); }
+    if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="24" fill="${gold}" opacity=".3" filter="url(#blur)"/>`);
+    t.push(diamond(x, y - 14, 19, on ? 'url(#goldv)' : 'none', on ? '' : `stroke="${gold}" stroke-opacity=".35" stroke-width="2"`)); }
 
   // амулеты дня: символ + одно слово
   const prep = prepOnly(d), hh = bestHours(a, d, shift), tl = talisman(a, st.el, br.el, prep);
@@ -218,13 +217,13 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   ];
   if (hh.length) am.push({ ic: 'hrs', word: hh[0].replace(/:\d\d/g, '').replace(/\s/g, ''), cap: 'часы удачи', c: gold });
   am.push({ ic: '', word: DIR_W[tl.el], cap: 'сторона', c: gold, dir: DIR_A[tl.el], coin: false });
-  if (risk) am.push({ ic: 'risk', word: riskWord(risk), cap: 'осторожно', c: '#f0907a' });
+  if (risk) am.push({ ic: 'risk', word: riskWord(risk), cap: 'осторожно', c: '#e3a08e' });
   const AY = 2068, gap = am.length > 4 ? 212 : am.length > 3 ? 252 : 290;
   am.forEach((m, i) => { const x = CX + (i - (am.length - 1) / 2) * gap, r = am.length > 4 ? 56 : 64;
-    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r + 26}" fill="${m.sw ? m.sw[0] : m.c}" opacity=".28" filter="url(#blur)"/>`);
+    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
     if (m.stone) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image href="${m.stone}" x="${f1(x - r + 4)}" y="${AY - r + 4}" width="${2 * r - 8}" height="${2 * r - 8}"/>`);
-      if (m.coin) t.push(`<g transform="translate(${f1(x + r * .72)} ${f1(AY - r * .72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
+      if (false) t.push(`<g transform="translate(${f1(x + r * .72)} ${f1(AY - r * .72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
     } else if (m.dir !== undefined) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/>`);
       for (let q = 0; q < 8; q++) { const [x1, y1] = pt(x, AY, r - 6, q * 45), [x2, y2] = pt(x, AY, r - (q % 2 ? 12 : 18), q * 45);
@@ -246,13 +245,13 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
   const WK = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'], strip = days.slice(k, k + 7), cw = 88, sx = CX - (strip.length * cw) / 2, sy = 2338;
-  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
-  strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, c2 = ACC[x.score] ?? ACC[3], now = i === 0;
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".35" stroke="${gold}" stroke-opacity=".12" stroke-width="1.2"/>`);
+  strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, now = i === 0;
     if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="144" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : '#8f88ad'}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? '#fff3cf' : '#e6e1f2'}">${dd}</text>`);
-    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
-    t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
+    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${gold}" opacity="${x.score === 5 ? .5 : .3}" filter="url(#blur)"/>`);
+    t.push(diamond(cx, sy + 86, 6 + x.score * 2, x.score >= 4 ? 'url(#goldv)' : 'none', x.score >= 4 ? '' : `stroke="${gold}" stroke-opacity="${x.score === 3 ? .6 : .3}" stroke-width="2"`));
   });
 
   // звёзды

@@ -3095,7 +3095,6 @@ function decodeSet(s) {
 var WP = { w: 1179, h: 2556 };
 var MON = ["\u044F\u043D\u0432\u0430\u0440\u044F", "\u0444\u0435\u0432\u0440\u0430\u043B\u044F", "\u043C\u0430\u0440\u0442\u0430", "\u0430\u043F\u0440\u0435\u043B\u044F", "\u043C\u0430\u044F", "\u0438\u044E\u043D\u044F", "\u0438\u044E\u043B\u044F", "\u0430\u0432\u0433\u0443\u0441\u0442\u0430", "\u0441\u0435\u043D\u0442\u044F\u0431\u0440\u044F", "\u043E\u043A\u0442\u044F\u0431\u0440\u044F", "\u043D\u043E\u044F\u0431\u0440\u044F", "\u0434\u0435\u043A\u0430\u0431\u0440\u044F"];
 var WDF = ["\u0432\u043E\u0441\u043A\u0440\u0435\u0441\u0435\u043D\u044C\u0435", "\u043F\u043E\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u0438\u043A", "\u0432\u0442\u043E\u0440\u043D\u0438\u043A", "\u0441\u0440\u0435\u0434\u0430", "\u0447\u0435\u0442\u0432\u0435\u0440\u0433", "\u043F\u044F\u0442\u043D\u0438\u0446\u0430", "\u0441\u0443\u0431\u0431\u043E\u0442\u0430"];
-var ACC2 = { 1: "#d6604f", 2: "#e2964f", 3: "#dcc878", 4: "#8cc882", 5: "#6ec8aa" };
 var HEAD = { peak: "\u0414\u0435\u043D\u044C \u0441\u0438\u043B\u044B", "peak-hit": "\u0421\u0438\u043B\u0430 \u0441 \u0438\u0437\u043B\u043E\u043C\u043E\u043C", calm: "\u0420\u043E\u0432\u043D\u043E\u0435 \u0442\u0435\u0447\u0435\u043D\u0438\u0435", heavy: "\u0412\u0440\u0435\u043C\u044F \u043A\u043E\u043F\u0438\u0442\u044C" };
 var ACT_W = { SS: "\u0422\u0432\u043E\u0440\u0438\u0442\u044C", SG: "\u0413\u043E\u0432\u043E\u0440\u0438\u0442\u044C", PC: "\u0414\u0435\u043D\u044C\u0433\u0438", ZC: "\u0421\u0447\u0451\u0442", QS: "\u0412\u044B\u0437\u043E\u0432", ZG: "\u0421\u0442\u0430\u0442\u0443\u0441", PY: "\u0422\u0438\u0448\u0438\u043D\u0430", ZY: "\u0423\u0447\u0451\u0431\u0430", BJ: "\u041A\u043E\u043C\u0430\u043D\u0434\u0430", JC: "\u0411\u0435\u0440\u0435\u0447\u044C", FAV: "\u0421\u0432\u043E\u0438" };
 var ACT_IC = { SS: "pen", SG: "talk", PC: "bag", ZC: "bag", QS: "peak", ZG: "crown", PY: "eye", ZY: "book", BJ: "ppl", JC: "shield", FAV: "ppl" };
@@ -3249,7 +3248,7 @@ var ICON = {
   ppl: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M16 14.2c2.6.1 4.4 1.6 5 4.3"/>'
 };
 function wallpaperSvg(a, d, days, shift, img) {
-  const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
+  const { w, h } = WP, CX = w / 2;
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
   const OY = 1250, OK = 0.76;
@@ -3264,8 +3263,8 @@ function wallpaperSvg(a, d, days, shift, img) {
   y += 62;
   for (let i = 0; i < 5; i++) {
     const x = CX - 128 + i * 64, on = i < d.score;
-    if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
-    t.push(diamond(x, y - 14, 21, on ? acc : "none", on ? "" : 'stroke="#5a5470" stroke-width="2.5"'));
+    if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="24" fill="${gold}" opacity=".3" filter="url(#blur)"/>`);
+    t.push(diamond(x, y - 14, 19, on ? "url(#goldv)" : "none", on ? "" : `stroke="${gold}" stroke-opacity=".35" stroke-width="2"`));
   }
   const prep = prepOnly(d), hh = bestHours(a, d, shift), tl = talisman(a, st.el, br.el, prep);
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0];
@@ -3276,14 +3275,14 @@ function wallpaperSvg(a, d, days, shift, img) {
   ];
   if (hh.length) am.push({ ic: "hrs", word: hh[0].replace(/:\d\d/g, "").replace(/\s/g, ""), cap: "\u0447\u0430\u0441\u044B \u0443\u0434\u0430\u0447\u0438", c: gold });
   am.push({ ic: "", word: DIR_W[tl.el], cap: "\u0441\u0442\u043E\u0440\u043E\u043D\u0430", c: gold, dir: DIR_A[tl.el], coin: false });
-  if (risk) am.push({ ic: "risk", word: riskWord(risk), cap: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", c: "#f0907a" });
+  if (risk) am.push({ ic: "risk", word: riskWord(risk), cap: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", c: "#e3a08e" });
   const AY = 2068, gap = am.length > 4 ? 212 : am.length > 3 ? 252 : 290;
   am.forEach((m, i) => {
     const x = CX + (i - (am.length - 1) / 2) * gap, r2 = am.length > 4 ? 56 : 64;
-    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2 + 26}" fill="${m.sw ? m.sw[0] : m.c}" opacity=".28" filter="url(#blur)"/>`);
+    t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2 + 22}" fill="${gold}" opacity=".16" filter="url(#blur)"/>`);
     if (m.stone) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="#05040c" stroke="#f3dc9c" stroke-opacity=".8" stroke-width="2.5"/><image href="${m.stone}" x="${f1(x - r2 + 4)}" y="${AY - r2 + 4}" width="${2 * r2 - 8}" height="${2 * r2 - 8}"/>`);
-      if (m.coin) t.push(`<g transform="translate(${f1(x + r2 * 0.72)} ${f1(AY - r2 * 0.72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
+      if (false) t.push(`<g transform="translate(${f1(x + r2 * 0.72)} ${f1(AY - r2 * 0.72)})"><circle r="19" fill="url(#goldv)" stroke="#fff3cf" stroke-width="1.5"/><rect x="-6" y="-6" width="12" height="12" fill="#1a1230"/></g>`);
     } else if (m.dir !== void 0) {
       t.push(`<circle cx="${f1(x)}" cy="${AY}" r="${r2}" fill="url(#med)" stroke="${m.c}" stroke-opacity=".85" stroke-width="2.5"/>`);
       for (let q = 0; q < 8; q++) {
@@ -3306,14 +3305,14 @@ function wallpaperSvg(a, d, days, shift, img) {
   });
   const k = days.findIndex((x) => x.iso === d.iso);
   const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2338;
-  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
+  t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="172" rx="34" fill="#0c0a22" fill-opacity=".35" stroke="${gold}" stroke-opacity=".12" stroke-width="1.2"/>`);
   strip.forEach((x, i) => {
-    const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = ACC2[x.score] ?? ACC2[3], now = i === 0;
+    const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, now = i === 0;
     if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="144" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : "#8f88ad"}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
-    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${c2}" opacity=".45" filter="url(#blur)"/>`);
-    t.push(diamond(cx, sy + 86, x.score >= 4 ? 14 : 10, c2));
+    if (x.score >= 4) t.push(`<circle cx="${cx}" cy="${sy + 86}" r="16" fill="${gold}" opacity="${x.score === 5 ? 0.5 : 0.3}" filter="url(#blur)"/>`);
+    t.push(diamond(cx, sy + 86, 6 + x.score * 2, x.score >= 4 ? "url(#goldv)" : "none", x.score >= 4 ? "" : `stroke="${gold}" stroke-opacity="${x.score === 3 ? 0.6 : 0.3}" stroke-width="2"`));
   });
   const r = rng(d.iso), stars = [];
   for (let i = 0; i < 260; i++) {
