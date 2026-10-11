@@ -1,7 +1,7 @@
 // Заставка телефона «карта дня» (SVG → PNG в api/zastavka). Чистая функция: день + часы → SVG.
 // Зоны экрана блокировки iPhone: верх до ~760 px — часы и виджеты (только небо), низ от ~2250 — фонарик/камера
 // (между ними полоса недели). Орбита в середине, текст коротко: оценка, что делать, часы, одно предупреждение.
-import { bestHours, JIANCHU, jcHint, prepOnly, type DayInfo } from './days';
+import { bestHours, JC_FAV, prepOnly, type DayInfo } from './days';
 import type { Analysis } from './calc';
 import { STEMS, BRANCHES } from './core';
 
@@ -9,7 +9,20 @@ export const WP = { w: 1179, h: 2556 };
 const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const WDF = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const ACC: Record<number, string> = { 1: '#d6604f', 2: '#e2964f', 3: '#dcc878', 4: '#8cc882', 5: '#6ec8aa' };
-const HEAD: Record<DayInfo['type'], string> = { peak: 'Сильный день', 'peak-hit': 'Сильный, но с риском', calm: 'Ровный день', heavy: 'День нагрузки' };
+const HEAD: Record<DayInfo['type'], string> = { peak: 'День силы', 'peak-hit': 'Сила с изломом', calm: 'Ровное течение', heavy: 'Время копить' };
+/** Голос заставки: коротко, одной строкой (≈40 знаков), глагол первым. Сайт и пуш — на полных текстах days.ts. */
+const WP_ACT: Record<string, string> = {
+  SS: 'Творить: продукт, тексты, работа руками', SG: 'Говорить и продавать: питчи, реклама',
+  PC: 'Ловить деньги: клиенты, сделки, покупки', ZC: 'Считать деньги: счета, долги, бюджет',
+  QS: 'Брать трудное, но без лобовых стычек', ZG: 'Документы, статус, официальные дела',
+  PY: 'Искать нестандартное, побыть одному', ZY: 'Учиться, восстанавливаться, просить помощи',
+  BJ: 'Работать с командой, держать свою линию', JC: 'Деньги беречь: рядом соперник и азарт',
+};
+const WP_FAV = 'Опереться на своих: команда и партнёры';
+const AN_GEN = ['Крысы', 'Быка', 'Тигра', 'Кролика', 'Дракона', 'Змеи', 'Лошади', 'Козы', 'Обезьяны', 'Петуха', 'Собаки', 'Свиньи'];
+/** Риск — в одну строку: «в сфере «X»» → «: X», хвост после тире и лишние советы срезаны. */
+export const wpRisk = (r: string) => r.startsWith('день идёт против месяца') ? 'Против месяца: крупно не тратить'
+  : cap(r.split(' — ')[0].replace(/ в сфере «(.+?)»/, ': $1').replace(/, без резких шагов$/, ''));
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const cap = (s: string) => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -96,7 +109,7 @@ const EL_RU = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Во
 /** Орбита как в шапке сайта, но собранная в композицию: медальоны под животными, лучи от центра, инь-ян,
  *  у знака и стихии дня — золотой ореол с лучами. */
 const BR_EL = [4, 2, 0, 0, 2, 1, 1, 2, 3, 3, 2, 4];
-function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number, img: WpImages): string {
+function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number, img: WpImages, wealth = -1): string {
   const o: string[] = [], gold = '#d9b968';
   // мягкий диск-подложка и лучи от центра к каждому знаку
   o.push(`<circle cx="${cx}" cy="${cy}" r="${R + 96}" fill="url(#disc)"/>`);
@@ -135,8 +148,24 @@ function orbit(cx: number, cy: number, R: number, stemEl: number, branch: number
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="url(#shine)"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? .95 : .55}" stroke-width="${on ? 3.5 : 2}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2 + 10}" fill="none" stroke="${c}" stroke-opacity="${on ? .45 : .18}" stroke-width="1.2" stroke-dasharray="${on ? '2 6' : '1 7'}"/>`);
+    if (e === wealth) { const bx = x + sz * 0.36, by = y - sz * 0.36;
+      o.push(`<circle cx="${f1(bx)}" cy="${f1(by)}" r="40" fill="#e8c97e" opacity=".45" filter="url(#blur)"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="27" fill="url(#goldv)" stroke="#fff3cf" stroke-width="2"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="21" fill="none" stroke="#7a5420" stroke-opacity=".6" stroke-width="1.5"/><rect x="${f1(bx - 8)}" y="${f1(by - 8)}" width="16" height="16" fill="#1a1230" stroke="#7a5420" stroke-width="1.5"/>`); }
     if (on) o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 52)}" text-anchor="middle" font-family="Manrope" font-size="44" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`); }
   return o.join('');
+}
+
+/** Оберег дня (五行大义: 木青 火赤 土黄 金白 水黑). Стихия дня полезна → её цвет (усилить);
+ *  вредна → полезная стихия, что её сдерживает или забирает (порядок полезных), иначе первая полезная.
+ *  Люди — по роли стихии оберега к господину дня (十神) и знакам года этой стихии. */
+const EL_COL = ['Зелёный, бирюза', 'Красный, бордо', 'Жёлтый, охра, беж', 'Белый, серебро', 'Чёрный, тёмно-синий'];
+const EL_SW = [['#2f8f5b', '#2fb3a6'], ['#c8322b', '#7a1f2b'], ['#e0b84a', '#b07a3a', '#d9c3a0'], ['#f2f2ee', '#b9c0c8'], ['#141420', '#1f3566']];
+const EL_AN = ['Тигр, Кролик', 'Змея, Лошадь', 'Бык, Дракон, Коза, Собака', 'Обезьяна, Петух', 'Крыса, Свинья'];
+const ROLE = ['Партнёры', 'Аудитория', 'Покупатели', 'Заказчики, власть', 'Наставники'];
+export function talisman(a: Analysis, dayEl: number): { el: number; money: boolean; colors: string; people: string; sw: string[] } {
+  const fav = a.consensus as number[];
+  const el = fav.includes(dayEl) ? dayEl : fav.find((f) => (f + 2) % 5 === dayEl || (dayEl + 1) % 5 === f) ?? fav[0] ?? dayEl;
+  const rel = ((el - a.dmEl) % 5 + 5) % 5;
+  return { el, money: rel === 2, colors: EL_COL[el], people: `${ROLE[rel]} · ${EL_AN[el]}`, sw: EL_SW[el] };
 }
 
 /** Значки строк карточки (24×24, линия). */
@@ -145,6 +174,8 @@ const ICON: Record<string, string> = {
   sup: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
   hrs: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2.5"/>',
   risk: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6"/>',
+  ppl: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M16 14.2c2.6.1 4.4 1.6 5 4.3"/>',
 };
 
 export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: number, img?: WpImages): string {
@@ -158,8 +189,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 102;
   text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 62;
-  const mine = (d.fav as number[]).includes(st.el) ? ' — ваша стихия' : (d.avoid as number[]).includes(st.el) ? ' — не ваша стихия' : '';
-  text(`${br.animal} · ${EL_RU[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
+  const mine = (d.fav as number[]).includes(st.el) ? 'питает вас' : (d.avoid as number[]).includes(st.el) ? 'давит на вас' : 'идёт мимо вас';
+  text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
   // оценка: пять ромбов и подпись в одну строку
   for (let i = 0; i < 5; i++) { const x = CX - 226 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
@@ -167,31 +198,31 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   t.push(`<line x1="${CX + 100}" y1="${y - 36}" x2="${CX + 100}" y2="${y + 8}" stroke="${gold}" stroke-opacity=".3" stroke-width="1.5"/>`);
   t.push(`<text x="${CX + 130}" y="${y}" font-family="Manrope" font-size="38" font-weight="800" fill="${acc}" letter-spacing="2">${d.score} из 5</text>`);
   const hh = bestHours(a, d, shift);
-  if (hh.length) { y += 60; const s = `Лучшие часы: ${hh[0]}`, tw = s.length * 34 * 0.56, x0 = CX - (tw + 50) / 2;
-    t.push(`<g transform="translate(${f1(x0)} ${y - 27}) scale(1.4)" fill="none" stroke="${gold}" stroke-width="1.6" stroke-linecap="round">${ICON.hrs}</g>`);
-    t.push(`<text x="${f1(x0 + 50)}" y="${y}" font-family="Manrope" font-size="34" font-weight="600" fill="#e9dfc4" letter-spacing="1">${esc(s)}</text>`); }
-  y += 48;
+  y += 44;
 
   // стеклянная карточка: строки со значками, тонкие разделители
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
-  const rows: { ic: string; head: string; body: string; fill: string; max: number }[] = [];
-  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: 'act', head: prepOnly(d) ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
-  const jh = jcHint(d);
-  if (jh) rows.push({ ic: 'sup', head: `День ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: '#e6dcc0', max: 1 });
-  if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: cap(risk.split(' — ')[0]), fill: '#f3c9bd', max: 1 });
+  const rows: { ic: string; head: string; body: string; fill: string; max: number; sw?: string[] }[] = [];
+  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
+  rows.push({ ic: 'act', head: (prepOnly(d) ? 'Готовить, не решать' : 'Делать') + (hh.length ? ` · ${hh[0].replace(/\s/g, '')}` : ''), body: act, fill: '#f1ece0', max: 1 });
+  const tl = talisman(a, st.el);
+  rows.push({ ic: 'coin', head: tl.money ? 'Цвет денег' : 'Цвет-оберег', body: tl.colors, fill: '#f1e3b8', max: 1, sw: tl.sw });
+  rows.push({ ic: 'ppl', head: 'Люди дня', body: tl.people, fill: '#e6dcc0', max: 1 });
+  if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: wpRisk(risk), fill: '#f3c9bd', max: 1 });
   const body: string[] = []; y += 50;
   rows.forEach((rw, i) => {
-    const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2236) return;
+    const ls = fit(rw.body, 34, rw.sw ? TWc - 130 : TWc, rw.max), need = 50 + ls.length * 42;
+    if (y + need > 2250) return;
     if (i) { body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`); y += 12; }
     const ic = rw.ic === 'risk' ? '#f0907a' : gold;
     body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
     body.push(`<g transform="translate(${IX - 15} ${y - 11}) scale(1.25)" fill="none" stroke="${ic}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[rw.ic]}</g>`);
     body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
-    y += 56;
-    for (const ln of ls) { body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="34" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`); y += 44; }
-    y += 26;
+    if (rw.sw) rw.sw.forEach((c, j) => { const sx2 = R2 - 150 + j * 40, sy2 = y + 34;
+      body.push(`<circle cx="${sx2}" cy="${sy2}" r="16" fill="${c}" stroke="#f3dc9c" stroke-opacity=".7" stroke-width="2"/><circle cx="${sx2 - 5}" cy="${sy2 - 5}" r="5" fill="#fff" opacity=".25"/>`); });
+    y += 50;
+    for (const ln of ls) { body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="34" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`); y += 42; }
+    y += 22;
   });
   y += 4;
   t.push(`<rect x="${L}" y="${top0}" width="${R2 - L}" height="${y - top0}" rx="44" fill="url(#glass)" stroke="url(#glassb)" stroke-width="2"/>`);
@@ -248,7 +279,7 @@ ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h
 <ellipse cx="230" cy="1700" rx="520" ry="620" fill="url(#neb2)"/>
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
 ${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}
-<g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
+<g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img, (a.dmEl + 2) % 5) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
 ${t.join('\n')}
 </svg>`;
 }
