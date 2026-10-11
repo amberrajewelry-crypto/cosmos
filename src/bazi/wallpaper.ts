@@ -1,7 +1,7 @@
 // Заставка телефона «карта дня» (SVG → PNG в api/zastavka). Чистая функция: день + часы → SVG.
 // Зоны экрана блокировки iPhone: верх до ~760 px — часы и виджеты (только небо), низ от ~2250 — фонарик/камера
 // (между ними полоса недели). Орбита в середине, текст коротко: оценка, что делать, часы, одно предупреждение.
-import { bestHours, JIANCHU, jcHint, prepOnly, type DayInfo } from './days';
+import { bestHours, JIANCHU, JC_FAV, jcHint, prepOnly, type DayInfo } from './days';
 import type { Analysis } from './calc';
 import { STEMS, BRANCHES } from './core';
 
@@ -9,7 +9,20 @@ export const WP = { w: 1179, h: 2556 };
 const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const WDF = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const ACC: Record<number, string> = { 1: '#d6604f', 2: '#e2964f', 3: '#dcc878', 4: '#8cc882', 5: '#6ec8aa' };
-const HEAD: Record<DayInfo['type'], string> = { peak: 'Сильный день', 'peak-hit': 'Сильный, но с риском', calm: 'Ровный день', heavy: 'День нагрузки' };
+const HEAD: Record<DayInfo['type'], string> = { peak: 'День силы', 'peak-hit': 'Сила с изломом', calm: 'Ровное течение', heavy: 'Время копить' };
+/** Голос заставки: коротко, одной строкой (≈40 знаков), глагол первым. Сайт и пуш — на полных текстах days.ts. */
+const WP_ACT: Record<string, string> = {
+  SS: 'Творить: продукт, тексты, работа руками', SG: 'Говорить и продавать: питчи, реклама',
+  PC: 'Ловить деньги: клиенты, сделки, покупки', ZC: 'Считать деньги: счета, долги, бюджет',
+  QS: 'Брать трудное, но без лобовых стычек', ZG: 'Документы, статус, официальные дела',
+  PY: 'Искать нестандартное, побыть одному', ZY: 'Учиться, восстанавливаться, просить помощи',
+  BJ: 'Работать с командой, держать свою линию', JC: 'Деньги беречь: рядом соперник и азарт',
+};
+const WP_FAV = 'Опереться на своих: команда и партнёры';
+const AN_GEN = ['Крысы', 'Быка', 'Тигра', 'Кролика', 'Дракона', 'Змеи', 'Лошади', 'Козы', 'Обезьяны', 'Петуха', 'Собаки', 'Свиньи'];
+/** Риск — в одну строку: «в сфере «X»» → «: X», хвост после тире и лишние советы срезаны. */
+export const wpRisk = (r: string) => r.startsWith('день идёт против месяца') ? 'Против месяца: крупно не тратить'
+  : cap(r.split(' — ')[0].replace(/ в сфере «(.+?)»/, ': $1').replace(/, без резких шагов$/, ''));
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const cap = (s: string) => s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -158,8 +171,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 102;
   text(HEAD[d.type], 104, 600, 'url(#goldt)', y, '', 'Cormorant'); y += 62;
-  const mine = (d.fav as number[]).includes(st.el) ? ' — ваша стихия' : (d.avoid as number[]).includes(st.el) ? ' — не ваша стихия' : '';
-  text(`${br.animal} · ${EL_RU[st.el]}${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
+  const mine = (d.fav as number[]).includes(st.el) ? 'питает вас' : (d.avoid as number[]).includes(st.el) ? 'давит на вас' : 'идёт мимо вас';
+  text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 66;
   // оценка: пять ромбов и подпись в одну строку
   for (let i = 0; i < 5; i++) { const x = CX - 226 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="26" fill="${acc}" opacity=".4" filter="url(#blur)"/>`);
@@ -175,11 +188,11 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   // стеклянная карточка: строки со значками, тонкие разделители
   const L = 92, R2 = w - 92, IX = L + 66, TX = L + 122, TWc = R2 - TX - 44, top0 = y;
   const rows: { ic: string; head: string; body: string; fill: string; max: number }[] = [];
-  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = risk ? d.act.split(/,? но /)[0] : d.act;
-  rows.push({ ic: 'act', head: prepOnly(d) ? 'Готовить, не решать' : 'Делать', body: cap(act), fill: '#f1ece0', max: 2 });
+  const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes('против месяца')) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
+  rows.push({ ic: 'act', head: prepOnly(d) ? 'Готовить, не решать' : 'Делать', body: act, fill: '#f1ece0', max: 2 });
   const jh = jcHint(d);
   if (jh) rows.push({ ic: 'sup', head: `День ${JIANCHU[d.jc].ru}`, body: cap(jh), fill: '#e6dcc0', max: 1 });
-  if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: cap(risk.split(' — ')[0]), fill: '#f3c9bd', max: 1 });
+  if (risk) rows.push({ ic: 'risk', head: 'Осторожно', body: wpRisk(risk), fill: '#f3c9bd', max: 1 });
   const body: string[] = []; y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
