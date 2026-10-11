@@ -597,6 +597,9 @@ function wireDays(c: Chart, a: Analysis) {
   if (wc) wc.onclick = async () => { try { await navigator.clipboard.writeText(wurl); wc.textContent = 'Ссылка скопирована'; } catch { prompt('Ссылка на заставку', wurl); } };
   const wi = document.getElementById('wpinstall');
   if (wi) wi.onclick = async () => { try { await navigator.clipboard.writeText(wurl); } catch { prompt('Скопируйте ссылку на заставку', wurl); } location.href = WP_SHORTCUT; };
+  const live = () => void import('./wp-live').then((m) => m.openLive(c, a));
+  const wl = document.getElementById('wplive'); if (wl) wl.onclick = live;
+  if (new URLSearchParams(location.search).has('live')) live();
   void wireJournal(c, a, days[0]);
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {

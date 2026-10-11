@@ -81,7 +81,7 @@ export function secDays(c: Chart, a: Analysis) {
   const fav = a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ');
   return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
     <p>Сильный день (4–5 из 5) — когда приходит полезная вам стихия (${fav}) и ничто её не перебивает: для главных шагов — переговоров, запусков, оплат, публикаций. Дни нагрузки (1–2 из 5) — когда ${bad ? `приходят ${bad} или ` : ''}день бьёт по вашей карте. Нажмите на день — подскажем, что на него ставить.</p></div>
-    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div></div>
+    <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div><div class="acts" style="margin-top:14px"><button class="primary" id="wplive" type="button">Живая карта дня</button></div></div>
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
       <p class="dhint">Как прошёл день — по ощущению, не глядя на прогноз? Ответы показывают, работает ли расчёт лично для вас. Дата рождения не отправляется.</p>
       <div id="jrows"></div><p class="dhint" id="jmy"></p><p class="dhint" id="jall" hidden></p></div>
