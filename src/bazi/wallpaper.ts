@@ -152,8 +152,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const { w, h } = WP, CX = w / 2, acc = ACC[d.score] ?? ACC[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = '#e2c47c';
   const t: string[] = [];
-  const OY = 990, OK = 0.64; // центр и масштаб орбиты
-  let y = 1352;
+  const OY = 1085, OK = 0.56; // центр и масштаб орбиты
+  let y = 1418;
   const text = (s: string, size: number, weight: number, fill: string, yy = y, extra = '', fam = 'Manrope') =>
     t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
 
@@ -184,7 +184,7 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
   const body: string[] = []; y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2200) return;
+    if (y + need > 2236) return;
     if (i) { body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`); y += 12; }
     const ic = rw.ic === 'risk' ? '#f0907a' : gold;
     body.push(`<circle cx="${IX}" cy="${y + 4}" r="30" fill="${ic}" fill-opacity=".1" stroke="${ic}" stroke-opacity=".45" stroke-width="1.5"/>`);
@@ -203,12 +203,8 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   // полоса недели внизу: сегодня + 6 дней, между кнопками фонарика и камеры
   const WK = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'], strip = days.slice(k, k + 7), cw = 88, sx = CX - (strip.length * cw) / 2, sy = 2338;
-  const TC: Record<DayInfo['type'], string> = { peak: '#6fd99a', 'peak-hit': '#ecd08a', calm: '#9a93b8', heavy: '#6f9cf0' };
-  const best = strip.slice(1).filter((x) => x.score >= 4 && x.score === Math.max(...strip.slice(1).map((z) => z.score)));
-  const cap2 = best.length ? `${best.length > 1 ? "Лучшие дни недели" : "Лучший день недели"}: ${best.slice(0, 3).map((x) => `${WK[new Date(x.iso + 'T12:00Z').getUTCDay()]} ${+x.iso.slice(8)}`).join(', ')}` : 'Сильных дней на неделе нет — ровный ход';
-  t.push(`<text x="${CX}" y="${sy - 84}" text-anchor="middle" font-family="Manrope" font-size="27" font-weight="600" fill="#cbbf9f" letter-spacing="1">${esc(cap2)}</text>`);
   t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
-  strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, c2 = TC[x.type], now = i === 0;
+  strip.forEach((x, i) => { const [yy, mm, dd] = x.iso.split('-').map(Number), cx = sx + i * cw + cw / 2, c2 = ACC[x.score] ?? ACC[3], now = i === 0;
     if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : '#8f88ad'}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? '#fff3cf' : '#e6e1f2'}">${dd}</text>`);
@@ -254,8 +250,6 @@ ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
 ${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join('')}
 <g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
-<rect x="36" y="36" width="${w - 72}" height="${h - 72}" rx="64" fill="none" stroke="${gold}" stroke-opacity=".18" stroke-width="2"/>
-<rect x="52" y="52" width="${w - 104}" height="${h - 104}" rx="52" fill="none" stroke="${gold}" stroke-opacity=".08" stroke-width="1.5"/>
 ${t.join('\n')}
 </svg>`;
 }

@@ -2854,7 +2854,7 @@ var JIANCHU = [
   // 破: 求医疗病 破屋坏垣
   { ru: "\u043E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E\u0441\u0442\u0438", act: "\u0443\u043A\u0440\u0435\u043F\u043B\u044F\u0442\u044C \u0434\u043E\u043C \u0438 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C", no: "\u0431\u0435\u0437 \u0440\u0438\u0441\u043A\u0430" },
   // 危: 安抚边境 训兵 安牀
-  { go: true, ru: "\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F", act: "\u043F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C, \u043E\u0442\u043A\u0440\u044B\u0442\u044C, \u043F\u0435\u0440\u0435\u0435\u0445\u0430\u0442\u044C, \u0443\u0447\u0438\u0442\u044C\u0441\u044F" },
+  { go: true, ru: "\u0441\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F", act: "\u043F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C, \u043E\u0442\u043A\u0440\u044B\u0442\u044C, \u043F\u0435\u0440\u0435\u0435\u0445\u0430\u0442\u044C, \u0443\u0447\u0438\u0442\u044C\u0441\u044F" },
   // 成: 入学 般移 开市 结婚姻; 天医
   { go: true, ru: "\u0441\u0431\u043E\u0440\u0430", act: "\u0441\u043E\u0431\u0440\u0430\u0442\u044C \u0434\u0435\u043D\u044C\u0433\u0438 \u0438 \u0434\u043E\u043B\u0433\u0438, \u043D\u0430\u043D\u044F\u0442\u044C \u043B\u044E\u0434\u0435\u0439" },
   // 收: 进人口 纳财 捕捉 纳畜
@@ -3276,8 +3276,8 @@ function wallpaperSvg(a, d, days, shift, img) {
   const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
-  const OY = 990, OK = 0.64;
-  let y = 1352;
+  const OY = 1085, OK = 0.56;
+  let y = 1418;
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, "#cbbf9f", y, 'letter-spacing="8"');
   y += 102;
@@ -3312,7 +3312,7 @@ function wallpaperSvg(a, d, days, shift, img) {
   y += 50;
   rows.forEach((rw, i) => {
     const ls = fit(rw.body, 34, TWc, rw.max), need = 54 + ls.length * 44;
-    if (y + need > 2200) return;
+    if (y + need > 2236) return;
     if (i) {
       body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
       y += 12;
@@ -3336,13 +3336,9 @@ function wallpaperSvg(a, d, days, shift, img) {
   t.push(...body);
   const k = days.findIndex((x) => x.iso === d.iso);
   const WK = ["\u0432\u0441", "\u043F\u043D", "\u0432\u0442", "\u0441\u0440", "\u0447\u0442", "\u043F\u0442", "\u0441\u0431"], strip = days.slice(k, k + 7), cw = 88, sx = CX - strip.length * cw / 2, sy = 2338;
-  const TC = { peak: "#6fd99a", "peak-hit": "#ecd08a", calm: "#9a93b8", heavy: "#6f9cf0" };
-  const best = strip.slice(1).filter((x) => x.score >= 4 && x.score === Math.max(...strip.slice(1).map((z) => z.score)));
-  const cap2 = best.length ? `${best.length > 1 ? "\u041B\u0443\u0447\u0448\u0438\u0435 \u0434\u043D\u0438 \u043D\u0435\u0434\u0435\u043B\u0438" : "\u041B\u0443\u0447\u0448\u0438\u0439 \u0434\u0435\u043D\u044C \u043D\u0435\u0434\u0435\u043B\u0438"}: ${best.slice(0, 3).map((x) => `${WK[(/* @__PURE__ */ new Date(x.iso + "T12:00Z")).getUTCDay()]} ${+x.iso.slice(8)}`).join(", ")}` : "\u0421\u0438\u043B\u044C\u043D\u044B\u0445 \u0434\u043D\u0435\u0439 \u043D\u0430 \u043D\u0435\u0434\u0435\u043B\u0435 \u043D\u0435\u0442 \u2014 \u0440\u043E\u0432\u043D\u044B\u0439 \u0445\u043E\u0434";
-  t.push(`<text x="${CX}" y="${sy - 84}" text-anchor="middle" font-family="Manrope" font-size="27" font-weight="600" fill="#cbbf9f" letter-spacing="1">${esc(cap2)}</text>`);
   t.push(`<rect x="${sx - 14}" y="${sy - 58}" width="${strip.length * cw + 28}" height="196" rx="34" fill="#0c0a22" fill-opacity=".55" stroke="${gold}" stroke-opacity=".22" stroke-width="1.5"/>`);
   strip.forEach((x, i) => {
-    const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = TC[x.type], now = i === 0;
+    const [yy, mm, dd] = x.iso.split("-").map(Number), cx = sx + i * cw + cw / 2, c2 = ACC2[x.score] ?? ACC2[3], now = i === 0;
     if (now) t.push(`<rect x="${cx - 40}" y="${sy - 44}" width="80" height="168" rx="24" fill="${gold}" fill-opacity=".12" stroke="${gold}" stroke-opacity=".6" stroke-width="2"/>`);
     t.push(`<text x="${cx}" y="${sy - 6}" text-anchor="middle" font-family="Manrope" font-size="24" font-weight="600" fill="${now ? gold : "#8f88ad"}" letter-spacing="2">${WK[new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()].toUpperCase()}</text>`);
     t.push(`<text x="${cx}" y="${sy + 44}" text-anchor="middle" font-family="Manrope" font-size="40" font-weight="800" fill="${now ? "#fff3cf" : "#e6e1f2"}">${dd}</text>`);
@@ -3387,8 +3383,6 @@ ${img?.bg ? `<image href="${img.bg[st.el]}" x="0" y="0" width="${w}" height="${h
 <ellipse cx="1000" cy="1250" rx="420" ry="480" fill="url(#neb)" opacity=".6"/>`}
 ${(img?.bg ? stars.filter((_, i) => i % 3 === 0) : stars).join("")}
 <g transform="translate(${CX} ${OY}) scale(${OK}) translate(${-CX} -550)">${img ? orbit(CX, 550, 400, st.el, d.idx % 12, img) : mandala(CX, 550, 410, st.el, d.idx % 12, br.el)}</g>
-<rect x="36" y="36" width="${w - 72}" height="${h - 72}" rx="64" fill="none" stroke="${gold}" stroke-opacity=".18" stroke-width="2"/>
-<rect x="52" y="52" width="${w - 104}" height="${h - 104}" rx="52" fill="none" stroke="${gold}" stroke-opacity=".08" stroke-width="1.5"/>
 ${t.join("\n")}
 </svg>`;
 }
