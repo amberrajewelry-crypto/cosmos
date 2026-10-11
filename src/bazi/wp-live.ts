@@ -12,19 +12,20 @@ import st0 from './img-wp/st0.png'; import st1 from './img-wp/st1.png'; import s
 import bg0 from './img-wp/bg0.jpg'; import bg1 from './img-wp/bg1.jpg'; import bg2 from './img-wp/bg2.jpg'; import bg3 from './img-wp/bg3.jpg'; import bg4 from './img-wp/bg4.jpg';
 
 const IMG: WpImages = { an: [rat, ox, tiger, rabbit, dragon, snake, horse, goat, monkey, rooster, dog, pig], el: [el0, el1, el2, el3, el4], st: [st0, st1, st2, st3, st4], bg: [bg0, bg1, bg2, bg3, bg4] };
-const CSS = `.wpl{position:fixed;inset:0;z-index:9999;background:radial-gradient(120% 80% at 50% 30%,#1a1340,#05040c 70%);display:flex;flex-direction:column;align-items:center;overflow-y:auto;animation:wplIn .5s ease;padding:calc(10px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom))}
+const CSS = `.wpl{--cw:min(560px,max(300px,calc((100dvh - 250px) * .69)),100vw);position:fixed;inset:0;z-index:9999;background:radial-gradient(120% 80% at 50% 30%,#1a1340,#05040c 70%);display:flex;flex-direction:column;align-items:center;overflow-y:auto;animation:wplIn .5s ease;padding:calc(10px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom))}
 @keyframes wplIn{from{opacity:0}to{opacity:1}}
-.wpl .bar{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;min-height:46px}
+.wpl>*{flex-shrink:0}
+.wpl .bar{width:var(--cw);display:flex;justify-content:space-between;align-items:center;padding:0 14px;min-height:46px}
 .wpl .bar button{height:42px;border-radius:21px;border:1px solid rgba(226,196,124,.4);background:rgba(10,8,24,.6);color:#e2c47c;font:600 14px Manrope,sans-serif;cursor:pointer;padding:0 16px}
 .wpl .bar .x{width:42px;padding:0;font-size:20px}
-.wpl .stage{width:100%;max-width:min(560px,calc((100dvh - 230px) * .69));min-width:min(100%,300px);transition:opacity .3s ease;border-radius:28px;overflow:hidden}
+.wpl .stage{width:var(--cw);transition:opacity .3s ease;border-radius:28px;overflow:hidden}
 .wpl .stage.fade{opacity:0}
 .wpl .stage svg{width:100%;height:auto;display:block}
 .wpl .wp-am,.wpl .wp-head,.wpl .wp-day{cursor:pointer}
 .wpl .wp-am{animation:wpUp .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes wpUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 .wpl .wp-am.sel circle{stroke-width:4}
-.wpl .sh{width:calc(100% - 24px);max-width:536px;margin-top:12px;padding:18px 22px 20px;border-radius:22px;background:linear-gradient(#241b52cc,#0d0a24e6);border:1px solid rgba(226,196,124,.3);color:#efe6cf;font:15px/1.55 Manrope,system-ui,sans-serif;transition:opacity .25s}
+.wpl .sh{width:calc(var(--cw) - 24px);text-align:center;margin-top:12px;padding:18px 22px 20px;border-radius:22px;background:linear-gradient(#241b52cc,#0d0a24e6);border:1px solid rgba(226,196,124,.3);color:#efe6cf;font:15px/1.55 Manrope,system-ui,sans-serif;transition:opacity .25s}
 .wpl .sh b{display:block;font:500 26px/1.1 'Cormorant Garamond',serif;color:#e8c97e;margin-bottom:6px}
 .wpl .sh small{display:block;margin-top:10px;font-size:12px;color:rgba(203,191,159,.6)}
 .wpl .wp-ring{transform-box:view-box;transform-origin:${WP.w / 2}px 550px;animation:wpRing 90s linear infinite}
@@ -46,7 +47,7 @@ const load = (u: string) => { let p = loaded.get(u); if (!p) { const im = new Im
 const need = (svg: string) => Promise.all([...svg.matchAll(/href="([^"]+)"/g)].map((m) => load(m[1])));
 
 /** Кадр без пустого верха под часы экрана блокировки: от круга до недели. */
-const VB = '0 830 1179 1710';
+const VB = '0 813 1179 1700'; // поля сверху и снизу равны (круг 873 … неделя 2452)
 
 export function openLive(c: Chart, a: Analysis): void {
   if (!document.getElementById('wpl-css')) { const st = document.createElement('style'); st.id = 'wpl-css'; st.textContent = CSS; document.head.appendChild(st); }
