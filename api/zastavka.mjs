@@ -3260,7 +3260,8 @@ function wallpaperSvg(a, d, days, shift, img) {
   y += 98;
   text(HEAD[d.type], 108, 600, "url(#goldt)", y, 'class="wp-head"', "Cormorant");
   y += 58;
-  const mine = d.fav.includes(st.el) ? "\u043F\u0438\u0442\u0430\u0435\u0442 \u0432\u0430\u0441" : d.avoid.includes(st.el) ? "\u0434\u0430\u0432\u0438\u0442 \u043D\u0430 \u0432\u0430\u0441" : "\u0438\u0434\u0451\u0442 \u043C\u0438\u043C\u043E \u0432\u0430\u0441";
+  const F2 = d.fav, A = d.avoid, nf = [st.el, br.el].filter((e) => F2.includes(e)).length;
+  const mine = nf === 2 ? "\u043F\u0438\u0442\u0430\u0435\u0442 \u0432\u0430\u0441" : nf === 1 ? "\u043F\u043E\u043C\u043E\u0433\u0430\u0435\u0442 \u043D\u0430\u043F\u043E\u043B\u043E\u0432\u0438\u043D\u0443" : [st.el, br.el].some((e) => A.includes(e)) ? "\u0434\u0430\u0432\u0438\u0442 \u043D\u0430 \u0432\u0430\u0441" : "\u0438\u0434\u0451\u0442 \u043C\u0438\u043C\u043E \u0432\u0430\u0441";
   text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"');
   y += 62;
   for (let i = 0; i < 5; i++) {

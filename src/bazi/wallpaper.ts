@@ -181,11 +181,12 @@ export function amuletInfo(a: Analysis, d: DayInfo, shift: number): Record<strin
   const rk = [...d.notes, ...d.warn];
   return {
     head: { t: HEAD[d.type], x: cap(DAY_TYPE[d.type].hint) + '.' },
-    stone: { t: STONE[tl.el], x: `Камень ${EL_G[tl.el]}, цвет — ${col}. ` + (tl.money ? 'Эта стихия для вас — деньги: держите камень или вещь этого цвета при себе, наденьте это в одежде.'
-      : bad.length ? `Сегодня приходит стихия ${EL_G[bad[0]]}, она вам не помогает — ${EL_G[tl.el].toLowerCase()} её уравновешивает. Носите этот цвет как защиту.` : 'День и так в вашу пользу — этот цвет его усиливает.') },
+    stone: { t: STONE[tl.el], x: `Цвет ${EL_G[tl.el]} — ${col}. ` + (tl.money ? 'Эта стихия для вас означает деньги: носите этот цвет или держите вещь этого цвета при себе.'
+      : bad.length ? `Сегодня приходит стихия ${EL_G[bad[0]]}, она вам не помогает; стихия ${EL_G[tl.el]} её уравновешивает — этот цвет как защита.` : 'День и так в вашу пользу — этот цвет его усиливает.')
+      + ' Цвет стихии — из классики; камень к стихии — современная традиция.' },
     act: { t: ACT_W[d.act === JC_FAV ? 'FAV' : d.god.key] ?? 'Дело дня', x: cap(d.act) + '.' + (prep ? ' Сегодня день подготовки: собирать, учиться, договариваться — крупные решения перенести.' : '') },
     hrs: { t: 'Часы удачи', x: hh.length ? `${hh.join(', ')} — часы вашей полезной стихии. Важные звонки, встречи и отправку предложений ставьте в это окно.` : 'Сегодня выраженных удачных часов нет.' },
-    dir: { t: DIR_W[tl.el], x: `Сторона ${EL_G[tl.el]}. На переговорах садитесь лицом в эту сторону, встречи и поездки по делам — в этом направлении от дома, рабочий стол — так же.` },
+    dir: { t: DIR_W[tl.el], x: `Сторона ${EL_G[tl.el]}${tl.el === 2 ? ' (в классике Земля — центр; северо-восток и юго-запад — её стороны в схеме восьми триграмм)' : ''}. На переговорах садитесь лицом в эту сторону, встречи и поездки по делам — в этом направлении от дома.` },
     risk: { t: 'Осторожно', x: rk.length ? rk.map((r) => cap(r)).join('. ') + '.' : 'Явных рисков нет.' },
   };
 }
@@ -219,7 +220,9 @@ export function wallpaperSvg(a: Analysis, d: DayInfo, days: DayInfo[], shift: nu
 
   text(cap(label(d.iso, true)).toUpperCase(), 30, 600, '#cbbf9f', y, 'letter-spacing="8"'); y += 98;
   text(HEAD[d.type], 108, 600, 'url(#goldt)', y, 'class="wp-head"', 'Cormorant'); y += 58;
-  const mine = (d.fav as number[]).includes(st.el) ? 'питает вас' : (d.avoid as number[]).includes(st.el) ? 'давит на вас' : 'идёт мимо вас';
+  const F = d.fav as number[], A = d.avoid as number[], nf = [st.el, br.el].filter((e) => F.includes(e)).length;
+  // честно по обеим половинам дня (стихия и животное), а не только по стихии
+  const mine = nf === 2 ? 'питает вас' : nf === 1 ? 'помогает наполовину' : [st.el, br.el].some((e) => A.includes(e)) ? 'давит на вас' : 'идёт мимо вас';
   text(`${EL_RU[st.el]} ${AN_GEN[d.idx % 12]} ${mine}`, 36, 600, col, y, 'letter-spacing="2"'); y += 62;
   for (let i = 0; i < 5; i++) { const x = CX - 128 + i * 64, on = i < d.score;
     if (on) t.push(`<circle cx="${x}" cy="${y - 14}" r="24" fill="${gold}" opacity=".3" filter="url(#blur)"/>`);
