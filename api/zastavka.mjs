@@ -3246,22 +3246,22 @@ function orbit(cx, cy, R, stemEl, branch, img, wealth = -1) {
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2}" fill="none" stroke="${c}" stroke-opacity="${on ? 0.95 : 0.55}" stroke-width="${on ? 3.5 : 2}"/>`);
     o.push(`<circle cx="${f1(x)}" cy="${f1(y)}" r="${sz / 2 + 10}" fill="none" stroke="${c}" stroke-opacity="${on ? 0.45 : 0.18}" stroke-width="1.2" stroke-dasharray="${on ? "2 6" : "1 7"}"/>`);
     if (e === wealth) {
-      const bx = x + sz * 0.36, by = y - sz * 0.36;
-      o.push(`<circle cx="${f1(bx)}" cy="${f1(by)}" r="40" fill="#e8c97e" opacity=".45" filter="url(#blur)"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="27" fill="url(#goldv)" stroke="#fff3cf" stroke-width="2"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="21" fill="none" stroke="#7a5420" stroke-opacity=".6" stroke-width="1.5"/><rect x="${f1(bx - 8)}" y="${f1(by - 8)}" width="16" height="16" fill="#1a1230" stroke="#7a5420" stroke-width="1.5"/>`);
+      const bx = x + sz * 0.42, by = y - sz * 0.42;
+      o.push(`<circle cx="${f1(bx)}" cy="${f1(by)}" r="70" fill="#e8c97e" opacity=".55" filter="url(#blur)"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="50" fill="url(#goldv)" stroke="#fff3cf" stroke-width="2"/><circle cx="${f1(bx)}" cy="${f1(by)}" r="40" fill="none" stroke="#7a5420" stroke-opacity=".6" stroke-width="1.5"/><rect x="${f1(bx - 14)}" y="${f1(by - 14)}" width="28" height="28" fill="#1a1230" stroke="#7a5420" stroke-width="1.5"/>`);
     }
     if (on) o.push(`<text x="${f1(x)}" y="${f1(y + sz / 2 + 52)}" text-anchor="middle" font-family="Manrope" font-size="44" font-weight="700" fill="${c}" letter-spacing="4" stroke="#0b0824" stroke-width="7" stroke-linejoin="round" paint-order="stroke">${EL_RU[e].toUpperCase()}</text>`);
   }
   return o.join("");
 }
-var EL_COL = ["\u0417\u0435\u043B\u0451\u043D\u044B\u0439, \u0431\u0438\u0440\u044E\u0437\u0430", "\u041A\u0440\u0430\u0441\u043D\u044B\u0439, \u0431\u043E\u0440\u0434\u043E", "\u0416\u0451\u043B\u0442\u044B\u0439, \u043E\u0445\u0440\u0430, \u0431\u0435\u0436", "\u0411\u0435\u043B\u044B\u0439, \u0441\u0435\u0440\u0435\u0431\u0440\u043E", "\u0427\u0451\u0440\u043D\u044B\u0439, \u0442\u0451\u043C\u043D\u043E-\u0441\u0438\u043D\u0438\u0439"];
+var EL_COL = ["\u0437\u0435\u043B\u0451\u043D\u044B\u0439, \u0431\u0438\u0440\u044E\u0437\u0430", "\u043A\u0440\u0430\u0441\u043D\u044B\u0439, \u0431\u043E\u0440\u0434\u043E", "\u0436\u0451\u043B\u0442\u044B\u0439, \u043E\u0445\u0440\u0430", "\u0431\u0435\u043B\u044B\u0439, \u0441\u0435\u0440\u0435\u0431\u0440\u043E", "\u0447\u0451\u0440\u043D\u044B\u0439, \u0441\u0438\u043D\u0438\u0439"];
 var EL_SW = [["#2f8f5b", "#2fb3a6"], ["#c8322b", "#7a1f2b"], ["#e0b84a", "#b07a3a", "#d9c3a0"], ["#f2f2ee", "#b9c0c8"], ["#141420", "#1f3566"]];
-var EL_AN = ["\u0422\u0438\u0433\u0440, \u041A\u0440\u043E\u043B\u0438\u043A", "\u0417\u043C\u0435\u044F, \u041B\u043E\u0448\u0430\u0434\u044C", "\u0411\u044B\u043A, \u0414\u0440\u0430\u043A\u043E\u043D, \u041A\u043E\u0437\u0430, \u0421\u043E\u0431\u0430\u043A\u0430", "\u041E\u0431\u0435\u0437\u044C\u044F\u043D\u0430, \u041F\u0435\u0442\u0443\u0445", "\u041A\u0440\u044B\u0441\u0430, \u0421\u0432\u0438\u043D\u044C\u044F"];
-var ROLE = ["\u041F\u0430\u0440\u0442\u043D\u0451\u0440\u044B", "\u0410\u0443\u0434\u0438\u0442\u043E\u0440\u0438\u044F", "\u041F\u043E\u043A\u0443\u043F\u0430\u0442\u0435\u043B\u0438", "\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u0438, \u0432\u043B\u0430\u0441\u0442\u044C", "\u041D\u0430\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0438"];
-function talisman(a, dayEl) {
-  const fav = a.consensus;
-  const el = fav.includes(dayEl) ? dayEl : fav.find((f) => (f + 2) % 5 === dayEl || (dayEl + 1) % 5 === f) ?? fav[0] ?? dayEl;
-  const rel = ((el - a.dmEl) % 5 + 5) % 5;
-  return { el, money: rel === 2, colors: EL_COL[el], people: `${ROLE[rel]} \xB7 ${EL_AN[el]}`, sw: EL_SW[el] };
+var STEP = ["\u0417\u0432\u0430\u0442\u044C \u043F\u0430\u0440\u0442\u043D\u0451\u0440\u043E\u0432 \u0432 \u043E\u0431\u0449\u0435\u0435 \u0434\u0435\u043B\u043E", "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0440\u0430\u0431\u043E\u0442\u0443: \u043F\u043E\u0441\u0442, \u0434\u0435\u043C\u043E, \u0432\u0438\u0442\u0440\u0438\u043D\u0430", "\u0417\u0432\u043E\u043D\u0438\u0442\u044C \u0442\u0435\u043C, \u043A\u0442\u043E \u0443\u0436\u0435 \u043F\u043E\u043A\u0443\u043F\u0430\u043B", "\u041F\u0438\u0441\u0430\u0442\u044C \u0437\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u0430\u043C \u0438 \u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u0443", "\u0421\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u0441\u043E\u0432\u0435\u0442\u0430 \u0443 \u043D\u0430\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0430"];
+function talisman(a, stemEl, brEl, prep) {
+  const fav = a.consensus, bad = [stemEl, brEl].filter((e) => !fav.includes(e));
+  const cure = (h) => fav.find((f) => (f + 2) % 5 === h || (h + 1) % 5 === f);
+  const el = !bad.length ? stemEl : bad.map(cure).find((x) => x !== void 0) ?? fav[0] ?? stemEl;
+  const rel = ((el - a.dmEl) % 5 + 5) % 5, money = rel === 2 && !prep;
+  return { el, money, head: `${money ? "\u0426\u0432\u0435\u0442 \u0434\u0435\u043D\u0435\u0433" : "\u041E\u0431\u0435\u0440\u0435\u0433"} \xB7 ${EL_COL[el]}`, step: prep ? "\u0421\u0432\u043E\u0438 \u0438 \u043D\u0430\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0438, \u043D\u043E\u0432\u044B\u0445 \u0441\u0434\u0435\u043B\u043E\u043A \u043D\u0435\u0442" : STEP[rel], sw: EL_SW[el] };
 }
 var ICON = {
   act: '<path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/>',
@@ -3275,8 +3275,8 @@ function wallpaperSvg(a, d, days, shift, img) {
   const { w, h } = WP, CX = w / 2, acc = ACC2[d.score] ?? ACC2[3];
   const st = STEMS[d.idx % 10], br = BRANCHES[d.idx % 12], col = EL_GLOW[st.el], gold = "#e2c47c";
   const t = [];
-  const OY = 1085, OK = 0.56;
-  let y = 1418;
+  const OY = 1115, OK = 0.56;
+  let y = 1450;
   const text = (s, size, weight, fill, yy = y, extra = "", fam = "Manrope") => t.push(`<text x="${CX}" y="${yy}" text-anchor="middle" font-family="${fam}" font-size="${size}" font-weight="${weight}" fill="${fill}" ${extra}>${esc(s)}</text>`);
   text(cap(label(d.iso, true)).toUpperCase(), 32, 600, "#cbbf9f", y, 'letter-spacing="8"');
   y += 102;
@@ -3298,14 +3298,13 @@ function wallpaperSvg(a, d, days, shift, img) {
   const rows = [];
   const rk = [...d.notes, ...d.warn], risk = rk.find((x) => x.includes("\u043F\u0440\u043E\u0442\u0438\u0432 \u043C\u0435\u0441\u044F\u0446\u0430")) ?? rk[0], act = d.act === JC_FAV ? WP_FAV : WP_ACT[d.god.key] ?? cap(risk ? d.act.split(/,? но /)[0] : d.act);
   rows.push({ ic: "act", head: (prepOnly(d) ? "\u0413\u043E\u0442\u043E\u0432\u0438\u0442\u044C, \u043D\u0435 \u0440\u0435\u0448\u0430\u0442\u044C" : "\u0414\u0435\u043B\u0430\u0442\u044C") + (hh.length ? ` \xB7 ${hh[0].replace(/\s/g, "")}` : ""), body: act, fill: "#f1ece0", max: 1 });
-  const tl = talisman(a, st.el);
-  rows.push({ ic: "coin", head: tl.money ? "\u0426\u0432\u0435\u0442 \u0434\u0435\u043D\u0435\u0433" : "\u0426\u0432\u0435\u0442-\u043E\u0431\u0435\u0440\u0435\u0433", body: tl.colors, fill: "#f1e3b8", max: 1, sw: tl.sw });
-  rows.push({ ic: "ppl", head: "\u041B\u044E\u0434\u0438 \u0434\u043D\u044F", body: tl.people, fill: "#e6dcc0", max: 1 });
+  const tl = talisman(a, st.el, br.el, prepOnly(d));
+  rows.push({ ic: "coin", head: tl.head, body: tl.step, fill: "#f1e3b8", max: 1, sw: tl.sw });
   if (risk) rows.push({ ic: "risk", head: "\u041E\u0441\u0442\u043E\u0440\u043E\u0436\u043D\u043E", body: wpRisk(risk), fill: "#f3c9bd", max: 1 });
   const body = [];
   y += 50;
   rows.forEach((rw, i) => {
-    const ls = fit(rw.body, 34, rw.sw ? TWc - 130 : TWc, rw.max), need = 50 + ls.length * 42;
+    const ls = fit(rw.body, 36, TWc, rw.max), need = 50 + ls.length * 42;
     if (y + need > 2250) return;
     if (i) {
       body.push(`<line x1="${TX}" y1="${y - 26}" x2="${R2 - 40}" y2="${y - 26}" stroke="${gold}" stroke-opacity=".14" stroke-width="1.5"/>`);
@@ -3316,15 +3315,15 @@ function wallpaperSvg(a, d, days, shift, img) {
     body.push(`<g transform="translate(${IX - 15} ${y - 11}) scale(1.25)" fill="none" stroke="${ic}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[rw.ic]}</g>`);
     body.push(`<text x="${TX}" y="${y + 12}" font-family="Manrope" font-size="26" font-weight="800" fill="${ic}" letter-spacing="5">${esc(rw.head.toUpperCase())}</text>`);
     if (rw.sw) rw.sw.forEach((c, j) => {
-      const sx2 = R2 - 150 + j * 40, sy2 = y + 34;
+      const sx2 = R2 - 150 + j * 40, sy2 = y + 3;
       body.push(`<circle cx="${sx2}" cy="${sy2}" r="16" fill="${c}" stroke="#f3dc9c" stroke-opacity=".7" stroke-width="2"/><circle cx="${sx2 - 5}" cy="${sy2 - 5}" r="5" fill="#fff" opacity=".25"/>`);
     });
-    y += 50;
+    y += 54;
     for (const ln of ls) {
-      body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="34" font-weight="400" fill="${rw.fill}">${esc(ln)}</text>`);
-      y += 42;
+      body.push(`<text x="${TX}" y="${y}" font-family="Manrope" font-size="36" font-weight="500" fill="${rw.fill}">${esc(ln)}</text>`);
+      y += 44;
     }
-    y += 22;
+    y += 34;
   });
   y += 4;
   t.push(`<rect x="${L}" y="${top0}" width="${R2 - L}" height="${y - top0}" rx="44" fill="url(#glass)" stroke="url(#glassb)" stroke-width="2"/>`);
