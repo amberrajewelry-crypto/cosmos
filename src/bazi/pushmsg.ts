@@ -31,7 +31,8 @@ export function pushMessage(q: Record<string, string>, z: string, now = new Date
     day.heal ? `Чем выровнять: ${EL_NOM[day.med]}.` : '',
     hh.length ? `Лучшие часы: ${hh.join(', ')}.` : '',
     day.type !== 'peak' && next ? `Сильный день впереди: ${next.iso.slice(8).replace(/^0/, '')}.${next.iso.slice(5, 7)}.` : '',
+    'Как прошёл вчера? Отметьте одним касанием.',
   ].filter(Boolean);
   const qs = new URLSearchParams(); for (const k of ['d', 't', 'p', 'g', 'u']) if (q[k]) qs.set(k, q[k]);
-  return { title: `Ваш день: ${DAY_TYPE[day.type].ru.toLowerCase()}, ${day.score} из 5`, body: lines.join(' '), url: `/bazi/?${qs}#s-days` };
+  return { title: `Ваш день: ${DAY_TYPE[day.type].ru.toLowerCase()}, ${day.score} из 5`, body: lines.join(' '), url: `/bazi/?${qs}#jr` };
 }

@@ -8,7 +8,8 @@ describe('утренняя карточка дня (push)', () => {
     expect(m.title).toMatch(/^Ваш день: .+, [1-5] из 5$/);
     expect(m.body).toMatch(/^(Что делать|Тема дня): /);
     expect(m.body).not.toMatch(/«/);
-    expect(m.url).toMatch(/^\/bazi\/\?d=1991-11-10.*#s-days$/);
+    expect(m.url).toMatch(/^\/bazi\/\?d=1991-11-10.*#jr$/);
+    expect(m.body).toMatch(/Как прошёл вчера\?/);
   });
   it('плохие данные — null', () => {
     expect(pushMessage({ d: 'x' }, 'Asia/Tbilisi')).toBeNull();

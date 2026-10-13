@@ -66,11 +66,15 @@ self.addEventListener('push', (e) => {
   let m = {}; try { m = e.data ? e.data.json() : {}; } catch { m = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(m.title || 'Ваш день', {
     body: m.body || '', icon: '/icons/bazi-192.png', badge: '/icons/bazi-192.png', tag: 'bazi-day', renotify: true, data: { url: m.url || '/bazi/' },
+    // Android/компьютер: ответ «как прошёл вчера» прямо из уведомления (iPhone кнопки не показывает — там тап ведёт к журналу)
+    actions: [{ action: 'y', title: 'Вчера: хорошо' }, { action: 'n', title: 'Вчера: тяжело' }],
   }));
 });
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = new URL((e.notification.data && e.notification.data.url) || '/bazi/', self.location.origin).href;
+  const u = new URL((e.notification.data && e.notification.data.url) || '/bazi/', self.location.origin);
+  if (e.action === 'y' || e.action === 'n') { u.searchParams.set('jy', e.action === 'y' ? '1' : '0'); u.hash = 'jr'; }
+  const url = u.href;
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const w of all) if (w.url.startsWith(self.location.origin + '/bazi')) { await w.focus(); return w.navigate ? w.navigate(url) : undefined; }

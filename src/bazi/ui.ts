@@ -576,6 +576,10 @@ async function wireJournal(c: Chart, a: Analysis, today: DayInfo) {
       draw(); document.getElementById('jmy')!.textContent = mySummary(h) + (ok ? '' : ' (сохранено в браузере, отправить не удалось)');
     }));
   };
+  // Ответ из кнопки пуша «Вчера: хорошо/тяжело» (?jy=1|0, public/bazi-sw.js): записать, если вчера ещё не отмечен, и убрать параметр
+  const jy = new URLSearchParams(location.search).get('jy');
+  if ((jy === '1' || jy === '0') && !myAnswer(h, rows[1].d.iso)) { await answer(h, rows[1].d, +jy as 0 | 1, conf); track('bazi:journal-push'); }
+  if (jy !== null) { const u = new URL(location.href); u.searchParams.delete('jy'); history.replaceState(history.state, '', u.href); }
   draw();
   document.getElementById('jmy')!.textContent = mySummary(h);
   document.getElementById('jall')!.textContent = await globalSummary();
