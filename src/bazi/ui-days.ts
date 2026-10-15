@@ -55,7 +55,7 @@ export function dayMore(c: Chart, a: Analysis, d: DayInfo, days: DayInfo[]): str
     ${d.heal || !/уже есть в этом дне/.test(d.why) ? `<h4>${d.heal ? 'Как добавить' : 'Как поддержать'} ${ACC_EL[d.med]}</h4>
     <ul class="list"><li>${esc(d.add.theory)}</li>
       <li>${esc(d.add.folk)}</li></ul>` : ''}
-    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${dayRu(next).toLowerCase()}, ${next.score} из 5.${top ? (pick.length ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : (d.score >= 3 ? ` Дальше на неделе сильных дней нет — важное лучше поставить на сегодня.` : ` Сильных дней на неделе нет — важное лучше перенести; самый ровный — ${dLabel(top)}.`)) : ''}</p>` : ''}
+    ${next ? `<p class="dhint">Завтра, ${dLabel(next)}: ${dayRu(next).toLowerCase()}, ${next.score} из 5.${top ? (pick.length ? ` Лучший день недели для важного — ${dLabel(top)} (${top.score} из 5).` : (d.score >= 3 ? ` Дальше на неделе сильных дней по расчёту нет — если важное можно сдвинуть, сегодня ровнее.` : ` Сильных дней на неделе по расчёту нет; самый ровный — ${dLabel(top)}.`)) : ''}</p>` : ''}
     <p class="dhint">Оценка из 5 — расчёт по стихиям и связям дня с вашей картой, не гарантия.</p>
   </div>`;
 }
