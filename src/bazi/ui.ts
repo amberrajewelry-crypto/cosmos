@@ -1,4 +1,5 @@
 import { confidence } from './confidence';
+import { evTag, evSummary } from './evidence';
 import { chartHash, answer, myAnswer, mySummary, globalSummary, myDays, sendRecog, recogSummary } from './journal';
 import { reveal, wireMotion } from './motion';
 import './bazi.css';
@@ -167,13 +168,13 @@ function fold(out: HTMLElement) {
   out.querySelectorAll<HTMLElement>('section.block').forEach((s) => {
     const head = s.querySelector<HTMLElement>(':scope > .bhead');
     if (!head || s.id === 's-fb') return;
-    const h2 = head.querySelector('h2')!, lead = head.querySelector(':scope > p:not(.acc)'), acc = head.querySelector(':scope > p.acc');
+    const h2 = head.querySelector('h2')!, lead = head.querySelector(':scope > p:not(.acc):not(.ev)'), acc = head.querySelector(':scope > p.acc'), ev = head.querySelector(':scope > p.ev');
     const key = s.id || h2.textContent!;
     const d = document.createElement('details');
     d.className = 'fold'; d.dataset.key = key; d.open = openSecs.has(key);
     d.innerHTML = `<summary>${secIcon(h2.textContent || '')}<span class="f-t"><h2>${h2.innerHTML}</h2>${lead ? `<small>${lead.innerHTML}</small>` : ''}</span><i class="f-ch" aria-hidden="true"></i></summary>`;
     const body = document.createElement('div'); body.className = 'f-body';
-    head.remove(); if (acc) body.append(acc);
+    head.remove(); if (ev) body.append(ev); if (acc) body.append(acc);
     while (s.firstChild) body.append(s.firstChild);
     d.append(body); s.append(d); s.classList.add('folded');
   });
@@ -239,7 +240,7 @@ function branchTile(b: number) {
 function secRasklad(c: Chart, a: Analysis) {
   const seen = new Set(portrait(c, a)); // то, что уже сказано в «Кто вы», не повторяем
   const items = rasklad(c, a).map((x, i) => `<div class="card pane rk"><p class="rk-q"><span>${i + 1}</span>${esc(x.q)}</p>${x.a.filter((l) => !seen.has(l)).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`).join('');
-  return `<section class="block" id="s-rasklad"><div class="bhead"><div><h2>Расклад по 7 вопросам</h2></div>
+  return `<section class="block" id="s-rasklad"><div class="bhead"><div><h2>Расклад по 7 вопросам</h2></div>${evTag('spheres', 'Ответ про занятия проверяли на биографиях — связи с профессией не нашли.')}
     <p>То, что разбирают на консультации, — посчитано по вашей карте.</p></div>
     <div class="rk-grid">${items}</div></section>`;
 }
@@ -248,7 +249,7 @@ function secTrait(c: Chart, a: Analysis) {
   const shown = new Set([...portrait(c, a), ...rasklad(c, a).flatMap((x) => x.a)]);
   const ls = portraitMore(c, a).filter((l) => !shown.has(l));
   if (!ls.length) return '';
-  return `<section class="block"><div class="bhead"><div><h2>Характер по традиции</h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Характер по традиции</h2></div>${evTag('character')}
     <p>Так эти черты описывают старые толкования. Проверку на известных людях они не прошли — читайте как повод задуматься, а не как факт о вас.</p></div>
     <div class="card pane">${ls.map((l) => `<p>${esc(l)}</p>`).join('')}</div></section>`;
 }
@@ -294,7 +295,7 @@ function secPillars(c: Chart, a: Analysis) {
   }).join('');
   const L = c.local, pad = (n: number) => String(n).padStart(2, '0');
   return `<section class="block" id="s-pillars">
-    <div class="bhead"><div><h2>Четыре столпа</h2></div>
+    <div class="bhead"><div><h2>Четыре столпа</h2></div>${evTag('calc')}
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
     <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
@@ -369,7 +370,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
   const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${(u.fav.filter((e) => !a.avoid.includes(e)).length ? u.fav.filter((e) => !a.avoid.includes(e)) : u.fav).map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
-  return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>${evTag('yong', yongExtra(a))}
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
@@ -429,7 +430,7 @@ function secLuck(c: Chart, a: Analysis) {
     return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text + ' ' + luckDetail(c, a, i).join(' '))}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
   }).join('');
   const sel = cur >= 0 ? cur : 0, rd = luckR(c, a, c.luck[sel].idx);
-  return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>
+  return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>${evTag('periods')}
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="luck">${cards}</div>
     <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
@@ -458,7 +459,7 @@ function secForecast(c: Chart, a: Analysis) {
     <details><summary>Подробнее</summary><small>Чем заняться — ${esc(lay(d.act))}.${hitsTxt(d.hits)} ${esc(lay(det.join(' ')))}</small></details></li>`;
   });
   const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
-  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div><p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div>${evTag('periods')}<p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
     <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года — ${esc(lay(y.act))}.${hitsTxt(y.hits)}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
       ${months}</div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
@@ -467,7 +468,7 @@ function secForecast(c: Chart, a: Analysis) {
 function secSpheres(c: Chart, a: Analysis) {
   const cards = spheres(c, a).map((x) => `<div class="card pane sph"><h3>${esc(x.title)}</h3><p class="lead">${esc(x.lead)}</p>
     <ul class="list">${x.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul><p class="todo"><b>Что делать.</b> ${esc(x.todo)}</p></div>`).join('');
-  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам</h2></div><p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты.</p></div>
+  return `<section class="block"><div class="bhead"><div><h2>Ваша жизнь по сферам</h2></div>${evTag('spheres')}<p>Характер, дело, деньги, любовь, здоровье и родные — простыми словами из вашей карты.</p></div>
     <div class="sph-grid">${cards}</div></section>`;
 }
 
@@ -650,7 +651,7 @@ function wireDays(c: Chart, a: Analysis) {
 }
 
 function secCompat() {
-  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div><p>Сравниваем две карты целиком: что каждый даёт другому в чувствах, поддержке и деньгах. Итог — легче или труднее, без «можно/нельзя».</p></div>
+  return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div>${evTag('compat')}<p>Сравниваем две карты целиком: что каждый даёт другому в чувствах, поддержке и деньгах. Итог — легче или труднее, без «можно/нельзя».</p></div>
     <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" aria-label="Город рождения партнёра" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div></div></section>`;
@@ -771,9 +772,15 @@ function secFeedback() {
     <div class="card pane"><div class="dacts fbv" id="fbv"><button class="ghost" type="button" data-ok="1">Да, это я</button><button class="ghost" type="button" data-ok="0">Мимо</button></div>
     <form class="askf" id="fbf"><input id="fbq" maxlength="1500" placeholder="Что было неточно?" aria-label="Что было непонятно или неточно" /><button class="go" type="submit">Отправить</button></form><div class="ans" id="fbmsg"></div></div></section>`;
 }
+/** Уточнение надёжности полезных стихий для типа этой карты (отложенная выборка, confidence.ts). */
+function yongExtra(a: Analysis): string {
+  const k = confidence(a);
+  return `Для карт вашего типа — около ${k.of10} из 10${a.brain.power.key === 'balanced' ? '; сила на грани, выбор особенно спорный' : ''}.`;
+}
 function secHonest() {
   return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы</h3>
-    <p>Расчёт карты точный: сезоны — по положению Солнца, время — истинное солнечное для места рождения. Толкования — традиция, а не наука: исследований, подтверждающих связь даты рождения с судьбой, нет. Используйте карту как язык самоанализа и планирования — и проверяйте её на своей жизни.</p></div></section>`;
+    <p>Расчёт карты точный: сезоны — по положению Солнца, время — истинное солнечное для места рождения. Толкования — традиция, а не наука: исследований, подтверждающих связь даты рождения с судьбой, нет. Используйте карту как язык самоанализа и планирования — и проверяйте её на своей жизни.</p>
+    <h3>Что мы проверили сами</h3>${evSummary()}</div></section>`;
 }
 
 function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis }[]) {

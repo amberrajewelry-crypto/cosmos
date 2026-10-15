@@ -1,3 +1,4 @@
+import { evTag } from './evidence';
 /** «Мои дни»: карточка дня, подробности, календарь 8 недель, лучшие дни — вынесено из ui.ts. */
 import {
   STEMS, BRANCHES, EL, EL_COLOR,
@@ -79,7 +80,7 @@ export function secDays(c: Chart, a: Analysis) {
   const off = (start.getDay() + 6) % 7, grid = days.slice(0, 56);
   const cells = Array.from({ length: off }, () => '<i></i>').join('') + grid.map((d, k) => dayCell(d, k === 0)).join('');
   const fav = a.consensus.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и '), bad = a.avoid.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ');
-  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>
+  return `<section class="block" id="s-days"><div class="bhead"><div><h2>Мои дни</h2></div>${evTag('days')}
     <p>Сильный день (4–5 из 5) — когда приходит полезная вам стихия (${fav}) и ничто её не перебивает: для главных шагов — переговоров, запусков, оплат, публикаций. Дни нагрузки (1–2 из 5) — когда ${bad ? `приходят ${bad} или ` : ''}день бьёт по вашей карте. Нажмите на день — подскажем, что на него ставить.</p></div>
     <div class="card pane"><p class="eyebrow">Сегодня</p><div id="dsel">${dayCard(today, true, dayMore(c, a, today, days))}</div><div class="acts" style="margin-top:14px"><button class="primary" id="wplive" type="button">Живая карта дня</button></div></div>
     <div class="card pane jr" id="jr"><p class="eyebrow">Проверка прогноза</p>
