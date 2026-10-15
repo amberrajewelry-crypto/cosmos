@@ -748,3 +748,11 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .dc .dmon { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font: 600 9px/1 var(--sans, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: #1b1630; background: #e6c77a; padding: 2px 4px; border-radius: 6px; font-style: normal; white-space: nowrap; z-index: 1; }
 
 .linkbtn{background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
+
+/* метка «что проверено» под заголовком блока (evidence.ts) */
+.ev { margin: 8px 0 0; padding: 6px 10px; border-radius: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-3); background: rgba(255,255,255,.03); border-left: 3px solid var(--ink-3); overflow-wrap: anywhere; }
+.ev b { color: var(--ink-2); font-weight: 600; }
+.ev-ok { border-left-color: rgba(120,190,120,.7); } .ev-part { border-left-color: var(--gold-2); }
+.ev-fail { border-left-color: rgba(214,96,79,.7); } .ev-open { border-left-color: rgba(160,160,170,.6); }
+.evlist { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-2); }
+.evlist li { margin: 6px 0; }
