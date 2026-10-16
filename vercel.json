@@ -65,8 +65,8 @@
           "value": "www.astropro.tech"
         }
       ],
-      "destination": "https://astropro.tech/bazi",
-      "permanent": false
+      "destination": "https://astropro.tech/bazi/",
+      "permanent": true
     },
     {
       "source": "/:path*",
@@ -87,8 +87,8 @@
           "value": "astropro.tech"
         }
       ],
-      "destination": "https://astropro.tech/bazi",
-      "permanent": false
+      "destination": "https://astropro.tech/bazi/",
+      "permanent": true
     },
     {
       "source": "/:znak(oven|telec|bliznecy|rak|lev|deva|vesy|skorpion|strelec|kozerog|vodolej|ryby)-na-samom-dele",
