@@ -25,10 +25,10 @@ import { compat } from './compat';
 import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, type Hypo, type Sphere } from './calibrate';
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
-import { daysFrom, type DayInfo, dayInfo } from './days';
+import { daysFrom, type DayInfo, dayInfo, prepOnly } from './days';
 
 import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
-import { dayCard, dayMore, dLabel, secDays, WP_SHORTCUT } from './ui-days';
+import { dayCard, dayMore, dLabel, dayRu, secDays, WP_SHORTCUT } from './ui-days';
 // ——— Фон: поток ци ———
 const qi = (() => {
   const cv = $<HTMLCanvasElement>('qi'), ctx = cv.getContext('2d')!;
@@ -199,8 +199,8 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
   const example = new URLSearchParams(location.search).has('ex');
   out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), example ? '' : pushCta(), secForecast(c, a), secRasklad(c, a), secCompat(),
-    `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
-    secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
+    `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым.</p></summary>`,
+    secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
   track('bazi:build');
   requestAnimationFrame(() => {
@@ -270,7 +270,13 @@ function secWho(c: Chart, a: Analysis) {
         <div><img src="${animalSm(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSm(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
         ${cur ? `<div class="lt ${tone}"><img src="${animalSm(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
-      </div></div></section>`;
+      </div>${todayLine(c, a)}</div></section>`;
+}
+/** Аудит 16.10: ради дней сюда и приходят, а «сегодня» было спрятано в свёрнутом разделе. Одна строка — оценка, тема дня, ссылка к дням. */
+function todayLine(c: Chart, a: Analysis) {
+  const n = new Date(), d = daysFrom(c, a, new Date(n.getFullYear(), n.getMonth(), n.getDate()), 1)[0];
+  const tone = d.type === 'peak' ? 'good' : d.type === 'heavy' ? 'bad' : 'mixed';
+  return `<a class="who-today ${tone}" href="#s-days" id="go-days"><span class="wt-h">Сегодня, ${dLabel(d)} · ${dayRu(d).toLowerCase()}, ${d.score} из 5</span><span class="wt-t">${prepOnly(d) ? 'День готовить и обдумывать, а не решать' : esc(lay(d.act)).replace(/^./, (x) => x.toUpperCase())}. Все дни и лучшие часы →</span></a>`;
 }
 
 function secPillars(c: Chart, a: Analysis) {
@@ -606,6 +612,8 @@ function wireDays(c: Chart, a: Analysis) {
   const wl = document.getElementById('wplive'); if (wl) wl.onclick = live;
   if (new URLSearchParams(location.search).has('live')) live();
   void wireJournal(c, a, days[0]);
+  const gd = document.getElementById('go-days');
+  if (gd) gd.onclick = (e) => { const f = document.querySelector<HTMLDetailsElement>('#s-days details.fold'); if (!f) return; e.preventDefault(); f.open = true; track('bazi:today-line'); f.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;
@@ -657,7 +665,7 @@ function secCompat() {
       <div class="ans" id="cf-out"></div></div></section>`;
 }
 
-function secAsk() {
+export function secAsk() { // снят с экрана 16.10 (см. обработчик askf)
   return `<section class="block"><div class="bhead"><div><h2>Спросить карту</h2></div><p>Ответ строится только из вашего разбора выше — без выдуманных чисел.</p></div>
     <div class="card pane"><form class="askf" id="askf"><input id="askq" placeholder="Ваш вопрос о карте" aria-label="Ваш вопрос о карте" /><button class="go" type="submit">Спросить</button></form><div class="ans" id="ans"></div></div></section>`;
 }
@@ -799,7 +807,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   const notes = [natureNote(a), strengthNote(c, a), axisNote(c, a), climateNote(c, a), ...comboNotes(c, a), ...bondNotes(c, a)];
   const fy = yearForecast(c, a, baziYear());
   const ctx = chartSummary(c, a) + '\n' + `Год ${fy.year} ${pillarZh(fy.idx)}: ${toneRu(fy.tone)}, ${fy.text}. Месяцы: ${fy.months.map((m) => `с ${m.start.toISOString().slice(0, 10)} ${pillarZh(m.idx)} ${toneRu(m.tone)}`).join('; ')}.` + '\n' + spheres(c, a).map((x) => `${x.title}: ${x.lead} ${x.points.join(' ')} Что делать: ${x.todo}`).join('\n') + '\n' + a.consensus.map((e) => EL_NEED[e]).join('\n') + '\n' + notes.map((n) => `${n.title}: ${n.text}${n.src ? ` (${n.src})` : ''}`).join('\n');
-  document.getElementById('askf')!.addEventListener('submit', async (e) => {
+  // 16.10: «Спросить карту» снят с экрана — движок puter требовал вход на чужом сайте, без входа ответ висел. Обработчик оставлен на возврат.
+  document.getElementById('askf')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;
     if (!q) return;
