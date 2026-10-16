@@ -2,7 +2,7 @@
 // при отсутствии токена — 503, клиент падает на mailto. IP не сохраняем.
 // 16.10: события сессии (kind=events) пишутся в Blob ev/<день>/<id>~<событие>~….json — без IP, даты рождения и cookies;
 // GET /api/fb?days=N&key=… — воронка по дням (сессии с каждым событием). В Telegram события идут, только если Blob недоступен.
-import { put, list } from '@vercel/blob';
+import { put, list, del } from '@vercel/blob';
 import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 const evKey = (k) => String(k).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30);
 // 16.10 (проверка безопасности): события — только объект из ≤25 счётчиков 1…500 и только со своего сайта.
@@ -13,14 +13,22 @@ const okOrigin = (req) => { const o = String(req.headers?.origin ?? req.headers?
 // Чтение воронки — по ключу, производному от токена Blob (отдельной переменной окружения не нужно).
 const readKey = () => createHash('sha256').update('fb-funnel:' + (process.env.BLOB_READ_WRITE_TOKEN ?? '')).digest('hex').slice(0, 24);
 const okKey = (k) => { const a = Buffer.from(String(k ?? '')), b = Buffer.from(readKey()); return a.length === b.length && timingSafeEqual(a, b); };
-async function storeEvents(fb) {
+const BOT = /bot|crawl|spider|headless|lighthouse|playwright|puppeteer|preview|monitor/i;
+async function storeEvents(fb, ua) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return false;
+  if (BOT.test(ua)) return true; // боты и автотесты в воронку не пишем
   const keys = [...new Set(Object.keys(fb.counts).map(evKey).filter(Boolean))].slice(0, 25).sort();
   if (!keys.length) return true;
   const day = new Date().toISOString().slice(0, 10);
-  const path = `ev/${day}/${randomUUID().slice(0, 8)}~${keys.join('~')}.json`;
-  try { await put(path, JSON.stringify({ counts: fb.counts, tz: fb.tz ?? '' }).slice(0, 4000), { access: 'private', addRandomSuffix: false, contentType: 'application/json' }); return true; }
-  catch { return false; }
+  // 16.10: одна сессия = один префикс ev/<день>/<sid>~; повторная отправка (сворачивание + уход) заменяет прежнюю запись.
+  const sid = /^[0-9a-f]{8}$/.test(String(fb.sid ?? '')) ? fb.sid : randomUUID().slice(0, 8);
+  const path = `ev/${day}/${sid}~${keys.join('~')}.json`;
+  try {
+    const old = (await list({ prefix: `ev/${day}/${sid}~`, limit: 10 })).blobs.filter((b) => b.pathname !== path);
+    await put(path, JSON.stringify({ counts: fb.counts, tz: fb.tz ?? '' }).slice(0, 4000), { access: 'private', addRandomSuffix: false, allowOverwrite: true, contentType: 'application/json' });
+    if (old.length) await del(old.map((b) => b.url));
+    return true;
+  } catch { return false; }
 }
 async function funnel(days) {
   const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10), byDay = {}, total = { sessions: 0 };
@@ -57,7 +65,7 @@ export default async function handler(req, res) {
   let fb; try { fb = JSON.parse(raw); } catch { res.status(400).end(); return; }
   if (!fb || !KINDS.has(fb.kind)) { res.status(400).end(); return; }
   if (fb.kind === 'events' && (!okCounts(fb.counts) || !okOrigin(req))) { res.status(400).end(); return; }
-  if (fb.kind === 'events' && await storeEvents(fb)) { res.status(200).json({ ok: true }); return; }
+  if (fb.kind === 'events' && await storeEvents(fb, String(req.headers?.['user-agent'] ?? ''))) { res.status(200).json({ ok: true }); return; }
   const token = process.env.TG_BOT_TOKEN, chat = process.env.TG_CHAT_ID;
   if (!token || !chat) { res.status(503).json({ ok: false }); return; }
   const lines = [`АСТРОАНАЛИЗ · ${fb.kind}${fb.id ? ' · ' + fb.id : ''}${fb.tz ? ' · ' + fb.tz : ''}`];

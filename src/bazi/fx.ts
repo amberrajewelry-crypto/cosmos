@@ -8,8 +8,13 @@ interface Fx { cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; draw: Draw;
 const fxs = new Set<Fx>();
 const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 let running = false, last = 0;
+// 16.10 (Lighthouse: главный поток 10 с, блокировка 1,3 с): 30 кадров в секунду вместо 60 и старт после загрузки страницы.
+const FRAME_MS = 1000 / 30 - 2;
+let ready = typeof document === 'undefined' || document.readyState === 'complete';
+if (!ready) addEventListener('load', () => setTimeout(() => { ready = true; kick(); }, 300), { once: true });
 function loop(now: number) {
-  const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+  if (now - last < FRAME_MS) { requestAnimationFrame(loop); return; }
+  const dt = Math.min(0.05, (now - last) / 1000 || 0.033); last = now;
   let any = false;
   for (const f of fxs) {
     if (!f.cv.isConnected) { fxs.delete(f); continue; }
@@ -19,7 +24,7 @@ function loop(now: number) {
   }
   if (any && !reduce) requestAnimationFrame(loop); else running = false;
 }
-const kick = () => { if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); } };
+const kick = () => { if (!running && ready) { running = true; last = performance.now() - 40; requestAnimationFrame(loop); } };
 const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => {
   for (const e of es) for (const f of fxs) if (f.cv === e.target) f.on = e.isIntersecting;
   kick();
@@ -40,10 +45,23 @@ export function mountFx(cv: HTMLCanvasElement, stem: number) {
 }
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+// Свечение — из готового спрайта (радиальный градиент 64 px на цвет), а не новый градиент на каждый вызов:
+// дерево звало glow ~170 раз за кадр, кадр стоил ~13 мс (16.10, профиль). Вид тот же: линейный спад альфы к краю.
+const glowSprites = new Map<string, HTMLCanvasElement>();
+const glowSprite = (col: string) => {
+  let sp = glowSprites.get(col);
+  if (!sp) {
+    sp = document.createElement('canvas'); sp.width = sp.height = 64;
+    const g2 = sp.getContext('2d')!, g = g2.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, `rgba(${col},1)`); g.addColorStop(1, `rgba(${col},0)`);
+    g2.fillStyle = g; g2.fillRect(0, 0, 64, 64); glowSprites.set(col, sp);
+  }
+  return sp;
+};
 const glow = (c: CanvasRenderingContext2D, x: number, y: number, r: number, col: string, a = 1) => {
-  const g = c.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, `rgba(${col},${a})`); g.addColorStop(1, `rgba(${col},0)`);
-  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  if (r <= 0 || a <= 0) return;
+  const ga = c.globalAlpha; c.globalAlpha = ga * Math.min(1, a);
+  c.drawImage(glowSprite(col), x - r, y - r, r * 2, r * 2); c.globalAlpha = ga;
 };
 
 const DRAW: Draw[] = [];
@@ -63,25 +81,37 @@ DRAW[0] = (c, t, dt, s, st) => {
   const leaves: number[][] = [];
   c.globalCompositeOperation = 'lighter';
   glow(c, s / 2, s * 0.45, s * 0.5, '70,190,120', 0.16);
+  // Ветви одной глубины — один путь (толщина и цвет у глубины общие), листья — пачками по цвету, эллипс с поворотом без save/restore.
+  const segs: number[][] = [], hi: number[] = [];
   const draw = (b: Br, x: number, y: number, ang: number, d: number) => {
     const a = ang + b.a + Math.sin(t * 1.1 + b.ph) * 0.035 * d + Math.sin(t * 0.7) * 0.02 * d;
     const x2 = x + Math.cos(a) * b.l, y2 = y + Math.sin(a) * b.l;
-    c.globalCompositeOperation = 'source-over';
-    c.strokeStyle = d < 4 ? `rgb(${120 - d * 10},${86 - d * 6},${58 - d * 4})` : 'rgba(150,200,140,.8)';
-    c.lineWidth = Math.max(0.7, b.w); c.lineCap = 'round';
-    c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke();
-    if (d < 2) { c.strokeStyle = 'rgba(255,220,160,.35)'; c.lineWidth = b.w * 0.25; c.beginPath(); c.moveTo(x - b.w * 0.25, y); c.lineTo(x2 - b.w * 0.2, y2); c.stroke(); }
+    (segs[d] ??= []).push(x, y, x2, y2, b.w);
+    if (d < 2) hi.push(x - b.w * 0.25, y, x2 - b.w * 0.2, y2, b.w * 0.25);
     if (d >= 3) leaves.push([x2, y2, b.ph]);
     b.ch.forEach((ch) => draw(ch, x2, y2, a, d + 1));
   };
   draw(st.tree, s / 2, s * 0.94, -Math.PI / 2, 0);
-  c.globalCompositeOperation = 'lighter';
-  c.globalCompositeOperation = 'source-over';
+  c.globalCompositeOperation = 'source-over'; c.lineCap = 'round';
+  segs.forEach((sg, d) => {
+    c.strokeStyle = d < 4 ? `rgb(${120 - d * 10},${86 - d * 6},${58 - d * 4})` : 'rgba(150,200,140,.8)';
+    c.lineWidth = Math.max(0.7, sg[4]); c.beginPath();
+    for (let i = 0; i < sg.length; i += 5) { c.moveTo(sg[i], sg[i + 1]); c.lineTo(sg[i + 2], sg[i + 3]); }
+    c.stroke();
+  });
+  c.strokeStyle = 'rgba(255,220,160,.35)';
+  for (let i = 0; i < hi.length; i += 5) { c.lineWidth = hi[i + 4]; c.beginPath(); c.moveTo(hi[i], hi[i + 1]); c.lineTo(hi[i + 2], hi[i + 3]); c.stroke(); }
+  const groups = new Map<string, number[]>(), rx = s * 0.03, ry = s * 0.014;
   for (const [x, y, ph] of leaves) {
-    const tw = Math.sin(t * 2.2 + ph * 3);
-    c.save(); c.translate(x, y); c.rotate(ph * 2 + tw * 0.25);
-    c.fillStyle = `hsla(${120 + (ph * 37) % 40},${55 + (ph * 11) % 25}%,${38 + (ph * 17) % 22 + tw * 6}%,.9)`;
-    c.beginPath(); c.ellipse(0, 0, s * 0.03, s * 0.014, 0, 0, Math.PI * 2); c.fill(); c.restore();
+    const tw = Math.sin(t * 2.2 + ph * 3), rot = ph * 2 + tw * 0.25;
+    const key = `hsla(${120 + Math.round(((ph * 37) % 40) / 5) * 5},${55 + Math.round(((ph * 11) % 25) / 5) * 5}%,${Math.round(38 + (ph * 17) % 22 + tw * 6)}%,.9)`;
+    let g = groups.get(key); if (!g) groups.set(key, (g = []));
+    g.push(x, y, rot);
+  }
+  for (const [col, g] of groups) {
+    c.fillStyle = col; c.beginPath();
+    for (let i = 0; i < g.length; i += 3) { const r = g[i + 2]; c.moveTo(g[i] + Math.cos(r) * rx, g[i + 1] + Math.sin(r) * rx); c.ellipse(g[i], g[i + 1], rx, ry, r, 0, Math.PI * 2); }
+    c.fill();
   }
   c.globalCompositeOperation = 'lighter';
   for (const [x, y, ph] of leaves) if ((ph * 10 | 0) % 3 === 0) glow(c, x, y, s * 0.03, '160,255,180', 0.12 + 0.12 * Math.sin(t * 2 + ph * 5));

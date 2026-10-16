@@ -12,7 +12,7 @@ import type { Note } from './reading';
 export interface Sphere { key: string; title: string; lead: string; points: string[]; todo: string; notes: Note[]; how?: string }
 
 export type Role = 'yong' | 'xi' | 'ji' | 'neutral';
-export const PARTNER_TYPE: Record<string, string> = { ZC: 'надёжный, хозяйственный человек, с которым строится быт', PC: 'яркий, щедрый, подвижный человек — с ним интересно, но нужен общий план', ZG: 'надёжный, правильный, с репутацией — опора и порядок', QS: 'сильный, решительный, ведущий — рядом с ним растёшь, но важно не потерять себя' };
+export const PARTNER_TYPE: Record<string, string> = { ZC: 'надёжный, хозяйственный человек, с которым строится быт', PC: 'яркий, щедрый, подвижный человек — с ним интересно, но нужен общий план', ZG: 'надёжный, правильный, с репутацией — опора и порядок', QS: 'сильный, решительный, ведущий — рядом с ним вы растёте, если сохраняете своё' };
 export const role = (a: Analysis, e: El): Role =>
   a.brain.yong === e ? 'yong' : a.brain.xi.includes(e) ? 'xi' : a.brain.ji.includes(e) ? 'ji' : 'neutral';
 const ROLE_RU: Record<Role, string> = { yong: 'главная полезная стихия', xi: 'полезная стихия', ji: 'стихия-нагрузка', neutral: 'нейтральная стихия' };
