@@ -516,8 +516,10 @@ section.block.deep > details.more > section.block.folded { margin-top: 12px; }
 /* 08.10: на телефоне форма — на первом экране: колесо меньше */
 @media (max-width: 520px) {
   .hero { padding-top: 2vh; }
-  .orbit { width: min(260px, 68vw); --R: calc(min(260px, 68vw) * 0.44); margin: -6px auto 4px; }
-  .hero h1 { font-size: 30px; }
+  .orbit { display: none; } /* 16.10 (аудит): кнопка «Построить карту» — на первом экране телефона */
+  .hero h1 { font-size: 28px; }
+  .hero .lead { font-size: 15px; line-height: 1.45; margin-bottom: 12px; }
+  .hero .eyebrow { margin-bottom: 4px; }
 }
 .ex-note .card { border-color: var(--gold); }
 .ex-note .go { margin-top: 10px; }

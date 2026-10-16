@@ -198,7 +198,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
   const example = new URLSearchParams(location.search).has('ex');
-  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), secForecast(c, a), secRasklad(c, a), secCompat(), example ? '' : pushCta(),
+  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), example ? '' : pushCta(), secForecast(c, a), secRasklad(c, a), secCompat(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым, вопросы к карте.</p></summary>`,
     secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secAsk(), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
@@ -828,6 +828,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
 (() => {
   document.getElementById('f')!.insertAdjacentHTML('afterend', '<div class="saved" id="saved-top" hidden></div>');
   renderSaved();
+  track('bazi:view');
+  try { const r = document.referrer && new URL(document.referrer).hostname; if (r && r !== location.hostname) track(`bazi:ref:${r.replace(/^www\./, '').split('.').slice(-2, -1)[0] ?? r}`); } catch { /* no-op */ }
   let q = new URLSearchParams(location.search);
   const me = localStorage.getItem(ME_KEY);
   if (me) document.getElementById('melink')?.removeAttribute('hidden');
@@ -845,6 +847,9 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   sessionStorage.setItem('bazi-scrolled', '1');
   build({ date: d, time: t === '-' ? '12:00' : t, timeKnown: t !== '-', tz, lat: +lat, lon: +lon, male: g === 'm', place: name.join(',') });
   sessionStorage.removeItem('bazi-scrolled');
+  // 16.10 (аудит): ссылка с датой открывается сразу на разборе, а не на форме
+  if (!q.has('jy') && !location.hash) requestAnimationFrame(() => $('out').scrollIntoView({ block: 'start' }));
+  track('bazi:link');
 })();
 void [SEASON_STATE];
 
