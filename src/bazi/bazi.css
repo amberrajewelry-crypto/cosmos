@@ -2,7 +2,7 @@
   --bg: #07061a; --ink: #ece6d3; --ink-rgb: 236,230,211; --ink-2: rgba(236,230,211,.74); --ink-3: rgba(236,230,211,.5);
   --gold: #c9a85c; --gold-2: rgba(201,168,92,.35); --gold-3: rgba(201,168,92,.12);
   --card: linear-gradient(180deg, rgba(22,18,56,.78), rgba(10,8,30,.82));
-  --head: 'Cormorant Garamond', Georgia, serif; --sans: 'Manrope','Geist',system-ui,sans-serif; --mono: 'Geist Mono',ui-monospace,Menlo,monospace;
+  --head: 'Cormorant Garamond', Georgia, serif; --sans: 'Manrope','Manrope Fallback','Geist',system-ui,sans-serif; --mono: 'Geist Mono',ui-monospace,Menlo,monospace;
   --han: 'Han','Noto Serif SC','Songti SC','SimSun',serif;
   --wood: #5fc98a; --fire: #ef5a3c; --earth: #d6a64f; --metal: #dfe4ec; --water: #4f8ef0;
   --ease: cubic-bezier(.32,.72,0,1);
@@ -769,3 +769,5 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .about h2 { font-size: 20px; margin: 18px 0 8px; }
 .about h2:first-child { margin-top: 0; }
 .about p { color: var(--ink-3); line-height: 1.55; margin: 0 0 10px; }
+/* Разбор показан — справка для новичка не нужна и не прыгает вниз (CLS 0,91 → ~0) */
+#out:not([hidden]) ~ #about { display: none; }

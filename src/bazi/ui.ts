@@ -42,12 +42,14 @@ const qi = (() => {
   resize(); addEventListener('resize', resize);
   const N = innerWidth < 700 ? 140 : 280;
   ps = Array.from({ length: N }, spawn);
-  const frame = () => {
-    t += 0.0016;
-    ctx.fillStyle = 'rgba(7,6,26,0.12)'; ctx.fillRect(0, 0, W, H);
+  let lastQ = 0;
+  const frame = (now = 0) => {
+    if (now - lastQ < 31) { if (!reduce) requestAnimationFrame(frame); return; } // фон — 30 кадров в секунду
+    lastQ = now; t += 0.0032;
+    ctx.fillStyle = 'rgba(7,6,26,0.22)'; ctx.fillRect(0, 0, W, H);
     for (const p of ps) {
       const a = Math.sin(p.x * 0.0021 + t * 3) * 1.6 + Math.cos(p.y * 0.0027 - t * 2) * 1.6 + p.e * 1.2566;
-      p.x += Math.cos(a) * p.s; p.y += Math.sin(a) * p.s - 0.15; p.life--;
+      p.x += Math.cos(a) * p.s * 2; p.y += (Math.sin(a) * p.s - 0.15) * 2; p.life -= 2;
       if (p.life < 0 || p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) Object.assign(p, spawn());
       ctx.fillStyle = `rgba(${EL_RGB[p.e]},${0.12 + 0.22 * Math.sin(p.life * 0.02) ** 2})`;
       ctx.fillRect(p.x, p.y, 1.4, 1.4);
