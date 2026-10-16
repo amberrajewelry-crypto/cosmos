@@ -1,13 +1,21 @@
 // Приёмник обратной связи (§7): сообщение уходит в Telegram владельцу (трекер = чат),
 // при отсутствии токена — 503, клиент падает на mailto. IP не сохраняем.
 // 16.10: события сессии (kind=events) пишутся в Blob ev/<день>/<id>~<событие>~….json — без IP, даты рождения и cookies;
-// GET /api/fb?days=N — воронка по дням (сессии с каждым событием). В Telegram события идут, только если Blob недоступен.
+// GET /api/fb?days=N&key=… — воронка по дням (сессии с каждым событием). В Telegram события идут, только если Blob недоступен.
 import { put, list } from '@vercel/blob';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 const evKey = (k) => String(k).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30);
+// 16.10 (проверка безопасности): события — только объект из ≤25 счётчиков 1…500 и только со своего сайта.
+const okCounts = (c) => c && typeof c === 'object' && !Array.isArray(c) && Object.keys(c).length <= 25 &&
+  Object.values(c).every((v) => Number.isInteger(v) && v >= 1 && v <= 500);
+const okOrigin = (req) => { const o = String(req.headers?.origin ?? req.headers?.referer ?? '');
+  return /^https:\/\/(www\.)?astropro\.tech(\/|$)/.test(o) || /^https:\/\/cosmos-[a-z0-9-]+\.vercel\.app(\/|$)/.test(o) || /^http:\/\/localhost(:\d+)?(\/|$)/.test(o); };
+// Чтение воронки — по ключу, производному от токена Blob (отдельной переменной окружения не нужно).
+const readKey = () => createHash('sha256').update('fb-funnel:' + (process.env.BLOB_READ_WRITE_TOKEN ?? '')).digest('hex').slice(0, 24);
+const okKey = (k) => { const a = Buffer.from(String(k ?? '')), b = Buffer.from(readKey()); return a.length === b.length && timingSafeEqual(a, b); };
 async function storeEvents(fb) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return false;
-  const keys = [...new Set(Object.keys(fb.counts ?? {}).map(evKey).filter(Boolean))].slice(0, 25).sort();
+  const keys = [...new Set(Object.keys(fb.counts).map(evKey).filter(Boolean))].slice(0, 25).sort();
   if (!keys.length) return true;
   const day = new Date().toISOString().slice(0, 10);
   const path = `ev/${day}/${randomUUID().slice(0, 8)}~${keys.join('~')}.json`;
@@ -16,9 +24,11 @@ async function storeEvents(fb) {
 }
 async function funnel(days) {
   const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10), byDay = {}, total = { sessions: 0 };
+  // Только запрошенные дни (префикс ev/<день>/), не весь архив.
+  for (let i = 0; i < days; i++) { const day = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
   let cursor;
   do {
-    const r = await list({ prefix: 'ev/', cursor, limit: 1000 });
+    const r = await list({ prefix: `ev/${day}/`, cursor, limit: 1000 });
     for (const b of r.blobs) {
       const m = /^ev\/(\d{4}-\d{2}-\d{2})\/[^~]+~(.*)\.json$/.exec(b.pathname);
       if (!m || m[1] < since) continue;
@@ -28,6 +38,7 @@ async function funnel(days) {
     }
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
+  }
   return { days, total, byDay };
 }
 const KINDS = new Set(['wrong', 'clear', 'check', 'question', 'note', 'events']);
@@ -35,8 +46,9 @@ const MAX = 4000;
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     if (!process.env.BLOB_READ_WRITE_TOKEN) { res.status(503).json({ ok: false }); return; }
-    const days = Math.min(Math.max(parseInt(String(req.query?.days ?? '30'), 10) || 30, 1), 365);
-    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=300');
+    if (!okKey(req.query?.key)) { res.status(403).json({ ok: false }); return; }
+    const days = Math.min(Math.max(parseInt(String(req.query?.days ?? '30'), 10) || 30, 1), 90);
+    res.setHeader('Cache-Control', 'private, no-store');
     res.status(200).json(await funnel(days)); return;
   }
   if (req.method !== 'POST') { res.status(405).end(); return; }
@@ -44,6 +56,7 @@ export default async function handler(req, res) {
   if (raw.length > MAX) { res.status(413).end(); return; }
   let fb; try { fb = JSON.parse(raw); } catch { res.status(400).end(); return; }
   if (!fb || !KINDS.has(fb.kind)) { res.status(400).end(); return; }
+  if (fb.kind === 'events' && (!okCounts(fb.counts) || !okOrigin(req))) { res.status(400).end(); return; }
   if (fb.kind === 'events' && await storeEvents(fb)) { res.status(200).json({ ok: true }); return; }
   const token = process.env.TG_BOT_TOKEN, chat = process.env.TG_CHAT_ID;
   if (!token || !chat) { res.status(503).json({ ok: false }); return; }
