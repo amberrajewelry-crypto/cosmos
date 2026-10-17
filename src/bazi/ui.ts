@@ -93,6 +93,7 @@ const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme']);
 if (incomingRef()) track('bazi:ref:in'); // пришёл по чужой карточке
 // Приглашение «сравнить карты»: ?pair=<d,t,p,g пригласившего>. Держим до построения своей карты.
 { const pr = new URLSearchParams(location.search).get('pair'); if (pr) { try { sessionStorage.setItem('bazi-pair', pr); } catch { /* нет хранилища */ } track('bazi:pair:in'); } }
+let pairGeo: { label: string; lat: number; lon: number; tz: string } | null = null;
 const pairInvite = (): URLSearchParams | null => { try { const v = sessionStorage.getItem('bazi-pair'); const q = v ? new URLSearchParams(v) : null; return q?.get('d') ? q : null; } catch { return null; } };
 if (pairInvite() && !new URLSearchParams(location.search).get('d')) msg.textContent = 'Вас пригласили сравнить карты. Введите свои данные — пару покажем сразу.';
 document.addEventListener('click', (e) => {
@@ -638,7 +639,7 @@ function wireDays(c: Chart, a: Analysis) {
     const Y = baziYear(), yf = yearForecast(c, a, Y), txt = lay(yf.text);
     try {
       const r = await shareCard({ title: DM_TEXT[a.dm].title, year: Y, yearTone: toneRu(yf.tone), yearLine: txt.charAt(0).toUpperCase() + txt.slice(1) + '.', pts: lifeLine(c, a), nowYear: new Date().getFullYear(), color: EL_COLOR[STEMS[a.dm].el] });
-      track(`bazi:scard:${r}`); if (r === 'saved') sc.textContent = 'Картинка сохранена, ссылка скопирована';
+      track(`bazi:scard:${r}`); if (r === 'saved') sc.textContent = 'Картинка сохранена';
     } catch { /* закрыл окно «поделиться» */ }
   };
   const pinv = document.getElementById('pinv');
@@ -650,7 +651,7 @@ function wireDays(c: Chart, a: Analysis) {
   if (pi && cfx && chartQuery() !== pi.toString()) setTimeout(() => {
     const set = (id: string, v: string) => ((document.getElementById(id) as HTMLInputElement).value = v);
     const pp = (pi.get('p') || '').split(',');
-    set('cf-d', pi.get('d')!); set('cf-t', pi.get('t') && pi.get('t') !== '-' ? pi.get('t')! : ''); set('cf-p', pp.slice(3).join(',')); set('cf-g', pi.get('g') === 'm' ? 'm' : 'f');
+    set('cf-d', pi.get('d')!); set('cf-t', pi.get('t') && pi.get('t') !== '-' ? pi.get('t')! : ''); set('cf-p', pp.slice(3).join(',')); if (pp.length >= 4 && Number.isFinite(+pp[0]) && Number.isFinite(+pp[1])) pairGeo = { label: pp.slice(3).join(','), lat: +pp[0], lon: +pp[1], tz: pp[2] }; set('cf-g', pi.get('g') === 'm' ? 'm' : 'f');
     try { sessionStorage.removeItem('bazi-pair'); } catch { /* нет хранилища */ }
     const det = document.querySelector<HTMLDetailsElement>('#s-compat details.fold'); if (det) det.open = true;
     cfx.requestSubmit(); track('bazi:pair:build');
@@ -662,7 +663,7 @@ function wireDays(c: Chart, a: Analysis) {
   if (cf) cf.onsubmit = async (e) => {
     e.preventDefault();
     const o = document.getElementById('cf-out')!, val = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
-    const q = val('cf-p').trim(), pl = q ? (await findPlaces(q, 1))[0] : null;
+    const q = val('cf-p').trim(), pl = q ? (pairGeo && q === pairGeo.label ? pairGeo : (await findPlaces(q, 1))[0]) : null;
     if (q && !pl) { o.textContent = 'Не нашёл такой город — уточните название.'; return; }
     const inp: BirthInput = { date: val('cf-d'), time: val('cf-t') || '12:00', timeKnown: !!val('cf-t'), tz: pl?.tz ?? c.input.tz, lat: pl?.lat ?? c.input.lat, lon: pl?.lon ?? c.input.lon, male: val('cf-g') === 'm' };
     const c2 = computeChart(inp, DEFAULT_VARIANT), r = compat(c, a, c2, analyze(c2));
