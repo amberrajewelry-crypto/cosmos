@@ -9,7 +9,7 @@ import { parseSpokenBirth, matchSpokenPlace } from '../ui/voice-parse';
 import { ask } from '../live/ask';
 import { track, sendFeedback } from '../live/feedback';
 import {
-  STEMS, BRANCHES, EL, EL_RGB, EL_COLOR, GODS, godOf, hiddenOf, stageOf, STAGES, nayinOf, TERMS, SEASON_STATE, type El,
+  STEMS, BRANCHES, EL, EL_RGB, EL_COLOR, GODS, godOf, senseFor, yearsRu, hiddenOf, stageOf, STAGES, nayinOf, TERMS, SEASON_STATE, type El,
 } from './core';
 import {
   computeChart, analyze, allVariants, DEFAULT_VARIANT, POS_RU, POS_SENSE, yearIdx,
@@ -383,22 +383,21 @@ function wheel(a: Analysis) {
 
 function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[]) {
   const bars = [0, 1, 2, 3, 4].map((e) => `<div class="bar" style="--rgb:${rgb(e)}"><div>${EL[e]}<small>${SEASON_STATE[seasonStateOf(e, a.monthEl)]}</small></div><div class="track"><div class="fill" data-w="${Math.round(a.pct[e] * 100)}%"></div></div><div class="v">${AMOUNT(a.pct[e])}</div></div>`).join('');
-  const rs = charts.map((x) => x.a.ratio), lo = Math.min(...rs), hi = Math.max(...rs);
+  const gpos = (x: Analysis) => Math.min(0.97, Math.max(0.03, ((x.brain?.power.score ?? (x.ratio - 0.5) * 20) + 9) / 18));
+  const rs = charts.map((x) => gpos(x.a)), lo = Math.min(...rs), hi = Math.max(...rs);
   const chip = (e: El) => `<span class="chip" style="--rgb:${rgb(e)}">${elIcon(e, EL_COLOR[e], 18)}${EL[e]}</span>`;
-  const methods = a.useful.map((u) => `<div><b>${u.method}:</b> ${u.why}. Полезно — ${(u.fav.filter((e) => !a.avoid.includes(e)).length ? u.fav.filter((e) => !a.avoid.includes(e)) : u.fav).map((e) => EL[e]).join(', ')}.</div>`).join('');
   void c;
   return `<section class="block"><div class="bhead"><div><h2>Пять стихий</h2></div>${evTag('yong', yongExtra(a))}
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
       <div class="gauge"><h3>Ваша сила: ${a.strength}</h3>
-        <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${a.ratio * 100}%"></div></div>
+        <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${gpos(a) * 100}%"></div></div>
         <div class="lbl"><span>слабый</span><span>баланс</span><span>сильный</span></div>
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
       <h3 style="margin-top:22px">Полезные стихии</h3><div class="chips">${a.consensus.map(chip).join('')}</div>
       ${a.avoid.length ? `<p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">Нагрузка: ${a.avoid.map((e) => EL[e]).join(', ')}</p>` : ''}
       ${((k) => `<p class="conf ${k.dispute ? 'low' : 'mid'}"><b>На чём держится вывод: ${k.dispute ? 'классика, есть спорное место' : 'классика, школы согласны'}.</b> ${esc(raskladNote(a))}${current && loadPast(current.input).apply ? ' Полезные стихии здесь подобраны по вашим прошлым годам — проверено на вашей жизни, но на небольшом числе событий.' : ' Уточнить под себя — блок «Сверка с вашей жизнью» ниже.'}</p>`)(bookBasis(a))}
-      <div class="methods">${methods}</div>
     </div></div></section>`;
 }
 function seasonStateOf(e: number, m: number) { return e === m ? 0 : (m + 1) % 5 === e ? 1 : (e + 1) % 5 === m ? 2 : (e + 2) % 5 === m ? 3 : 4; }
@@ -431,7 +430,7 @@ function secSeason(c: Chart) {
     <div class="card pane"><div class="facts">
       <div><span>Сезон рождения</span><b>${TERMS[c.termIdx]}</b></div>
       <div><span>Время по солнцу в месте рождения</span><b>${pad(L.h)}:${pad(L.min)}</b></div>
-      <div><span>Такты удачи начинаются</span><b>примерно в ${Math.max(1, Math.round(c.startAge))} ${Math.max(1, Math.round(c.startAge)) % 10 === 1 && Math.max(1, Math.round(c.startAge)) !== 11 ? 'год' : 'лет'}</b></div>
+      <div><span>Такты удачи начинаются</span><b>примерно с ${Math.max(1, Math.round(c.startAge))} ${Math.max(1, Math.round(c.startAge)) % 10 === 1 && Math.max(1, Math.round(c.startAge)) % 100 !== 11 ? 'года' : 'лет'}</b></div>
     </div></div></div></section>`;
 }
 
@@ -440,7 +439,7 @@ function secLuck(c: Chart, a: Analysis) {
   const cur = c.luck.findIndex((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
   const cards = c.luck.map((l, i) => {
     const r = luckR(c, a, l.idx), s = STEMS[l.idx % 10], b = BRANCHES[l.idx % 12];
-    return `<button class="lk ${r.tone}${i === cur ? ' now sel' : ''}" data-i="${i}">${thumb(l.idx % 12, 64)}<span class="lk-el">${elIcon(s.el, EL_COLOR[s.el], 16)}<b style="color:${EL_COLOR[s.el]}">${s.ru}</b></span><small>${b.animal}</small><div class="age">${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет</div><small>${l.year}–${l.year + 9}</small></button>`;
+    return `<button class="lk ${r.tone}${i === cur ? ' now sel' : ''}" data-i="${i}">${thumb(l.idx % 12, 64)}<span class="lk-el">${elIcon(s.el, EL_COLOR[s.el], 16)}<b style="color:${EL_COLOR[s.el]}">${s.ru}</b></span><small>${b.animal}</small><div class="age">${Math.floor(l.age)}–${Math.floor(l.age) + 9} ${yearsRu(Math.floor(l.age) + 9)}</div><small>${l.year}–${l.year + 9}</small></button>`;
   }).join('');
   const yrs = Array.from({ length: 10 }, (_, k) => nowY - 1 + k).map((y) => {
     const i = yearIdx(y), r = luckR(c, a, i), s = STEMS[i % 10], b = BRANCHES[i % 12];
@@ -461,24 +460,29 @@ const ucFirst = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 const lcFirst = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
 const hitsTxt = (h: string[]) => (h.length ? ' ' + esc(lay(ucFirst(h.join('; ')))) + '.' : '');
 
+/** Почему у месяца такой итог: всё после первой фразы (перевес, связь с картой), простыми словами. */
+const monthWhy = (t: string) => { const r = lay(t.split('. ').slice(1).join('. ')); return r ? `<p class="fm-r">${esc(ucFirst(r))}.</p>` : ''; };
+
 function secForecast(c: Chart, a: Analysis) {
   const Y = baziYear(), y = yearForecast(c, a, Y), dec = decade(c, a, Y);
   const dt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p><p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p>${monthWhy(m.text)}<p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
   // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
   const yHtml = dec.map((d) => {
-    const det = d.detail.filter((x) => !d.hits.some((h) => x.toLowerCase().includes(h)));
+    const low = d.text.toLowerCase(), hits = d.hits.filter((h) => !low.includes(h.toLowerCase()));
+    const det = d.detail.filter((x) => !d.hits.some((h) => x.toLowerCase().includes(h)) && !(/встряска/i.test(x) && /встряска|удар по столпу/.test(low)));
+    const detTxt = lay(det.join(' '));
     return `<li class="fy ${d.tone}"><b>${d.year}</b> <span>${pill(d.idx)}</span> <span class="fm-t">${toneRu(d.tone)}</span>: ${esc(lcFirst(d.why))}; ${esc(lay(d.text))}.
-    <details><summary>Подробнее</summary><small>Чем заняться — ${esc(lay(d.act))}.${hitsTxt(d.hits)} ${esc(lay(det.join(' ')))}</small></details></li>`;
+    <details><summary>Подробнее</summary><small>Чем заняться: ${esc(lay(d.act))}.${hitsTxt(hits)}${detTxt ? ` ${esc(detTxt)}.` : ''}</small></details></li>`;
   });
   const years = `<ul class="list fy-list">${yHtml.slice(0, 3).join('')}</ul><details class="more-in"><summary>Остальные ${yHtml.length - 3} лет</summary><ul class="list fy-list">${yHtml.slice(3).join('')}</ul></details>`;
   return `<section class="block"><div class="bhead"><div><h2>Ваш год и десятилетие</h2></div>${evTag('periods')}<p>Год по китайскому календарю начинается около 4 февраля. Для каждого месяца и года — насколько он вам благоприятен и чем лучше заняться.</p></div>
-    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года — ${esc(lay(y.act))}.${hitsTxt(y.hits)}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
+    <div class="card pane"><h3>${Y} · ${pill(y.idx)} — ${toneRu(y.tone)}</h3><p>${esc(lay(y.text[0].toUpperCase() + y.text.slice(1)))}. Главное дело года: ${esc(lay(y.act))}.${hitsTxt(y.hits)}${y.luck ? ` Десятилетие с ${y.luck.from} года — ${toneRu(y.luck.tone)}: оно задаёт общий фон, год — погода внутри него.` : ''}</p>
       ${months}</div>
     <div class="card pane" style="margin-top:22px"><h3>Десять лет по годам</h3>${years}</div></section>`;
 }
@@ -545,7 +549,7 @@ async function wirePush() {
 function secRazbor(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], t = DM_TEXT[a.dm], gp = godProfile(a);
   const inter = a.interactions.map((i) => `<li class="${i.tone === 'harm' ? 'harm' : ''}"><b>${esc(i.label)}</b> — ${POS_RU[i.a]}${i.b ? ' и ' + POS_RU[i.b].toLowerCase() : ''}${i.c ? ' и ' + POS_RU[i.c].toLowerCase() : ''}: ${INTER_SENSE[i.kind]}</li>`).join('');
-  const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => `<li><b>${GODS[k].ru}</b> — ${GODS[k].sense}</li>`).join('');
+  const godsList = Object.entries(a.gods).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => `<li><b>${GODS[k].ru}</b> — ${senseFor(k, c.input.male)}</li>`).join('');
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
@@ -850,7 +854,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   document.querySelectorAll<HTMLButtonElement>('.lk').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.lk.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
     const l = c.luck[+b.dataset.i!], r = luckR(c, a, l.idx);
-    lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} лет.</b> ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
+    lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} ${yearsRu(Math.floor(l.age) + 9)}.</b> ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
   }));
   document.querySelectorAll<HTMLButtonElement>('.vt button[data-v]').forEach((b) => (b.onclick = () => {
     sessionStorage.setItem('bazi-scrolled', '1');

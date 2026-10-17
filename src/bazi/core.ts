@@ -62,6 +62,14 @@ export const GODS: Record<string, God> = {
   PY: { key: 'PY', zh: '偏印', ru: 'Косвенный ресурс', short: 'Интуиция', group: 'Ресурс', sense: 'нестандартное знание, мистика, одиночество, изобретение' },
   ZY: { key: 'ZY', zh: '正印', ru: 'Прямой ресурс', short: 'Покровитель', group: 'Ресурс', sense: 'учёба, мать, покровительство, документы, забота' },
 };
+/** Смысл бога без чужого пола: «для мужчины — жена» женщине не показываем, и наоборот; пол неизвестен — без обоих. */
+export function senseFor(key: string, male?: boolean): string {
+  const s = GODS[key].sense;
+  const re = male === undefined ? /,\s*для (мужчины|женщины) — [^,]+/g : male ? /,\s*для женщины — [^,]+/g : /,\s*для мужчины — [^,]+/g;
+  return s.replace(re, '');
+}
+/** 1 год, 2 года, 5 лет, 11 лет, 21 год. */
+export const yearsRu = (n: number) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 15 ? 'лет' : b === 1 ? 'год' : b >= 2 && b <= 4 ? 'года' : 'лет'; };
 export function godOf(dm: number, s: number): God {
   const d = STEMS[dm], o = STEMS[s];
   const rel = (o.el - d.el + 5) % 5, same = d.yang === o.yang;

@@ -1,5 +1,5 @@
 // Толкования — традиция (Ди тянь суй, Цюн тун бао цзянь, Цзы пин чжэнь цюань), своими словами.
-import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, type El } from './core';
+import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, senseFor, type El } from './core';
 import type { Analysis, Chart } from './calc';
 
 export const DM_TEXT: { title: string; core: string; gift: string; shadow: string; way: string }[] = [
@@ -50,7 +50,7 @@ export function luckReading(a: Analysis, idx: number, toneIn?: 'good' | 'bad' | 
   const score = (e: El) => (a.consensus.includes(e) ? 1 : a.avoid.includes(e) ? -1 : 0);
   const sc = score(es) + score(eb);
   const t4 = toneIn ?? (sc > 0 ? 'good' : sc < 0 ? 'bad' : 'mixed'), tone = t4 === 'calm' ? 'mixed' : t4;
-  const t = `Ствол: ${EL[es]} — «${gs.ru}» (${gs.sense}). Ветвь: ${BRANCHES[b].animal}, ${EL[eb]} — «${gb.ru}».`;
+  const t = `Ствол: ${EL[es]} — «${gs.ru}» (${senseFor(gs.key)}). Ветвь: ${BRANCHES[b].animal}, ${EL[eb]} — «${gb.ru}».`;
   return { tone, text: t + (tone === 'good' ? ' Приходит полезная стихия — время действовать.' : tone === 'bad' ? ' Приходит стихия-нагрузка — время укреплять базу, а не рисковать.' : t4 === 'calm' ? ' Спокойный фон: ни сильной помощи, ни нагрузки — многое решают ваши шаги.' : ' Смешанный фон: успех зависит от выбора направления.') };
 }
 

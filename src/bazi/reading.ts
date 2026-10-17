@@ -74,6 +74,9 @@ export function natureNote(a: Analysis): Note {
 }
 
 /** Сила: сезон (旺相休囚死) + корни + что давит и что поэтому нужно (ДТС 衰旺). */
+/** Сила по шкале мозга (как и подпись «сильный/слабый»), а не сырой ratio calc.ts. */
+const pw = (a: Analysis) => a.brain?.power.score ?? Math.round((a.ratio - 0.5) * 20);
+
 export function strengthNote(c: Chart, a: Analysis): Note {
   const month = pillars(c).find((p) => p.pos === 'month')!;
   const ss = seasonState(a.dmEl, BRANCHES[month.branch].el);
@@ -84,7 +87,7 @@ export function strengthNote(c: Chart, a: Analysis): Note {
     : 'корней в ветвях нет';
   const wealth = a.scores[(a.dmEl + 2) % 5], officer = a.scores[(a.dmEl + 3) % 5], out = a.scores[(a.dmEl + 1) % 5];
   let need: string;
-  if (a.ratio < 0.5) {
+  if (pw(a) <= -1) {
     const top = Math.max(wealth, officer, out);
     need = top === wealth ? 'давит Богатство — по Жэню нужны «друзья» (своя стихия), а не Печать: Печать Богатство разобьёт'
       : top === officer ? 'давит Чиновник/Убийство — нужна Печать: она переводит давление в поддержку'
@@ -98,7 +101,7 @@ export function strengthNote(c: Chart, a: Analysis): Note {
     text: `Сезон рождения: ${EL[a.dmEl]} — «${SEASON_STATE[ss].toLowerCase()}». Корни: ${rootTxt}. Стволов своей стихии рядом: ${friends}. `
       + `Корень весит больше сезона и стволов. Вывод: ${need}.`,
     quote: '干多不如根重', src: 'СМ т.2 (旺相休囚死); ЦПЦЦ гл.3, гл.6; ДТС 衰旺',
-    tone: a.ratio < 0.35 || a.ratio > 0.75 ? 'mixed' : 'good',
+    tone: pw(a) <= -3 || pw(a) >= 6 ? 'mixed' : 'good',
   };
 }
 
@@ -153,18 +156,18 @@ export function comboNotes(c: Chart, a: Analysis): Note[] {
   }
   if (has('PY') && has('SS')) out.push({ title: 'Сова отнимает еду', quote: '食神逢梟', src: 'ЮХ; СМ т.5', tone: has('PC', 'ZC') ? 'mixed' : 'bad',
     text: `Нестандартное знание глушит естественный талант и доход от него.${has('PC', 'ZC') ? ' Богатство в стволах обуздывает Сову — по СМ т.5 «не судить сразу как беду».' : ' Выправляет Богатство — смотреть такты с ним.'}` });
-  if (grp('Богатство') / tot > 0.35 && a.ratio < 0.5) out.push({ title: 'Богатства много, хозяин слаб', quote: '财多身弱，正为富屋贫人', src: 'ЮХ; СМ т.5; ДТС 衰旺', tone: 'bad',
+  if (grp('Богатство') / tot > 0.35 && pw(a) <= -1) out.push({ title: 'Богатства много, хозяин слаб', quote: '财多身弱，正为富屋贫人', src: 'ЮХ; СМ т.5; ДТС 衰旺', tone: 'bad',
     text: 'Возможностей больше, чем сил их удержать — «богатый дом, бедный хозяин». Помогают партнёры и своя опора (такты своей стихии), а не новая учёба.' });
-  if (has('SS') && has('QS')) out.push({ title: 'Бог еды обуздывает Убийство', quote: '身强七煞逢制', src: 'ЦПЦЦ гл.8–9; СМ т.11', tone: a.ratio >= 0.4 ? 'good' : 'mixed',
-    text: `Давление превращается в достижение через мастерство.${a.ratio >= 0.4 ? ' Сила хозяина позволяет — это одна из сильнейших формул.' : ' Но хозяин слаб: «煞重身輕終身有損» — нужна опора.'}` });
+  if (has('SS') && has('QS')) out.push({ title: 'Бог еды обуздывает Убийство', quote: '身强七煞逢制', src: 'ЦПЦЦ гл.8–9; СМ т.11', tone: pw(a) > -3 ? 'good' : 'mixed',
+    text: `Давление превращается в достижение через мастерство.${pw(a) > -3 ? ' Сила хозяина позволяет — это одна из сильнейших формул.' : ' Но хозяин слаб: «煞重身輕終身有損» — нужна опора.'}` });
   if (has('ZG', 'QS') && has('ZY', 'PY')) out.push({ title: 'Чиновник и Печать питают друг друга', quote: '官印雙全', src: 'ЦПЦЦ гл.9; ЮХ «有官无印，即非真官»', tone: 'good',
     text: 'Статус рождает покровительство и знание, знание держит статус: карьера через систему, образование, документы.' });
   if (has('ZG') && has('QS')) out.push({ title: 'Чиновник и Убийство вперемешку', quote: '取清則貴', src: 'ЦПЦЦ, 正官格/七煞格; СМ т.5', tone: 'mixed',
     text: 'Два начальника — порядок и давление тянут в разные стороны. Ценность приходит, когда одного убирает Бог еды/Ранящий или союз.' });
   if (has('PC', 'ZC') && has('ZY', 'PY') && grp('Ресурс') < grp('Богатство')) out.push({ title: 'Жадность к Богатству разбивает Печать', quote: '印輕逢財', src: 'ЦПЦЦ гл.9, 印格', tone: 'bad',
     text: 'Погоня за деньгами съедает учёбу, здоровье, поддержку. При избытке Печати то же сочетание полезно — здесь Печать легче.' });
-  if (has('SG', 'SS') && has('PC', 'ZC')) out.push({ title: 'Талант рождает деньги', quote: '伤官用财者富', src: 'ЮХ, 论十神; ЦПЦЦ гл.8', tone: a.ratio >= 0.4 ? 'good' : 'mixed',
-    text: `Выражение (продукт, речь, ремесло) прямо переходит в доход.${a.ratio < 0.4 ? ' Хозяину нужна опора, иначе цепочка «отдал — получил» утомляет.' : ''}` });
+  if (has('SG', 'SS') && has('PC', 'ZC')) out.push({ title: 'Талант рождает деньги', quote: '伤官用财者富', src: 'ЮХ, 论十神; ЦПЦЦ гл.8', tone: pw(a) > -3 ? 'good' : 'mixed',
+    text: `Выражение (продукт, речь, ремесло) прямо переходит в доход.${pw(a) <= -3 ? ' Хозяину нужна опора, иначе цепочка «отдал — получил» утомляет.' : ''}` });
   if (has('SG') && has('ZY', 'PY')) out.push({ title: 'Ранящий в узде Печати', quote: '傷官佩印', src: 'ЦПЦЦ гл.8, гл.14', tone: 'good',
     text: 'Резкий талант дисциплинирован знанием: эксперт, преподаватель, автор. «用之夏木，其秀百倍».' });
   if (STEMS[a.dm].yang && has('QS') && pillars(c).some((p) => stageOf(a.dm, p.branch) === 4)) out.push({ title: 'Клинок и Убийство', quote: '刃無煞不威，煞無刃不顯', src: 'СМ т.5; ЮХ', tone: 'good',
@@ -210,7 +213,7 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   if (idx === day.idx) out.push('Период повторяет ваш знак дня — застой и возврат старых тем.');
   const month2 = pillars(c).find((p) => p.pos === 'month')!;
   const need = [...TIAOHOU[a.dm][month2.branch]].map((z) => SZ.indexOf(z));
-  if (need.includes(s)) out.push('Приходит стихия, которой карте не хватает для равновесия.');
+  if (need.includes(s)) out.push('Приходит стихия, нужная карте «по погоде», — она смягчает период.');
   if (BRANCHES[month2.branch].hidden[0] === s && STEMS[s].el !== a.dmEl) out.push(`Проявляется главная тема карты — «${godOf(a.dm, s).ru}».`);
   if ((s + 5) % 10 === a.dm) out.push(`Период в союзе с вами — «${godOf(a.dm, s).ru}» притягивается к вам.`);
   return out;

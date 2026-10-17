@@ -128,8 +128,8 @@ function career(c: Chart, a: Analysis, now: number): Sphere {
     const g = godOf(a.dm, L.idx % 10), v = periodVerdict(a.brain, L.idx, c);
     points.push(`Сейчас идёт десятилетие ${span(L.year)}: для дела это время — ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'благоприятный' : v.tone === 'bad' ? 'с нагрузкой: время укреплять базу' : 'смешанный'}.`);
   }
-  const best = c.luck.filter((l) => l.year + 9 >= now && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
-  if (best.length) points.push(`По расчёту самые благоприятные десятилетия для рывка: ${best.slice(0, 3).join(', ')}.`);
+  const best = c.luck.filter((l) => l.year + 9 >= now && l.age < 65 && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
+  if (best.length) points.push(`По расчёту благоприятные десятилетия для рывка в рабочем возрасте: ${best.slice(0, 3).join(', ')}.`);
   if (outStrong) points.push(`Выражение (${EL[r.out]}) сильно — ${pc(a.pct[r.out])}: талант просится наружу, ему нужен продукт, сцена, ученики.`);
   return {
     key: 'career', title: 'Призвание и работа',

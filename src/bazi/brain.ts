@@ -221,15 +221,19 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
     for (const p of order) {
       const pair = COMBO.find(([x, y]) => (x === st && y === p.stem) || (y === st && x === p.stem));
       if (!pair) continue;
-      if (p.pos === 'day') { bond = ' Период в союзе с вами — сам по себе не вред'; break; }
+      if (p.pos === 'day') { bond = ' Период тянется к вам — сам по себе не вред'; break; }
       // На собственном сильном корне (禄/刃/长生) ствол не превращается, только связан (ЦПЦЦ гл.5 «合而不化»).
       if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты и превращается: работает как ${EL[pair[2]]}`; }
-      else { k = 0.5; bond = ' Часть силы периода уходит в союз с вашей картой — действует вполсилы'; }
+      else { k = 0.5; bond = ' Часть силы периода связана вашей картой — действует вполсилы'; }
       break;
     }
   }
   let s = v(se) * k, r = v(be);
-  if ((se + 2) % 5 === be) s *= 1.5; else if ((be + 2) % 5 === se) r *= 1.5;
+  // Верх бьёт низ (или наоборот) — вес бьющего больше; в тексте сказать, иначе одинаковые метки стихий дают разный итог без причины.
+  const ACC = ['дерево', 'огонь', 'землю', 'металл', 'воду'];
+  let hit = '', hv = 0;
+  if ((se + 2) % 5 === be) { s *= 1.5; hv = s; hit = ` ${EL[se]} давит на ${ACC[be]}`; }
+  else if ((be + 2) % 5 === se) { r *= 1.5; hv = r; hit = ` ${EL[be]} давит на ${ACC[se]}`; }
   let extra = '', s0 = s, r0 = r;
   if (c) {
     const day = c.pillars.find((p) => p.pos === 'day')!, month = c.pillars.find((p) => p.pos === 'month')!;
@@ -254,12 +258,13 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
   // Текст — по стихиям периода (до штрафа за 天克地冲), тон — с ним: иначе «одна стихия — нагрузка» при нейтральной стихии.
   const t = s + r, one = se === be, byEl = verdictOf(s0, r0, s0 + r0, one), fin = verdictOf(s, r, t, one);
   const res0 = { tone: fin.tone, text: byEl.text + (fin.tone !== byEl.tone ? ', но удар по столпу дня перевешивает' : '') };
-  return { tone: res0.tone, text: res0.text + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') + (extra ? '.' + extra : ''), set, se, swung };
+  const hitTxt = hit && k === 1 && s0 * r0 < 0 && Math.sign(s0 + r0) === Math.sign(hv) ? `.${hit} — поэтому ${hv > 0 ? 'польза' : 'нагрузка'} сильнее` : '';
+  return { tone: res0.tone, text: res0.text + hitTxt + (bond ? '.' + bond : '') + (swing ? '.' + swing : '') + (extra ? '.' + extra : ''), set, se, swung };
 }
 
 function verdictOf(s: number, r: number, t: number, one = false): { tone: 'good' | 'bad' | 'mixed' | 'calm'; text: string } {
   if (s > 0 && r > 0) return { tone: 'good', text: one ? 'стихия периода вам полезна — по расчёту он хорош целиком' : 'обе стихии периода вам полезны — по расчёту он хорош целиком' };
   if (s < 0 && r < 0) return { tone: 'bad', text: one ? 'стихия периода — нагрузка, по расчёту он тяжёлый целиком' : 'обе стихии периода — нагрузка, по расчёту он тяжёлый целиком' };
-  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одна стихия полезна, другая — нагрузка; перевешивает ${(Math.abs(s) > Math.abs(r)) === (s > 0) ? 'польза' : 'нагрузка'}` };
+  if (s * r < 0) return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'mixed', text: `одна стихия полезна, другая — нагрузка; ${Math.abs(Math.abs(s) - Math.abs(r)) < 1e-9 ? 'они уравновешивают друг друга' : `перевешивает ${(Math.abs(s) > Math.abs(r)) === (s > 0) ? 'польза' : 'нагрузка'}`}` };
   return { tone: t > 0 ? 'good' : t < 0 ? 'bad' : 'calm', text: t > 0 ? 'полезное без вредного — умеренно хорошо' : t < 0 ? 'вредное без полезного — умеренно тяжело' : 'ни заметной помощи, ни нагрузки' };
 }

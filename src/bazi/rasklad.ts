@@ -1,7 +1,7 @@
 // «Расклад по 7 вопросам» — то, что обещает обычная консультация (кто ты и 4 животных, предназначение, стратегия,
 // есть ли деньги и где, чем зарабатывать, какой партнёр, какой сейчас период), но каждый ответ — из расчёта карты,
 // с пометкой, на чём он держится и насколько проверен (confidence.ts — HOLDOUT мастеров; портрет — слепой тест, KB 18 §8).
-import { STEMS, BRANCHES, EL, GODS, type El } from './core';
+import { STEMS, BRANCHES, EL, senseFor, type El } from './core';
 import type { Analysis, Chart } from './calc';
 import { describe } from './describe';
 import { axisNote } from './reading';
@@ -56,10 +56,10 @@ export function rasklad(c: Chart, a: Analysis, now = new Date()): Answer[] {
     a: [dm.image.includes(EL[dm.el].toLowerCase()) ? `Ваша стихия — ${dm.image}.` : `Ваша стихия — ${EL[dm.el].toLowerCase()}, ваш образ — ${dm.image}.`, `Животные: ${animals.join('; ')}.`, d.lines[0]] });
 
   // 2. Предназначение: тема месяца (格) + куда уходит сила (полезный бог)
-  const ax = axisNote(c, a), g = GODS[ax.godKey];
+  const ax = axisNote(c, a);
   const yongGroup = GROUP_BY_REL[(a.brain.yong - a.dmEl + 5) % 5];
   out.push({ q: 'Ваше предназначение', basis: `тема — точный расчёт; направление — ${yongNote}`,
-    a: [ax.godKey === 'BJ' || ax.godKey === 'JC' ? 'По традиции главная тема — стоять на своём и вести своё: опора внутри вас, направление задаёте вы сами.' : `Тема, которую традиция считает главной для такой карты: ${g.sense}.`,
+    a: [ax.godKey === 'BJ' || ax.godKey === 'JC' ? 'По традиции главная тема — стоять на своём и вести своё: опора внутри вас, направление задаёте вы сами.' : `Тема, которую традиция считает главной для такой карты: ${senseFor(ax.godKey, c.input.male)}.`,
       `Сила раскрывается через ${PATH[(a.brain.yong - a.dmEl + 5) % 5]} (ваша стихия-помощник — ${EL_ACC[a.brain.yong].replace('землю', 'земля').replace('воду', 'вода')}).`] });
 
   // 3. Стратегия
