@@ -1,6 +1,7 @@
 // Живые стихии: 10 стволов = 10 процедурных анимаций на canvas.
 // Огонь горит (частицы пламени и искры), вода течёт, дерево растёт и качается, металл блестит, земля дышит туманом.
-import { whenAnim } from './anim-gate';
+import { whenAnim, frameCost, animSlow } from './anim-gate';
+const cost = frameCost();
 // Один общий цикл requestAnimationFrame; анимация идёт только пока холст виден.
 
 type Draw = (ctx: CanvasRenderingContext2D, t: number, dt: number, s: number, st: any) => void;
@@ -16,16 +17,18 @@ whenAnim(() => { ready = true; kick(); });
 function loop(now: number) {
   if (now - last < FRAME_MS) { requestAnimationFrame(loop); return; }
   const dt = Math.min(0.05, (now - last) / 1000 || 0.033); last = now;
-  let any = false;
+  let any = false; const T0 = performance.now();
   for (const f of fxs) {
     if (!f.cv.isConnected) { fxs.delete(f); continue; }
     if (!f.on) continue;
     any = true;
     f.ctx.save(); f.draw(f.ctx, now / 1000, dt, f.s, f.st); f.ctx.restore();
   }
+  // кадр стихий дороже 8 мс в среднем — слабое устройство: остаёмся на неподвижном кадре
+  if (any && cost(performance.now() - T0, 8)) { running = false; return; }
   if (any && !reduce) requestAnimationFrame(loop); else running = false;
 }
-const kick = () => { if (!running && ready) { running = true; last = performance.now() - 40; requestAnimationFrame(loop); } };
+const kick = () => { if (animSlow()) return; if (!running && ready) { running = true; last = performance.now() - 40; requestAnimationFrame(loop); } };
 const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => {
   // холст нулевого размера (скрытая мандала) IntersectionObserver считает «видимым» — такие не рисуем
   for (const e of es) for (const f of fxs) if (f.cv === e.target) f.on = e.isIntersecting && e.boundingClientRect.width > 0;

@@ -20,7 +20,7 @@ import { daysFrom, type DayInfo, dayInfo } from './days';
 import { lifeLine } from './lifeline';
 import { shareCard, incomingRef, cameByRef, myRef } from './sharecard';
 import { $, esc, rgb, lbl, ANIMAL, animalSm, lay, luckR, ME_KEY } from './ui-kit';
-import { whenAnim } from './anim-gate';
+import { whenAnim, frameCost, animSlow } from './anim-gate';
 import { secRasklad, secTrait, secWho, secPillars, drawLinks, secElements, secSeason, luckWhen, secLuck, noteHtml, secForecast, secSpheres, pushCta, secRazbor, secCompat, secPro, secFeedback, secHonest } from './ui-sections';
 import { dayCard, dayMore, dLabel, secDays, WP_SHORTCUT } from './ui-days';
 // ——— Фон: поток ци ———
@@ -36,10 +36,11 @@ const qi = (() => {
   resize(); addEventListener('resize', resize);
   const N = innerWidth < 700 ? 140 : 280;
   ps = Array.from({ length: N }, spawn);
-  let lastQ = 0;
+  let lastQ = 0; const qiCost = frameCost();
   const frame = (now = 0) => {
     if (now - lastQ < 31) { if (!reduce) requestAnimationFrame(frame); return; } // фон — 30 кадров в секунду
-    lastQ = now; t += 0.0032;
+    if (animSlow()) return;
+    lastQ = now; t += 0.0032; const T0 = performance.now();
     ctx.fillStyle = 'rgba(7,6,26,0.22)'; ctx.fillRect(0, 0, W, H);
     for (const p of ps) {
       const a = Math.sin(p.x * 0.0021 + t * 3) * 1.6 + Math.cos(p.y * 0.0027 - t * 2) * 1.6 + p.e * 1.2566;
@@ -48,6 +49,7 @@ const qi = (() => {
       ctx.fillStyle = `rgba(${EL_RGB[p.e]},${0.12 + 0.22 * Math.sin(p.life * 0.02) ** 2})`;
       ctx.fillRect(p.x, p.y, 1.4, 1.4);
     }
+    if (qiCost(performance.now() - T0, 6)) return; // фон дороже 6 мс в кадре — останавливаем
     if (!reduce) requestAnimationFrame(frame);
   };
   whenAnim(() => frame());
