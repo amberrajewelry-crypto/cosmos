@@ -4,17 +4,31 @@ import { constellationVsSign } from '../compute/sign';
 import { precessionOffsetDeg } from '../compute/precession';
 import { birthLightStar } from '../compute/birthlight';
 import { toValue } from '../registry/registry';
+import { say, natalLines } from '../ui/oracle';
 import { ascMc } from '../compute/angles';
 import { natalBodies } from '../compute/natalbodies';
-import { loadStars, zodiacLines, nearestLightStar } from '../data/stars';
+import { loadStars, zodiacLines, zodiacLabels, nearestLightStar } from '../data/stars';
 import { dossier } from './dossier';
+import { readingHtml, transitHtml, synastryHtml, solarHtml, directionsHtml } from './interp';
+import { planetsTable, anglesTable, aspectGrid, transitsTable, solarTable, synastryTable, returnsTable } from './views';
 
-export interface Place { lat: number; lon: number; }
+export interface Place { lat: number; lon: number; tz?: string; }
 
 // Второе лицо (§2.1): застывшая карта рождения. Ключевой момент — поворот прецессии (§4.8):
 // не переключатель, а поворот — круг знаков садится на реальные созвездия.
 // Выход (§2.1): ссылка ?birth=YYYY-MM-DD и PNG — оба без сервера, дата остаётся в URL/браузере (§3.7).
-export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?: string): void {
+// Параметры режимов астропроцессора (/karta/): какую вкладку открыть сразу и с какими датами.
+export interface NatalOpts { view?: string; at?: Date; second?: Date; year?: number; outer?: boolean; }
+// Заголовок карты: местное время рождения, если известен пояс; иначе — UTC.
+function natalTitle(when: Date, place?: Place): string {
+  if (!place) return `${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })} · без времени`;
+  const tz = place.tz;
+  const d = when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz ?? 'UTC' });
+  const t = when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: tz ?? 'UTC' });
+  return `${d} · ${t}${tz ? '' : ' UTC'} <span class="natal-coord">${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°</span>`;
+}
+
+export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?: string, opts: NatalOpts = {}): void {
   const sunLon = SunPosition(when).elon;
   // ASC/MC (§4.7) — только при известных времени и месте; иначе честно не рисуем.
   const angles = place ? ascMc(place.lat, place.lon, when) : undefined;
@@ -28,10 +42,14 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
   overlay.innerHTML = `
     <div class="natal-box">
       <button class="natal-close" aria-label="Закрыть">✕</button>
-      <h2 class="natal-title">${when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}${place ? ` · ${when.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC · ${place.lat.toFixed(2)}°, ${place.lon.toFixed(2)}°` : ' · полдень UTC, без места'}</h2>
+      <h2 class="natal-title">${natalTitle(when, place)}</h2>
       <div class="natal-svg" id="natalSvg">${natalSVG({ sunLon, rotationDeg: 0, asc: angles?.asc, mc: angles?.mc, bodies })}</div>
       <p class="natal-bodies">${bodies.map((b) => `<span title="${b.name}">${b.glyph}\uFE0E <b>${b.lon.toFixed(1)}°</b></span>`).join('')}</p>
-      <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[МИФ]</span> Астрология рисует твой знак по этому кругу.</p>
+      <nav class="natal-tabs" aria-label="Виды карты">
+        <button data-view="reading">Разбор</button><button data-view="planets">Положения</button><button data-view="angles">Углы</button><button data-view="transits">Сейчас</button><button data-view="solar">Возврат Солнца</button><button data-view="synastry">Две даты</button><button data-view="returns">Возвраты</button>
+      </nav>
+      <div class="natal-view" id="natalView" hidden></div>
+      <p class="natal-cap" id="natalCap"><span class="tag tag-inline">[ТРАДИЦИЯ]</span> Астрология рисует твой знак по этому кругу.</p>
       <button class="natal-rotate" id="natalRotate">Повернуть на реальные созвездия</button>
       ${angles
         ? `<p class="natal-cap natal-star"><span class="tag tag-inline">[ОЦЕНКА]</span> Асцендент ${angles.asc.toFixed(1)}°, MC ${angles.mc.toFixed(1)}° — геометрия эклиптики для твоего времени и места. <span class="natal-src">точность зависит от точности времени: 4 минуты = 1°</span></p>`
@@ -39,7 +57,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       <p class="natal-cap natal-star" id="natalStarLine">${starLine(star)}</p>
       <section class="dossier" aria-label="Досье по реальным данным">
         <h3>Досье по реальным данным</h3>
-        <p class="dossier-lead">Не толкования — факты о твоём дне, которые можно проверить. Каждый с тегом и источником.</p>
+        <p class="dossier-lead">Факты о твоём дне, которые можно проверить, — с тегом и источником. Разбор характера и пути — во вкладке «Разбор» выше.</p>
         <ol>${facts.map((d) => `<li><span class="tag tag-inline tag-${d.tag}">[${d.tag}]</span><b>${d.title}</b><p>${d.text.replace(/(apod\.nasa\.gov\/\S+)/, '<a href="https://$1" target="_blank" rel="noopener">$1</a>')}</p><small>${d.source}</small></li>`).join('')}</ol>
         <p class="dossier-more">Дальше: <a href="/natalnaya-karta/${String(when.getUTCMonth() + 1).padStart(2, '0')}-${String(when.getUTCDate()).padStart(2, '0')}/">страница этой даты</a> (созвездие, окно, метеоры) · <a href="/nebo/${when.toISOString().slice(0, 10)}/">небо в день рождения</a> (Луна, планеты, APOD).</p>
       </section>
@@ -50,6 +68,8 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
       </div>
     </div>`;
   overlay.hidden = false;
+  // Разбор посчитан — лицо скажет вывод, когда карту закроют (оракул ждёт закрытия оверлея).
+  say(...natalLines(real, angles?.asc));
 
   // Каталог звёзд (54 КБ) — после первого рендера: точная «звезда рождения» и линии созвездий под поворот.
   loadStars().then((cat) => {
@@ -57,9 +77,32 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     const pick = nearestLightStar(cat, age);
     if (pick) { star = toValue(birthLightStar(when, new Date(), [pick.name, Math.round(pick.ly * 10) / 10])); (overlay.querySelector('#natalStarLine') as HTMLElement).innerHTML = starLine(star); }
     const svg = overlay.querySelector('#natalSvg') as HTMLElement;
-    if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()) });
+    if (svg && !svg.querySelector('#realSky')) svg.innerHTML = natalSVG({ sunLon, rotationDeg: rotated ? -offset : 0, asc: angles?.asc, mc: angles?.mc, bodies, sky: zodiacLines(cat, when.getUTCFullYear()), skyLabels: zodiacLabels(cat, when.getUTCFullYear()) });
     if (rotated) (overlay.querySelector('#realSky') as SVGGElement | null)?.style.setProperty('opacity', '1');
   }).catch(() => { /* без каталога остаётся встроенный список */ });
+
+  // Виды по образцу астропроцессоров — таблицы, транзиты, соляр, синастрия, возвраты — но только вычислимое.
+  const view = overlay.querySelector('#natalView') as HTMLElement;
+  const tabs = Array.from(overlay.querySelectorAll('.natal-tabs button')) as HTMLButtonElement[];
+  let solYear = opts.year ?? new Date().getUTCFullYear(), synDate = opts.second ? opts.second.toISOString().slice(0, 10) : '';
+  const at = opts.at ?? new Date();
+  const render = (kind: string): void => {
+    view.innerHTML = kind === 'reading' ? readingHtml(when, angles?.asc)
+      : kind === 'planets' ? planetsTable(when, opts.outer)
+      : kind === 'angles' ? anglesTable(when) + aspectGrid(when)
+      : kind === 'transits' ? transitHtml(when, at, angles?.asc) + transitsTable(when, at)
+      : kind === 'sky' ? `<p class="nt-cap"><span class="tag tag-inline">[ТОЧНО]</span> Небо на ${at.toISOString().slice(0, 10)}: положения всех тел. Полная страница этого дня — <a href="/nebo/${at.toISOString().slice(0, 10)}/">/nebo/${at.toISOString().slice(0, 10)}/</a>.</p>` + planetsTable(at, opts.outer)
+      : kind === 'directions' ? directionsHtml(when, at, angles?.asc) + transitsTable(when, at) + returnsTable(when, at)
+      : kind === 'solar' ? `<p class="nt-pick"><label>Год <input type="number" id="solYear" value="${solYear}" min="1900" max="2100"></label></p>` + solarHtml(when, solYear, angles?.asc) + solarTable(when, solYear)
+      : kind === 'synastry' ? `<p class="nt-pick"><label>Вторая дата <input type="date" id="synDate" value="${synDate}"></label></p>` + (synDate ? synastryHtml(when, new Date(synDate + 'T12:00:00Z')) + synastryTable(when, new Date(synDate + 'T12:00:00Z')) : '<p class="nt-cap">Введите вторую дату — покажем оба неба рядом.</p>')
+      : returnsTable(when);
+    view.hidden = false;
+    tabs.forEach((b) => b.classList.toggle('on', b.dataset.view === kind));
+    view.querySelector('#solYear')?.addEventListener('change', (e) => { solYear = Number((e.target as HTMLInputElement).value) || solYear; render('solar'); });
+    view.querySelector('#synDate')?.addEventListener('change', (e) => { synDate = (e.target as HTMLInputElement).value; render('synastry'); });
+  };
+  tabs.forEach((b) => b.addEventListener('click', () => { if (b.classList.contains('on')) { view.hidden = true; b.classList.remove('on'); } else render(b.dataset.view!); }));
+  render(opts.view ?? 'reading');
 
   const rotateBtn = overlay.querySelector('#natalRotate') as HTMLButtonElement;
   const cap = overlay.querySelector('#natalCap') as HTMLElement;
@@ -91,7 +134,7 @@ export function openNatal(overlay: HTMLElement, when: Date, place?: Place, link?
     const svg = overlay.querySelector('#natalSvg svg') as SVGSVGElement;
     const blob = await shareCard(svg, when, facts.slice(0, 3));
     const file = new File([blob], `cosmos-${iso}.png`, { type: 'image/png' });
-    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'COSMOS' }); return; } catch { /* отмена — падаем в скачивание */ } }
+    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'АСТРОАНАЛИЗ' }); return; } catch { /* отмена — падаем в скачивание */ } }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
@@ -138,7 +181,7 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
   ctx.drawImage(img, (W - 620) / 2, 70, 620, 620);
   ctx.textAlign = 'center'; ctx.fillStyle = '#c9a85c'; ctx.font = '500 22px "Geist Mono", Menlo, monospace';
   ctx.fillText('C O S M O S', W / 2, 46);
-  ctx.fillStyle = '#ece6d3'; ctx.font = '300 40px Unbounded, Geist, system-ui, sans-serif';
+  ctx.fillStyle = '#ece6d3'; ctx.font = '300 40px Manrope, Geist, system-ui, sans-serif';
   ctx.fillText(when.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), W / 2, 748);
   ctx.fillStyle = 'rgba(236,230,211,.68)'; ctx.font = '300 20px Geist, system-ui, sans-serif';
   ctx.fillText('небо в этот день — как было на самом деле', W / 2, 782);
@@ -148,12 +191,12 @@ async function shareCard(svg: SVGSVGElement, when: Date, facts: Array<{ tag: str
     ctx.fillStyle = 'rgba(236,230,211,.04)'; ctx.beginPath(); ctx.roundRect(60, y - 34, W - 120, 132, 20); ctx.fill();
     ctx.strokeStyle = 'rgba(236,230,211,.08)'; ctx.stroke();
     ctx.fillStyle = '#c9a85c'; ctx.font = '500 15px "Geist Mono", Menlo, monospace'; ctx.fillText(`[${f.tag}]`, 84, y);
-    ctx.fillStyle = '#ece6d3'; ctx.font = '400 24px Unbounded, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
+    ctx.fillStyle = '#ece6d3'; ctx.font = '400 24px Manrope, Geist, system-ui, sans-serif'; ctx.fillText(f.title, 84 + ctx.measureText(`[${f.tag}]  `).width * 0.65, y);
     ctx.fillStyle = 'rgba(236,230,211,.85)'; ctx.font = '300 22px Geist, system-ui, sans-serif';
     wrap(ctx, f.text, 84, y + 40, W - 168, 30, 2);
     y += 158;
   }
   ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(236,230,211,.5)'; ctx.font = '300 18px "Geist Mono", Menlo, monospace';
-  ctx.fillText('cosmos-alpha-three.vercel.app · эфемериды VSOP87/ELP · каждое число проверяемо', W / 2, H - 40);
+  ctx.fillText('astropro.tech · эфемериды VSOP87/ELP · каждое число проверяемо', W / 2, H - 40);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/png'));
 }
