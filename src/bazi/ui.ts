@@ -207,7 +207,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
   const example = new URLSearchParams(location.search).has('ex');
-  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), example ? '' : pushCta(), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), secForecast(c, a), secRasklad(c, a), secCompat(),
+  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), example ? '' : pushCta(), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), secForecast(c, a), secRasklad(c, a), secCompat(), example ? '' : secPro(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым.</p></summary>`,
     secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
@@ -231,6 +231,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     wirePast(c, a, input);
     wireRecog(input);
     void wirePush();
+    wirePro();
     const own = document.getElementById('ex-own');
     if (own) own.onclick = () => { fd.value = ''; ft.value = ''; fp.value = ''; chosen = undefined; history.replaceState(null, '', location.pathname); lastQuery = ''; out.hidden = true; $('f').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => fd.focus(), 400); };
     if (input.timeKnown) wireJudge(c, a);
@@ -697,6 +698,24 @@ function secCompat() {
       <input id="cf-p" aria-label="Город рождения партнёра" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
       <div class="ans" id="cf-out"></div>
       <div class="acts"><button class="ghost" id="pinv" type="button">Пригласить партнёра сравнить</button></div><p class="dhint" id="pinv-m">Партнёр введёт свою дату сам — и вы оба увидите пару. В ссылке будут ваши дата, время и город рождения.</p></div></section>`;
+}
+
+/** Проверка спроса на Pro (17.10): цена видна, оплаты пока нет — считаем «хочу» и контакты. Нажатия → bazi_pro_*, контакт → /api/fb note. */
+function secPro() {
+  return `<section class="block" id="s-pro"><div class="card pane pro"><p class="eyebrow">Скоро · Pro</p><h3>Семья, команда и год вперёд — 399 ₽ в месяц</h3>
+    <ul class="list"><li>Календарь дней на 12 месяцев вперёд — в календарь телефона</li><li>Карты семьи или команды до 10 человек: кто кому помогает, общие удачные дни</li><li>Разбор месяца в Telegram первого числа</li></ul>
+    <p class="dhint">Всё, что есть сейчас, останется бесплатным. Pro ещё не продаётся: нажмите, если купили бы, — запустим, когда наберётся сто человек.</p>
+    <div class="acts"><button class="go" id="pro-yes" type="button">Купил бы за 399 ₽</button><button class="ghost" id="pro-no" type="button">Не нужно</button></div>
+    <form class="askf" id="pro-f" hidden><input id="pro-c" placeholder="Telegram или почта — напишем при запуске" aria-label="Контакт для запуска Pro" maxlength="80" /><button class="go" type="submit">Оставить</button></form><p class="dhint" id="pro-m"></p></div></section>`;
+}
+function wirePro() {
+  const y = document.getElementById('pro-yes'), n = document.getElementById('pro-no'), f = document.getElementById('pro-f') as HTMLFormElement | null, m = document.getElementById('pro-m');
+  if (!y || !n || !f || !m) return;
+  const done = localStorage.getItem('bazi-pro');
+  if (done) { y.parentElement!.hidden = true; m.textContent = done === 'yes' ? 'Спасибо — вы в списке.' : 'Понятно, спасибо.'; }
+  y.onclick = () => { track('bazi:pro:yes'); try { localStorage.setItem('bazi-pro', 'yes'); } catch { /* */ } y.parentElement!.hidden = true; f.hidden = false; m.textContent = 'Спасибо! Оставьте контакт, если хотите узнать о запуске (необязательно).'; };
+  n.onclick = () => { track('bazi:pro:no'); try { localStorage.setItem('bazi-pro', 'no'); } catch { /* */ } y.parentElement!.hidden = true; m.textContent = 'Понятно, спасибо.'; };
+  f.onsubmit = async (e) => { e.preventDefault(); const v = (document.getElementById('pro-c') as HTMLInputElement).value.trim(); if (!v) return; const ok = await sendFeedback({ kind: 'note', text: `[бацзы pro] ${v}` }); track('bazi:pro:contact'); f.hidden = true; m.textContent = ok ? 'Записали. Напишем один раз — когда Pro запустится.' : 'Не ушло — попробуйте позже.'; };
 }
 
 export function secAsk() { // снят с экрана 16.10 (см. обработчик askf)
