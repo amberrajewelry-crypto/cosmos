@@ -318,7 +318,7 @@ function secPillars(c: Chart, a: Analysis) {
     <div class="bhead"><div><h2>Четыре столпа</h2></div>${evTag('calc')}
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
-    <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
+    <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date.split('-').reverse().join('.')} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
   </section>`;
 }
 
@@ -394,7 +394,7 @@ function secElements(c: Chart, a: Analysis, charts: { v: Variant; a: Analysis }[
     <p>Сколько каждой стихии в вашей карте. Стрелки по кругу показывают, какая стихия питает следующую, пунктир внутри — какая сдерживает.</p></div>
     <div class="grid2"><div class="card pane">${wheel(a)}</div>
     <div class="card pane"><div class="bars">${bars}</div>
-      <div class="gauge"><h3>Ваша сила: ${a.strength}</h3>
+      <div class="gauge"><h3>Тип по силе: ${a.strength}</h3>
         <div class="scale"><div class="rng" style="left:${lo * 100}%;width:${Math.max(1, (hi - lo) * 100)}%"></div><div class="mk" style="left:${gpos(a) * 100}%"></div></div>
         <div class="lbl"><span>слабый</span><span>баланс</span><span>сильный</span></div>
         <p style="font-size:14px;color:var(--ink-3);margin:10px 0 0">В сезон рождения ${STEMS[a.dm].ru} ${SEASON_STATE[a.season].toLowerCase()}.</p></div>
@@ -457,7 +457,7 @@ function secLuck(c: Chart, a: Analysis) {
     return `<div class="yr ${r.tone}${y === nowY ? ' now' : ''}" title="${esc(r.text + ' ' + luckDetail(c, a, i).join(' '))}">${thumb(i % 12, 40)}<span class="yr-el">${elIcon(s.el, EL_COLOR[s.el], 13)}${EL[s.el]}</span>${y}<br>${b.animal}</div>`;
   }).join('');
   const sel = cur >= 0 ? cur : 0, rd = luckR(c, a, c.luck[sel].idx);
-  return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>${evTag('periods')}
+  return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>${evTag('periods', '', 'Та же проверка, что у годов: на биографиях известных людей — на уровне монетки.')}
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="ll-box"><h3>Линия жизни</h3><p class="dhint">Как старая традиция видит фон ваших лет: выше середины — легче, ниже — нагрузка. На биографиях известных людей эта линия важные годы не угадала — это картинка традиции, не прогноз.</p>${lifeLineSvg(lifeLine(c, a), nowY)}</div>
     <div class="luck">${cards}</div>
@@ -469,7 +469,7 @@ const noteHtml = (n: Note) => `<div class="note ${n.tone ?? ''}"><h4>${esc(n.tit
 
 const ucFirst = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 const lcFirst = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
-const hitsTxt = (h: string[]) => (h.length ? ' ' + esc(lay(ucFirst(h.join('; ')))) + '.' : '');
+const hitsTxt = (h: string[]) => (h.length ? ' Осторожно: ' + esc(lay(h.join('; '))) + '.' : '');
 
 /** Почему у месяца такой итог: всё после первой фразы (перевес, связь с картой), простыми словами. */
 const monthWhy = (t: string) => { const r = lay(t.split('. ').slice(1).join('. ')); return r ? `<p class="fm-r">${esc(ucFirst(r))}.</p>` : ''; };
@@ -480,7 +480,7 @@ function secForecast(c: Chart, a: Analysis) {
   const pill = animalOf;
   const cur = Math.max(0, y.months.findIndex((_, i) => (y.months[i + 1]?.start ?? y.end) > new Date()));
   const mHtml = y.months.map((m, i) => `<div class="fm ${m.tone}"><p class="fm-d">${dt(m.start)} — ${dt(new Date((y.months[i + 1]?.start ?? y.end).getTime() - 864e5))}</p>
-    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p>${monthWhy(m.text)}<p>${esc(lay(m.act))}</p>${m.hits.map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
+    <b>${pill(m.idx)}</b> <span class="fm-t">${toneRu(m.tone)}</span><p class="fm-w">${esc(lay(m.why))}${m.swing ? ` (${esc(m.swing)})` : ''}</p>${monthWhy(m.text)}<p>${esc(lay(m.act))}</p>${m.hits.filter((h) => !lay(m.text).toLowerCase().includes(lay(h).toLowerCase())).map((h) => `<p class="fm-h">${esc(lay(h))}</p>`).join('')}</div>`);
   const rest = mHtml.filter((_, i) => i < cur || i > cur + 2);
   const months = `<div class="fm-grid">${mHtml.slice(cur, cur + 3).join('')}</div>${rest.length ? `<details class="more-in"><summary>Все месяцы года</summary><div class="fm-grid">${rest.join('')}</div></details>` : ''}`;
   // Удары (hits) и подробности такта (luckDetail) частично совпадают — повтор убираем, предложения — с заглавной.
@@ -564,7 +564,7 @@ function secRazbor(c: Chart, a: Analysis) {
   const combos = comboNotes(c, a), bonds = bondNotes(c, a);
   return `<section class="block"><details class="more"><summary><h2>Подробный разбор карты</h2><p>Из чего сложена карта и почему выводы такие — для тех, кому интересно глубже.</p></summary>
     <div class="razbor">
-      <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Сила: ${a.strength}.</p></div></div>
+      <div class="card pane"><div class="dm-hero">${stemTile(a.dm)}<div><h3>${t.title}</h3><p><b>${d.ru}</b> — ${EL[d.el]} ${pol(d.yang)}. Тип по силе: ${a.strength}.</p></div></div>
         ${noteHtml(natureNote(a))}${noteHtml(strengthNote(c, a))}
         <div class="note"><h4>В образах</h4><p><b>Дар:</b> ${t.gift}. <b>Тень:</b> ${t.shadow}. <b>Путь:</b> ${t.way}</p></div></div>
       <div class="card pane"><h3>Ось и климат</h3><p class="conf mid judge" id="judge" hidden></p>${noteHtml(axisNote(c, a))}${noteHtml(climateNote(c, a))}

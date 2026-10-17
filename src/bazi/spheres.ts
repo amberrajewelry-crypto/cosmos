@@ -127,7 +127,7 @@ function career(c: Chart, a: Analysis, now: number): Sphere {
   const L = currentLuck(c, now);
   if (L) {
     const g = godOf(a.dm, L.idx % 10), v = periodVerdict(a.brain, L.idx, c);
-    points.push(`Сейчас идёт десятилетие ${span(L.year)}: для дела это время — ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'благоприятный' : v.tone === 'bad' ? 'с нагрузкой: время укреплять базу' : 'смешанный'}.`);
+    points.push(`Сейчас идёт десятилетие ${span(L.year)}. Для дела: ${GOD_ACT[g.key]}. Фон десятилетия — ${v.tone === 'good' ? 'благоприятный' : v.tone === 'bad' ? 'с нагрузкой: время укреплять базу' : 'смешанный'}.`);
   }
   const best = c.luck.filter((l) => l.year + 9 >= now && l.age < 65 && periodVerdict(a.brain, l.idx, c).tone === 'good').map((l) => span(l.year));
   if (best.length) points.push(`По расчёту благоприятные десятилетия для рывка в рабочем возрасте: ${best.slice(0, 3).join(', ')}.`);

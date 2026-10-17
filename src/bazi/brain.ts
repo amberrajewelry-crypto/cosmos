@@ -221,10 +221,10 @@ export function periodVerdict(b: Brain, idx: number, c?: Chart, partner?: number
     for (const p of order) {
       const pair = COMBO.find(([x, y]) => (x === st && y === p.stem) || (y === st && x === p.stem));
       if (!pair) continue;
-      if (p.pos === 'day') { bond = ' Период тянется к вам — сам по себе не вред'; break; }
+      if (p.pos === 'day') { bond = ' Период вступает в союз с вами — это притяжение, само по себе не вред'; break; }
       // На собственном сильном корне (禄/刃/长生) ствол не превращается, только связан (ЦПЦЦ гл.5 «合而不化»).
       if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) { se = pair[2]; bond = ` ${STEMS[st].ru} в союзе с ${STEMS[p.stem].ru} вашей карты и превращается: работает как ${EL[pair[2]]}`; }
-      else { k = 0.5; bond = ' Часть силы периода связана вашей картой — действует вполсилы'; }
+      else { k = 0.5; bond = ' Но часть его силы связана союзом с вашей картой — действует слабее'; }
       break;
     }
   }

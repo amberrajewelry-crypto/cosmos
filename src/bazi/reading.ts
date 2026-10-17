@@ -97,7 +97,7 @@ export function strengthNote(c: Chart, a: Analysis): Note {
       : 'сила есть, и есть кому её принять — годятся Чиновник (дисциплина) и Богатство (дело)';
   }
   return {
-    title: `Сила: ${a.strength}`,
+    title: `Тип по силе: ${a.strength}`,
     text: `Сезон рождения: ${EL[a.dmEl]} — «${SEASON_STATE[ss].toLowerCase()}». Корни: ${rootTxt}. Стволов своей стихии рядом: ${friends}. `
       + `Корень весит больше сезона и стволов. Вывод: ${need}.`,
     quote: '干多不如根重', src: 'СМ т.2 (旺相休囚死); ЦПЦЦ гл.3, гл.6; ДТС 衰旺',
@@ -213,7 +213,7 @@ export function luckDetail(c: Chart, a: Analysis, idx: number): string[] {
   if (idx === day.idx) out.push('Период повторяет ваш знак дня — застой и возврат старых тем.');
   const month2 = pillars(c).find((p) => p.pos === 'month')!;
   const need = [...TIAOHOU[a.dm][month2.branch]].map((z) => SZ.indexOf(z));
-  if (need.includes(s)) out.push('Приходит стихия, нужная карте «по погоде», — она смягчает период.');
+  if (need.includes(s)) out.push('Приходит стихия, нужная карте «по погоде», — это поддержка.');
   if (BRANCHES[month2.branch].hidden[0] === s && STEMS[s].el !== a.dmEl) out.push(`Проявляется главная тема карты — «${godOf(a.dm, s).ru}».`);
   if ((s + 5) % 10 === a.dm) out.push(`Период в союзе с вами — «${godOf(a.dm, s).ru}» притягивается к вам.`);
   return out;

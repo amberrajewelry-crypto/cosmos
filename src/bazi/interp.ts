@@ -50,7 +50,9 @@ export function luckReading(a: Analysis, idx: number, toneIn?: 'good' | 'bad' | 
   const score = (e: El) => (a.consensus.includes(e) ? 1 : a.avoid.includes(e) ? -1 : 0);
   const sc = score(es) + score(eb);
   const t4 = toneIn ?? (sc > 0 ? 'good' : sc < 0 ? 'bad' : 'mixed'), tone = t4 === 'calm' ? 'mixed' : t4;
-  const t = `Ствол: ${EL[es]} — «${gs.ru}» (${senseFor(gs.key)}). Ветвь: ${BRANCHES[b].animal}, ${EL[eb]} — «${gb.ru}».`;
+  // Простыми словами, без «ствол/ветвь» и имён богов (правило сайта: термины — только в «Подробном разборе»)
+  const t = gs.key === gb.key && es === eb ? `Стихия периода — ${EL[es].toLowerCase()} (${BRANCHES[b].animal}): ${senseFor(gs.key)}.`
+    : `Стихии периода: ${EL[es].toLowerCase()} — ${senseFor(gs.key)}; ${EL[eb].toLowerCase()} (${BRANCHES[b].animal}) — ${senseFor(gb.key)}.`;
   return { tone, text: t + (tone === 'good' ? ' Приходит полезная стихия — время действовать.' : tone === 'bad' ? ' Приходит стихия-нагрузка — время укреплять базу, а не рисковать.' : t4 === 'calm' ? ' Спокойный фон: ни сильной помощи, ни нагрузки — многое решают ваши шаги.' : ' Смешанный фон: успех зависит от выбора направления.') };
 }
 
