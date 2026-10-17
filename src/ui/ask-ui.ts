@@ -8,7 +8,7 @@ let asked = 0, interviewed = false;
 // Оверлей «Спросить» (§2.2). Открывается от карточки; в контекст уходят ВСЕ видимые значения
 // (не только эта карточка) — вопрос может быть о связи параметров. Координаты не передаются (§3.7).
 export function openAsk(overlay: HTMLElement, focus: Value | undefined, all: Value[], prefill = ''): void {
-  const title = focus ? focus.label : 'Космос внутри тебя';
+  const title = focus ? focus.label : 'Астроанализ';
   overlay.innerHTML = `
     <div class="ask-box">
       <button class="ask-close" aria-label="Закрыть">✕</button>

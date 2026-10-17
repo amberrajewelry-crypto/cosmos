@@ -1,4 +1,6 @@
-import { neboPage, neboSitemapIndex, neboSitemapYear, NEBO_YEARS } from '../src/natal/page';
+import { neboPage, neboSitemapIndex, neboSitemapYear, NEBO_YEARS, setStarCatalog } from '../src/natal/page';
+import stars from '../public/stars.json';
+setStarCatalog(stars as never);
 
 // /nebo/{YYYY-MM-DD}/ и /en/sky/{дата}/ (§5.3) + sitemap-nebo*.xml. Прошлое небо не меняется — кэш на год.
 interface Req { query: Record<string, string | string[] | undefined>; }
