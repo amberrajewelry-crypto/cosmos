@@ -1,5 +1,28 @@
 // scripts/judge-fn.ts
 import { put, list } from "@vercel/blob";
+
+// scripts/ratelimit.ts
+var hits = /* @__PURE__ */ new Map();
+function ipOf(h) {
+  const v = h?.["x-real-ip"] ?? h?.["x-forwarded-for"];
+  const s = Array.isArray(v) ? v[0] : v;
+  return (s ?? "").split(",")[0].trim() || "unknown";
+}
+function allow(scope, ip, max, windowMs, now = Date.now()) {
+  const k = scope + "|" + ip, arr = (hits.get(k) ?? []).filter((t) => now - t < windowMs);
+  if (arr.length >= max) {
+    hits.set(k, arr);
+    return false;
+  }
+  arr.push(now);
+  hits.set(k, arr);
+  if (hits.size > 5e3) {
+    for (const [kk, ts] of hits) if (!ts.length || now - ts[ts.length - 1] > windowMs) hits.delete(kk);
+  }
+  return true;
+}
+
+// scripts/judge-fn.ts
 var KEY = /^([0-5]?\d)_([0-5]?\d)_([0-5]?\d)_([0-5]?\d)$/;
 var MAX_QUEUE = 300;
 var keyOf = (v) => {
@@ -20,6 +43,10 @@ async function handler(req, res) {
     return;
   }
   res.setHeader("Cache-Control", "no-store");
+  if (!allow(req.method === "POST" ? "judge-post" : "judge-get", ipOf(req.headers), req.method === "POST" ? 20 : 600, 36e5)) {
+    res.status(429).json({ ok: false, status: "busy" });
+    return;
+  }
   let raw = req.query?.p;
   if (req.method === "POST") {
     try {
