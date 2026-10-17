@@ -318,7 +318,7 @@ function secPillars(c: Chart, a: Analysis) {
     <div class="bhead"><div><h2>Четыре столпа</h2></div>${evTag('calc')}
     <p>Читается справа налево, как в китайской карте: год (корни) → месяц → день (вы) → час (плоды). Верхний знак — небесный ствол, нижний — земная ветвь со спрятанными стволами.</p></div>
     <div class="pillars-wrap"><div class="pillars" style="--n:${c.pillars.length}">${cols}</div><svg class="links" id="links"></svg></div>
-    <p class="meta">${esc(c.input.place ?? '')} · ${c.input.date.split('-').reverse().join('.')} ${c.input.timeKnown ? c.input.time : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
+    <p class="meta">${esc(c.input.place ?? '')} · ${esc(c.input.date.split('-').reverse().join('.'))} ${c.input.timeKnown ? esc(c.input.time) : '(время неизвестно — без столпа часа)'} · по солнцу в месте рождения ${pad(L.h)}:${pad(L.min)}</p>
   </section>`;
 }
 
@@ -913,7 +913,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   if (me) document.getElementById('melink')?.removeAttribute('hidden');
   if (q.has('me') && me) { q = new URLSearchParams(me); history.replaceState(null, '', `?${me}`); }
   const d = q.get('d'), p = q.get('p');
-  if (!d || !p) return;
+  if (!d || !p || !/^\d{4}-\d{2}-\d{2}$/.test(d) || !/^(\d{2}:\d{2}|-)$/.test(q.get('t') ?? '12:00')) return; // только дата/время нужного вида
   lastQuery = q.toString();
   const [lat, lon, tz, ...name] = p.split(',');
   const t = q.get('t') ?? '12:00';
