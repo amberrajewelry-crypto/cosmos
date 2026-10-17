@@ -15,6 +15,8 @@ export interface Brain {
   yong: El; xi: El[]; ji: El[]; steps: Step[];
   /** Сила «на грани»: набор для противоположного перевеса — такт решает, какой работает (朱祖夏 八字与用神 гл.2 中和). */
   alt?: { lean: 'weak' | 'strong'; yong: El; xi: El[]; ji: El[] };
+  /** другая школа: противоположное направление при спорной силе (только показ) */
+  rival?: { lean: 'weak' | 'strong'; yong: El };
 }
 
 const SEASON_PTS = [3, 2, -1, -2, -3];  // 旺相休囚死
@@ -179,6 +181,9 @@ export function brain(c: Chart, a: Analysis): Brain {
     if (!ji.includes(med)) xi = [...xi, med];
   }
   const b = done(frame, yong, xi, ji);
+  // Спор школ о направлении (17.10, сверка с мастерами): при силе от −5 до 3 мастера выбирают «поддержать» в 30–75% карт —
+  // почти монетка. Только для показа («школы расходятся»), на прогнозы дней и периодов не влияет (они идут по yong/xi/ji и alt).
+  if (key !== 'balanced' && score >= -5 && score <= 3) { const o = lean === 'strong' ? 'weak' : 'strong'; b.rival = { lean: o, yong: pick(o)[0] }; }
   // 中和: при силе «на грани» 用神 по наталу не окончательный — такт ломает баланс (朱祖夏 八字与用神 гл.2 §3).
   if (key === 'balanced') {
     const other = lean === 'strong' ? 'weak' : 'strong';

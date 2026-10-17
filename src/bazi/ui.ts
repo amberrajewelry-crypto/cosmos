@@ -333,6 +333,12 @@ function wireDays(c: Chart, a: Analysis) {
   void wireJournal(c, a, days[0]);
   const gd = document.getElementById('go-days');
   if (gd) gd.onclick = (e) => { const f = document.querySelector<HTMLDetailsElement>('#s-days details.fold'); if (!f) return; e.preventDefault(); f.open = true; track('bazi:today-line'); f.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  // «Сверка с вашей жизнью» лежит в свёрнутых разделах: ссылка раскрывает все уровни и прокручивает к ней
+  document.querySelectorAll<HTMLAnchorElement>('a.go-past').forEach((l) => (l.onclick = (e) => {
+    const s = document.getElementById('s-past'); if (!s) return; e.preventDefault();
+    for (let d = s.closest('details'); d; d = d.parentElement?.closest('details') ?? null) (d as HTMLDetailsElement).open = true;
+    track('bazi:go-past'); s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
   const sh = document.getElementById('share');
   if (sh) sh.onclick = async () => {
     const url = location.href;
