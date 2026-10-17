@@ -170,6 +170,7 @@ const SEC_IC: [RegExp, string, string][] = [
   [/столп/i, '#c9a85c', '<path d="M5 20V7M10 20V4M14 20V4M19 20V7M3 20.5h18"/>'],
   [/стихи/i, '#ef5a3c', '<path d="M12 3.5l8 6-3 9.5H7l-3-9.5z"/>'],
   [/сезон/i, '#4f8ef0', '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'],
+  [/честно/i, '#5fc98a', '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'],
   [/точност|вслепую/i, '#e2c47c', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>'],
 ];
 const secIcon = (t: string) => { const m = SEC_IC.find(([r]) => r.test(t)); return m ? `<i class="f-ic" style="--ic:${m[1]}" aria-hidden="true"><svg viewBox="0 0 24 24">${m[2]}</svg></i>` : ''; };
@@ -508,7 +509,7 @@ function secSpheres(c: Chart, a: Analysis) {
 const VAPID_PUBLIC = 'BAtafqYtBLaVo0Hdz37tmWAPbdl4KsKLTImwFW3nXXCJU9BEjwhEWNrUQ0bYFB_tASdD7CUImFgr-YnWukGH_1I';
 function pushCta() {
   return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
-    <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
+    <p class="dhint">Сильный день или нагрузка, что делать, лучшие часы. Для этого данные рождения хранятся у нас; отключить — той же кнопкой.</p>
     <button class="go" data-push type="button">Мой день — каждое утро</button><p class="dhint" data-pushmsg></p>
     <div class="acts"><button class="ghost" id="scard" type="button">Картинка для Stories</button><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
 }
@@ -718,8 +719,7 @@ function secCompat() {
 /** Проверка спроса на Pro (17.10): цена видна, оплаты пока нет — считаем «хочу» и контакты. Нажатия → bazi_pro_*, контакт → /api/fb note. */
 function secPro() {
   return `<section class="block" id="s-pro"><div class="card pane pro"><p class="eyebrow">Скоро · Pro</p><h3>Семья, команда и год вперёд — 399 ₽ в месяц</h3>
-    <ul class="list"><li>Календарь дней на 12 месяцев вперёд — в календарь телефона</li><li>Карты семьи или команды до 10 человек: кто кому помогает, общие удачные дни</li><li>Разбор месяца в Telegram первого числа</li></ul>
-    <p class="dhint">Всё, что есть сейчас, останется бесплатным. Pro ещё не продаётся: нажмите, если купили бы, — запустим, когда наберётся сто человек.</p>
+    <p class="dhint">Дни на 12 месяцев в календарь телефона, карты семьи или команды до 10 человек, разбор месяца в Telegram. Всё нынешнее останется бесплатным; запустим, когда наберётся сто желающих.</p>
     <div class="acts"><button class="go" id="pro-yes" type="button">Купил бы за 399 ₽</button><button class="ghost" id="pro-no" type="button">Не нужно</button></div>
     <form class="askf" id="pro-f" hidden><input id="pro-c" placeholder="Telegram или почта — напишем при запуске" aria-label="Контакт для запуска Pro" maxlength="80" /><button class="go" type="submit">Оставить</button></form><p class="dhint" id="pro-m"></p></div></section>`;
 }
@@ -854,7 +854,7 @@ function yongExtra(a: Analysis): string {
   return `Для карт вашего типа — около ${k.of10} из 10${a.brain.power.key === 'balanced' ? '; сила на грани, выбор особенно спорный' : ''}.`;
 }
 function secHonest() {
-  return `<section class="block"><div class="card pane honest"><h3>Честно о Бацзы</h3>
+  return `<section class="block" id="s-honest"><div class="bhead"><div><h2>Честно о Бацзы</h2></div><p>Расчёт точный, толкования — традиция. Что подтвердилось в наших проверках, а что нет.</p></div><div class="card pane honest">
     <p>Расчёт карты точный: сезоны — по положению Солнца, время — истинное солнечное для места рождения. Толкования — традиция, а не наука: исследований, подтверждающих связь даты рождения с судьбой, нет. Используйте карту как язык самоанализа и планирования — и проверяйте её на своей жизни.</p>
     <h3>Что мы проверили сами</h3>${evSummary()}</div></section>`;
 }
