@@ -212,7 +212,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым.</p></summary>`,
     secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
-  track('bazi:build'); if (cameByRef()) track('bazi:ref:build');
+  track('bazi:build'); if (cameByRef()) { try { if (!sessionStorage.getItem('bazi-ref-b')) { sessionStorage.setItem('bazi-ref-b', '1'); track('bazi:ref:build'); } } catch { /* нет хранилища */ } } // один раз за сессию, иначе K завышен
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     fold(out);
@@ -276,7 +276,7 @@ function secWho(c: Chart, a: Analysis) {
       <h2>${t.title}</h2>
       <p class="who-sub">Ваша стихия — ${EL[d.el].toLowerCase()} · главная опора — ${EL[a.brain.yong].toLowerCase()}${a.brain.xi.length ? `, помогают также ${a.brain.xi.map((e) => EL[e].toLowerCase()).join(', ').replace(/, (?=[^,]*$)/, ' и ')}` : ''}</p>
       ${portrait(c, a).map((l) => `<p>${esc(l)}</p>`).join('')}
-      ${a.brain.alt ? `<p>Сила у вас на грани, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
+      ${a.brain.alt ? `<p>Ваша карта в равновесии, поэтому в разные периоды полезно разное: обычно — ${EL[a.brain.yong].toLowerCase()}, а в годы, когда ${a.brain.alt.lean === 'strong' ? 'приходит поддержка' : 'растёт нагрузка'}, — ${EL[a.brain.alt.yong].toLowerCase()}. Прогноз и календарь дней это учитывают.</p>` : ''}
       <div class="who-row">
         <div><img src="${animalSm(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSm(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
