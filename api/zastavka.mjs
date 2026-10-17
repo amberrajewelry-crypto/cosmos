@@ -2599,7 +2599,7 @@ function periodVerdict(b, idx, c, partner) {
       const pair = COMBO.find(([x, y]) => x === st && y === p.stem || y === st && x === p.stem);
       if (!pair) continue;
       if (p.pos === "day") {
-        bond = " \u041F\u0435\u0440\u0438\u043E\u0434 \u0432 \u0441\u043E\u044E\u0437\u0435 \u0441 \u0432\u0430\u043C\u0438 \u2014 \u0441\u0430\u043C \u043F\u043E \u0441\u0435\u0431\u0435 \u043D\u0435 \u0432\u0440\u0435\u0434";
+        bond = " \u041F\u0435\u0440\u0438\u043E\u0434 \u0442\u044F\u043D\u0435\u0442\u0441\u044F \u043A \u0432\u0430\u043C \u2014 \u0441\u0430\u043C \u043F\u043E \u0441\u0435\u0431\u0435 \u043D\u0435 \u0432\u0440\u0435\u0434";
         break;
       }
       if (BRANCHES[month.branch].el === pair[2] && (rootOf(st, idx % 12)?.w ?? 0) < 3) {
@@ -2607,14 +2607,23 @@ function periodVerdict(b, idx, c, partner) {
         bond = ` ${STEMS[st].ru} \u0432 \u0441\u043E\u044E\u0437\u0435 \u0441 ${STEMS[p.stem].ru} \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u044B \u0438 \u043F\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044F: \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043A\u0430\u043A ${EL[pair[2]]}`;
       } else {
         k = 0.5;
-        bond = " \u0427\u0430\u0441\u0442\u044C \u0441\u0438\u043B\u044B \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0443\u0445\u043E\u0434\u0438\u0442 \u0432 \u0441\u043E\u044E\u0437 \u0441 \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u043E\u0439 \u2014 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0432\u043F\u043E\u043B\u0441\u0438\u043B\u044B";
+        bond = " \u0427\u0430\u0441\u0442\u044C \u0441\u0438\u043B\u044B \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0441\u0432\u044F\u0437\u0430\u043D\u0430 \u0432\u0430\u0448\u0435\u0439 \u043A\u0430\u0440\u0442\u043E\u0439 \u2014 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0432\u043F\u043E\u043B\u0441\u0438\u043B\u044B";
       }
       break;
     }
   }
   let s = v(se) * k, r = v(be);
-  if ((se + 2) % 5 === be) s *= 1.5;
-  else if ((be + 2) % 5 === se) r *= 1.5;
+  const ACC2 = ["\u0434\u0435\u0440\u0435\u0432\u043E", "\u043E\u0433\u043E\u043D\u044C", "\u0437\u0435\u043C\u043B\u044E", "\u043C\u0435\u0442\u0430\u043B\u043B", "\u0432\u043E\u0434\u0443"];
+  let hit = "", hv = 0;
+  if ((se + 2) % 5 === be) {
+    s *= 1.5;
+    hv = s;
+    hit = ` ${EL[se]} \u0434\u0430\u0432\u0438\u0442 \u043D\u0430 ${ACC2[be]}`;
+  } else if ((be + 2) % 5 === se) {
+    r *= 1.5;
+    hv = r;
+    hit = ` ${EL[be]} \u0434\u0430\u0432\u0438\u0442 \u043D\u0430 ${ACC2[se]}`;
+  }
   let extra = "", s0 = s, r0 = r;
   if (c) {
     const day = c.pillars.find((p) => p.pos === "day"), month = c.pillars.find((p) => p.pos === "month");
@@ -2639,16 +2648,26 @@ function periodVerdict(b, idx, c, partner) {
   }
   const t = s + r, one = se === be, byEl = verdictOf(s0, r0, s0 + r0, one), fin = verdictOf(s, r, t, one);
   const res0 = { tone: fin.tone, text: byEl.text + (fin.tone !== byEl.tone ? ", \u043D\u043E \u0443\u0434\u0430\u0440 \u043F\u043E \u0441\u0442\u043E\u043B\u043F\u0443 \u0434\u043D\u044F \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442" : "") };
-  return { tone: res0.tone, text: res0.text + (bond ? "." + bond : "") + (swing ? "." + swing : "") + (extra ? "." + extra : ""), set, se, swung };
+  const hitTxt = hit && k === 1 && s0 * r0 < 0 && Math.sign(s0 + r0) === Math.sign(hv) ? `.${hit} \u2014 \u043F\u043E\u044D\u0442\u043E\u043C\u0443 ${hv > 0 ? "\u043F\u043E\u043B\u044C\u0437\u0430" : "\u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430"} \u0441\u0438\u043B\u044C\u043D\u0435\u0435` : "";
+  return { tone: res0.tone, text: res0.text + hitTxt + (bond ? "." + bond : "") + (swing ? "." + swing : "") + (extra ? "." + extra : ""), set, se, swung };
 }
 function verdictOf(s, r, t, one = false) {
   if (s > 0 && r > 0) return { tone: "good", text: one ? "\u0441\u0442\u0438\u0445\u0438\u044F \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u0430 \u2014 \u043F\u043E \u0440\u0430\u0441\u0447\u0451\u0442\u0443 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" : "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u0432\u0430\u043C \u043F\u043E\u043B\u0435\u0437\u043D\u044B \u2014 \u043F\u043E \u0440\u0430\u0441\u0447\u0451\u0442\u0443 \u043E\u043D \u0445\u043E\u0440\u043E\u0448 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
   if (s < 0 && r < 0) return { tone: "bad", text: one ? "\u0441\u0442\u0438\u0445\u0438\u044F \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043F\u043E \u0440\u0430\u0441\u0447\u0451\u0442\u0443 \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" : "\u043E\u0431\u0435 \u0441\u0442\u0438\u0445\u0438\u0438 \u043F\u0435\u0440\u0438\u043E\u0434\u0430 \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430, \u043F\u043E \u0440\u0430\u0441\u0447\u0451\u0442\u0443 \u043E\u043D \u0442\u044F\u0436\u0451\u043B\u044B\u0439 \u0446\u0435\u043B\u0438\u043A\u043E\u043C" };
-  if (s * r < 0) return { tone: t > 0 ? "good" : t < 0 ? "bad" : "mixed", text: `\u043E\u0434\u043D\u0430 \u0441\u0442\u0438\u0445\u0438\u044F \u043F\u043E\u043B\u0435\u0437\u043D\u0430, \u0434\u0440\u0443\u0433\u0430\u044F \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430; \u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442 ${Math.abs(s) > Math.abs(r) === s > 0 ? "\u043F\u043E\u043B\u044C\u0437\u0430" : "\u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430"}` };
+  if (s * r < 0) return { tone: t > 0 ? "good" : t < 0 ? "bad" : "mixed", text: `\u043E\u0434\u043D\u0430 \u0441\u0442\u0438\u0445\u0438\u044F \u043F\u043E\u043B\u0435\u0437\u043D\u0430, \u0434\u0440\u0443\u0433\u0430\u044F \u2014 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430; ${Math.abs(Math.abs(s) - Math.abs(r)) < 1e-9 ? "\u043E\u043D\u0438 \u0443\u0440\u0430\u0432\u043D\u043E\u0432\u0435\u0448\u0438\u0432\u0430\u044E\u0442 \u0434\u0440\u0443\u0433 \u0434\u0440\u0443\u0433\u0430" : `\u043F\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u0435\u0442 ${Math.abs(s) > Math.abs(r) === s > 0 ? "\u043F\u043E\u043B\u044C\u0437\u0430" : "\u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0430"}`}` };
   return { tone: t > 0 ? "good" : t < 0 ? "bad" : "calm", text: t > 0 ? "\u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0435 \u0431\u0435\u0437 \u0432\u0440\u0435\u0434\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0445\u043E\u0440\u043E\u0448\u043E" : t < 0 ? "\u0432\u0440\u0435\u0434\u043D\u043E\u0435 \u0431\u0435\u0437 \u043F\u043E\u043B\u0435\u0437\u043D\u043E\u0433\u043E \u2014 \u0443\u043C\u0435\u0440\u0435\u043D\u043D\u043E \u0442\u044F\u0436\u0435\u043B\u043E" : "\u043D\u0438 \u0437\u0430\u043C\u0435\u0442\u043D\u043E\u0439 \u043F\u043E\u043C\u043E\u0449\u0438, \u043D\u0438 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0438" };
 }
 
 // src/bazi/calc.ts
+var YEAR_MS = 365.2422 * 864e5;
+var lstart = (l) => l.start ?? Date.UTC(l.year, 0, 1);
+function luckIndexAt(c, t) {
+  let i = -1;
+  c.luck.forEach((l, k) => {
+    if (lstart(l) <= t) i = k;
+  });
+  return i;
+}
 var JIE_OFFSET = 15;
 function jdn(y, m, d) {
   const a = Math.floor((14 - m) / 12), yy = y + 4800 - a, mm = m + 12 * a - 3;
@@ -2710,7 +2729,7 @@ function computeChart(input, variant) {
   const luck = [];
   for (let k = 1; k <= 9; k++) {
     const age = startAge + (k - 1) * 10;
-    luck.push({ idx: mod(mi + (forward ? k : -k), 60), age, year: Math.floor(birthYearFrac + age) });
+    luck.push({ idx: mod(mi + (forward ? k : -k), 60), age, year: Math.floor(birthYearFrac + age), start: Math.round(utc.getTime() + age * YEAR_MS) });
   }
   return { input, variant, utc, local, eotMin, sunLon, termIdx: Math.floor(norm(sunLon - 315) / 15), pillars, forward, startAge, luck, jieDays };
 }
@@ -2876,15 +2895,16 @@ function background(c, a, t) {
   const Y = t.getTime() < lc(t.getUTCFullYear()) ? t.getUTCFullYear() - 1 : t.getUTCFullYear();
   let m = bgCache.get(a);
   if (!m) bgCache.set(a, m = /* @__PURE__ */ new Map());
-  const hit = m.get(Y);
+  const li = luckIndexAt(c, t.getTime()), key = Y * 16 + li + 1;
+  const hit = m.get(key);
   if (hit) return hit;
-  const L = [...c.luck].reverse().find((l) => l.year <= Y), yi = yearIdx(Y);
+  const L = li >= 0 ? c.luck[li] : void 0, yi = yearIdx(Y);
   const { set, swung } = L ? activeSet(a.brain, L.idx, c) : { set: a.brain, swung: false };
   const A = swung ? { ...a, consensus: [set.yong, ...set.xi], avoid: set.ji, brain: { ...a.brain, ...set } } : a;
   const luck = L ? periodVerdict(a.brain, L.idx, c).tone : null, year = periodVerdict(a.brain, yi, c, L?.idx).tone;
   const adj = 0.25 * ((luck ? TV[luck] : 0) + TV[year]) * (L && L.idx === yi ? 1.5 : 1);
   const r = { A, bg: { luck, year, adj, swung }, yi };
-  m.set(Y, r);
+  m.set(key, r);
   return r;
 }
 function dayInfo(c, a0, y, m, d) {

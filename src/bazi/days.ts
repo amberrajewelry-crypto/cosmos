@@ -2,7 +2,7 @@
 // удары (冲/刑/害) по ветвям карты, пустота (空亡) и «божество дня» → что делать.
 import { SunPosition } from 'astronomy-engine';
 import { STEMS, BRANCHES, EL, cyc, gen, godOf, type God, type El } from './core';
-import { lichun, yearIdx, type Chart, type Analysis, type Pos } from './calc';
+import { lichun, yearIdx, luckIndexAt, type Chart, type Analysis, type Pos } from './calc';
 import { activeSet, periodVerdict, tianKeDiChong } from './brain';
 
 export type DayType = 'peak' | 'peak-hit' | 'calm' | 'heavy';
@@ -86,15 +86,16 @@ const bgCache = new WeakMap<Analysis, Map<number, { A: Analysis; bg: DayBg; yi: 
 function background(c: Chart, a: Analysis, t: Date): { A: Analysis; bg: DayBg; yi: number } {
   const Y = t.getTime() < lc(t.getUTCFullYear()) ? t.getUTCFullYear() - 1 : t.getUTCFullYear();
   let m = bgCache.get(a); if (!m) bgCache.set(a, (m = new Map()));
-  const hit = m.get(Y); if (hit) return hit;
-  const L = [...c.luck].reverse().find((l) => l.year <= Y), yi = yearIdx(Y);
+  const li = luckIndexAt(c, t.getTime()), key = Y * 16 + li + 1; // такт — по точной дате смены, не по году
+  const hit = m.get(key); if (hit) return hit;
+  const L = li >= 0 ? c.luck[li] : undefined, yi = yearIdx(Y);
   const { set, swung } = L ? activeSet(a.brain, L.idx, c) : { set: a.brain, swung: false };
   const A: Analysis = swung ? { ...a, consensus: [set.yong, ...set.xi], avoid: set.ji, brain: { ...a.brain, ...set } } : a;
   const luck = L ? periodVerdict(a.brain, L.idx, c).tone : null, year = periodVerdict(a.brain, yi, c, L?.idx).tone;
   // Фон сдвигает оценку дня не больше чем на полбалла; год = такт (岁运并临, «灾祥庚大» — 命理约言) — в полтора раза.
   const adj = 0.25 * ((luck ? TV[luck] : 0) + TV[year]) * (L && L.idx === yi ? 1.5 : 1);
   const r = { A, bg: { luck, year, adj, swung }, yi };
-  m.set(Y, r); return r;
+  m.set(key, r); return r;
 }
 
 export function dayInfo(c: Chart, a0: Analysis, y: number, m: number, d: number): DayInfo {

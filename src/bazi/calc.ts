@@ -20,7 +20,17 @@ export const POS_SENSE: Record<Pos, string> = {
 };
 
 export interface Pillar { pos: Pos; idx: number; stem: number; branch: number }
-export interface Luck { idx: number; age: number; year: number }
+export interface Luck { idx: number; age: number; year: number; /** момент смены такта, мс UTC (нет у эталонов без даты) */ start?: number }
+const YEAR_MS = 365.2422 * 864e5;
+const lstart = (l: Luck) => l.start ?? Date.UTC(l.year, 0, 1);
+/** Индекс такта, действующего в момент t (мс); −1 — до первого такта. */
+export function luckIndexAt(c: { luck: Luck[] }, t: number): number {
+  let i = -1;
+  c.luck.forEach((l, k) => { if (lstart(l) <= t) i = k; });
+  return i;
+}
+/** Годы такта «2022–2032»: от года смены до года следующей смены. */
+export const luckYears = (c: { luck: Luck[] }, i: number) => `${c.luck[i].year}–${c.luck[i + 1]?.year ?? c.luck[i].year + 10}`;
 export interface Chart {
   input: BirthInput; variant: Variant; utc: Date;
   local: { y: number; m: number; d: number; h: number; min: number }; eotMin: number;
@@ -96,7 +106,7 @@ export function computeChart(input: BirthInput, variant: Variant): Chart {
   const luck: Luck[] = [];
   for (let k = 1; k <= 9; k++) {
     const age = startAge + (k - 1) * 10;
-    luck.push({ idx: mod(mi + (forward ? k : -k), 60), age, year: Math.floor(birthYearFrac + age) });
+    luck.push({ idx: mod(mi + (forward ? k : -k), 60), age, year: Math.floor(birthYearFrac + age), start: Math.round(utc.getTime() + age * YEAR_MS) });
   }
   return { input, variant, utc, local, eotMin, sunLon, termIdx: Math.floor(norm(sunLon - 315) / 15), pillars, forward, startAge, luck, jieDays };
 }

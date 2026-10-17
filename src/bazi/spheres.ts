@@ -3,7 +3,7 @@
 // Нельзя: число детей, «克», болезни и сроки, патриархальная женская карта (KB 12 §5, 13 §3, 14 §1).
 import { STEMS, BRANCHES, EL, EL_GEN, GODS, godOf, type El } from './core';
 import type { Analysis, Chart, Pillar } from './calc';
-import { yearIdx } from './calc';
+import { yearIdx, luckIndexAt } from './calc';
 import { DM_TEXT, EL_NEED } from './interp';
 import { periodVerdict } from './brain';
 import { GOD_ACT } from './days';
@@ -37,8 +37,9 @@ const ORGANS = ['печень и желчный пузырь, сухожилия
 const HIT_QUOTE = ['筋骨疼痛，盖因木被金伤', '眼暗目昏，多是火遭水剋', '土虚乘木旺之乡，脾伤', '金弱遇火炎之地，血疾', '下元冷疾，只缘水值土伤'];
 
 const SEASON = ['весной', 'летом', 'на стыках сезонов (середина и конец каждого)', 'осенью', 'зимой'];
-const currentLuck = (c: Chart, now: number) => [...c.luck].reverse().find((l) => l.year <= now);
-const span = (y: number) => `${y}–${y + 9}`;
+/** Такт сейчас — по точной дате смены (если год = текущий), иначе по году. */
+const currentLuck = (c: Chart, now: number) => now === new Date().getFullYear() ? c.luck[luckIndexAt(c, Date.now())] : [...c.luck].reverse().find((l) => l.year <= now);
+const span = (y: number) => `${y}–${y + 10}`;
 
 export const PROF: Record<string, string> = {
   'Опора': 'самостоятельная работа, своё дело, спорт, команда равных',

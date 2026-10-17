@@ -15,6 +15,7 @@ import {
   computeChart, analyze, allVariants, DEFAULT_VARIANT, POS_RU, POS_SENSE, yearIdx,
   type BirthInput, type Chart, type Analysis, type Variant, type Pos,
 } from './calc';
+import { luckIndexAt, luckYears } from './calc';
 import { mountFx, elIcon } from './fx';
 import { DM_TEXT, EL_NEED, godProfile, chartSummary } from './interp';
 import { describe } from './describe';
@@ -268,7 +269,7 @@ function secTrait(c: Chart, a: Analysis) {
 function secWho(c: Chart, a: Analysis) {
   const d = STEMS[a.dm], day = c.pillars.find((p) => p.pos === 'day')!, br = BRANCHES[day.branch], t = DM_TEXT[a.dm];
   const yr = c.pillars.find((p) => p.pos === 'year')!;
-  const nowY = new Date().getFullYear(), cur = c.luck.find((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
+  const ci = luckIndexAt(c, Date.now()), cur = ci >= 0 ? c.luck[ci] : undefined;
   const lr = cur ? luckR(c, a, cur.idx) : null, tone = lr ? lr.tone : 'mixed', t4 = lr ? lr.t4 : 'mixed';
   return `<section class="block who" style="--rgb:${rgb(d.el)}">
     <div class="who-fx"><canvas class="fxc" data-stem="${a.dm}"></canvas></div>
@@ -280,7 +281,7 @@ function secWho(c: Chart, a: Analysis) {
       <div class="who-row">
         <div><img src="${animalSm(day.branch)}" alt="" /><span>Животное дня<b>${br.animal}</b></span></div>
         <div><img src="${animalSm(yr.branch)}" alt="" /><span>Животное года<b>${BRANCHES[yr.branch].animal}</b></span></div>
-        ${cur ? `<div class="lt ${tone}"><img src="${animalSm(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${cur.year}–${cur.year + 9} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
+        ${cur ? `<div class="lt ${tone}"><img src="${animalSm(cur.idx % 12)}" alt="" /><span>Десятилетие сейчас<b>${luckYears(c, ci)} · ${t4 === 'good' ? 'благоприятно' : t4 === 'bad' ? 'нагрузка' : t4 === 'calm' ? 'спокойно' : 'смешанно'}</b></span></div>` : ''}
       </div>${todayLine(c, a)}</div></section>`;
 }
 /** Аудит 16.10: ради дней сюда и приходят, а «сегодня» было спрятано в свёрнутом разделе. Одна строка — оценка, тема дня, ссылка к дням. */
@@ -434,12 +435,20 @@ function secSeason(c: Chart) {
     </div></div></div></section>`;
 }
 
+const MON_G = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+/** «Смена: 7 июля 2022 → 7 июля 2032» по точному моменту (местное время браузера). */
+function luckWhen(c: Chart, i: number) {
+  const f = (t?: number) => { if (t == null) return ''; const d = new Date(t); return `${d.getDate()} ${MON_G[d.getMonth()]} ${d.getFullYear()}`; };
+  const a = f(c.luck[i].start), b = f(c.luck[i + 1]?.start);
+  return a ? ` <span class="lk-when">С ${a}${b ? ` по ${b}` : ''}.</span>` : '';
+}
+
 function secLuck(c: Chart, a: Analysis) {
   const now = new Date(), nowY = now.getFullYear();
-  const cur = c.luck.findIndex((l, i) => nowY >= l.year && (i === c.luck.length - 1 || nowY < c.luck[i + 1].year));
+  const cur = luckIndexAt(c, now.getTime());
   const cards = c.luck.map((l, i) => {
     const r = luckR(c, a, l.idx), s = STEMS[l.idx % 10], b = BRANCHES[l.idx % 12];
-    return `<button class="lk ${r.tone}${i === cur ? ' now sel' : ''}" data-i="${i}">${thumb(l.idx % 12, 64)}<span class="lk-el">${elIcon(s.el, EL_COLOR[s.el], 16)}<b style="color:${EL_COLOR[s.el]}">${s.ru}</b></span><small>${b.animal}</small><div class="age">${Math.floor(l.age)}–${Math.floor(l.age) + 9} ${yearsRu(Math.floor(l.age) + 9)}</div><small>${l.year}–${l.year + 9}</small></button>`;
+    return `<button class="lk ${r.tone}${i === cur ? ' now sel' : ''}" data-i="${i}">${thumb(l.idx % 12, 64)}<span class="lk-el">${elIcon(s.el, EL_COLOR[s.el], 16)}<b style="color:${EL_COLOR[s.el]}">${s.ru}</b></span><small>${b.animal}</small><div class="age">${Math.floor(l.age)}–${Math.floor(l.age) + 10} ${yearsRu(Math.floor(l.age) + 10)}</div><small>${luckYears(c, i)}</small></button>`;
   }).join('');
   const yrs = Array.from({ length: 10 }, (_, k) => nowY - 1 + k).map((y) => {
     const i = yearIdx(y), r = luckR(c, a, i), s = STEMS[i % 10], b = BRANCHES[i % 12];
@@ -450,7 +459,7 @@ function secLuck(c: Chart, a: Analysis) {
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
     <div class="ll-box"><h3>Линия жизни</h3><p class="dhint">Как старая традиция видит фон ваших лет: выше середины — легче, ниже — нагрузка. На биографиях известных людей эта линия важные годы не угадала — это картинка традиции, не прогноз.</p>${lifeLineSvg(lifeLine(c, a), nowY)}</div>
     <div class="luck">${cards}</div>
-    <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
+    <div class="reading" id="lkr"><b>${luckYears(c, sel)}${sel === cur ? ' · сейчас' : ''}.</b>${luckWhen(c, sel)} ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;
 }
 
@@ -853,8 +862,8 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
   const lkr = document.getElementById('lkr')!;
   document.querySelectorAll<HTMLButtonElement>('.lk').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('.lk.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel');
-    const l = c.luck[+b.dataset.i!], r = luckR(c, a, l.idx);
-    lkr.innerHTML = `<b>${l.year}–${l.year + 9} · ${Math.floor(l.age)}–${Math.floor(l.age) + 9} ${yearsRu(Math.floor(l.age) + 9)}.</b> ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
+    const i = +b.dataset.i!, l = c.luck[i], r = luckR(c, a, l.idx);
+    lkr.innerHTML = `<b>${luckYears(c, i)} · ${Math.floor(l.age)}–${Math.floor(l.age) + 10} ${yearsRu(Math.floor(l.age) + 10)}.</b>${luckWhen(c, i)} ${esc(r.text)} ${esc(luckDetail(c, a, l.idx).join(' '))}`;
   }));
   document.querySelectorAll<HTMLButtonElement>('.vt button[data-v]').forEach((b) => (b.onclick = () => {
     sessionStorage.setItem('bazi-scrolled', '1');
