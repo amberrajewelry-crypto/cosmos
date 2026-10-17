@@ -2561,6 +2561,10 @@ function brain(c, a) {
     if (!ji.includes(med)) xi = [...xi, med];
   }
   const b = done(frame, yong, xi, ji);
+  if (key !== "balanced" && score >= -5 && score <= 3) {
+    const o = lean === "strong" ? "weak" : "strong";
+    b.rival = { lean: o, yong: pick(o)[0] };
+  }
   if (key === "balanced") {
     const other = lean === "strong" ? "weak" : "strong";
     let [y2, x2, j2] = pick(other);
