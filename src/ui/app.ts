@@ -24,6 +24,8 @@ import { initDrawer } from './drawer';
 import { sendFeedback, track, trackZoom } from '../live/feedback';
 import { wrongNumberMailto } from './panel';
 import { contentValues, levelName, type Ctx } from '../registry/content';
+import * as oracle from './oracle';
+import { canListen, listen } from './listen';
 import type { Value } from '../types';
 
 // Гравюрное кольцо за фигурой (§4.5): тики, двойной обод, глифы — строится один раз.
@@ -55,7 +57,7 @@ stage.scene.add(createStarfield());
 
 // Тело = человек из точек, раскрашенных по происхождению вещества (§4.1/§4.3).
 const body = new THREE.Group();
-const bodyPts = createBodyParticles();
+const bodyPts = createBodyParticles(14000);
 body.add(bodyPts.points);
 const flux = createFlux();
 body.add(flux.points);
@@ -64,19 +66,20 @@ const decays = createDecays(bodyPts.body), neutrinos = createNeutrinos(), fieldL
 body.add(decays.obj, neutrinos.obj, fieldLines.obj);
 const levelLines = createLevelLines(); body.add(levelLines.obj);
 const innerLegend = document.getElementById('innerLegend') as HTMLElement;
-// Анатомическая фигура (§4.1): 9000 точек внутри меша, 54 КБ; до загрузки — капсульная.
+// Лицо из искр (§4.1): 14000 точек поверхности головы + тень/свет на точку, 112 КБ; до загрузки — капсульная.
 fetch('/body.bin').then((r) => r.arrayBuffer()).then((buf) => {
   const n = new DataView(buf).getUint32(0, true);
-  const q = new Int16Array(buf, 4, n * 3);
-  const f = new Float32Array(n * 3);
-  for (let i = 0; i < f.length; i++) f[i] = q[i] / 10000;
-  bodyPts.replaceBody(f); decays.rebind(f);
+  const q = new Int16Array(buf, 4, n * 4); // x, y, z, shade (x1e-4)
+  const f = new Float32Array(n * 3), sh = new Float32Array(n);
+  for (let i = 0; i < n; i++) { f[i * 3] = q[i * 4] / 10000; f[i * 3 + 1] = q[i * 4 + 1] / 10000; f[i * 3 + 2] = q[i * 4 + 2] / 10000; sh[i] = q[i * 4 + 3] / 10000; }
+  bodyPts.replaceBody(f, sh); decays.rebind(f); scale.refresh(); // shapes cached from the capsule body must be rebuilt
 }).catch(() => { /* остаёмся на капсульной фигуре */ });
 // §4.2 лестница масштабов: поток сквозь тело и легенда происхождения — только на уровне тела.
 // Живые данные форм: планеты на сейчас — сразу; звёзды и тела над горизонтом — после геолокации; Kp — из NOAA.
 const liveShapes: LiveShapes = { planets: helioPlanets(new Date()) };
 const scale = initScale(document.getElementById('scale') as HTMLElement, bodyPts, (lvl) => {
   trackZoom(lvl); contentLevel = lvl; if (typeof render === 'function') render();
+  oracle.sayOnly(oracle.levelLine(lvl)); // зум частый: последняя реплика вытесняет предыдущую
   flux.points.visible = decays.obj.visible = neutrinos.obj.visible = fieldLines.obj.visible = lvl === BODY_LEVEL;
   document.documentElement.classList.toggle('off-body', lvl !== BODY_LEVEL);
   document.documentElement.classList.toggle('ring-off', ![BODY_LEVEL, BODY_LEVEL + 1, BODY_LEVEL + 3].includes(lvl)); // кольцо эклиптики имеет смысл у тела, горизонта, орбиты
@@ -127,6 +130,8 @@ const drag = initGestures(stageEl, scale, reduceMotion);
 const syncLook = (): void => { LOOK.y = portrait ? 0.95 : 0.84; };
 syncLook();
 const baseCam = stage.camera.position.clone();
+const TALK_ANGLE = 0.8; // рад: лицо смотрит в +Z, 0.8 = три четверти вправо — видны и профиль, и челюсть
+let facing = 0, talkLvl = 0; // разговор: доля поворота к зрителю и сглаженное открытие рта
 fit(); baseCam.copy(stage.camera.position);
 // Адаптивное качество: если кадр стабильно > 33 мс — снижаем pixelRatio до 1 (только вниз).
 let slowFrames = 0, lastFrame = performance.now(), degraded = false;
@@ -144,7 +149,12 @@ function loop(now = performance.now()) {
     t += 0.008;
     body.scale.setScalar(1 + Math.sin(t) * 0.01);
     if (drag.x == null) { drag.rot += drag.v; drag.v *= 0.93; } // инерция после отпускания: докручивается и гаснет
-    body.rotation.y = Math.sin(t * 0.3) * 0.18 + drag.rot;
+    // Говорит — встаёт в три четверти к зрителю (анфас из искр не читается, профиль — да), замолчал — вращение продолжается.
+    const spin = t * 0.25 + drag.rot, mo = oracle.mouth(now / 1000);
+    facing += ((mo > 0 ? 1 : 0) - facing) * (mo > 0 ? 0.04 : 0.008); // к зрителю быстро, обратно — плавно, паузы между репликами не дёргают
+    const front = Math.round((spin - TALK_ANGLE) / (2 * Math.PI)) * 2 * Math.PI + TALK_ANGLE;
+    body.rotation.y = spin + (front - spin) * facing;
+    talkLvl += (mo - talkLvl) * 0.35; bodyPts.setTalk(talkLvl);
     bodyPts.setTime(now / 1000);
     flux.setTime(now / 1000); decays.setTime(now / 1000); neutrinos.setTime(now / 1000); fieldLines.setTime(now / 1000);
     gain(now);
@@ -175,6 +185,17 @@ const byId = (id: string) => bodyValues.find((v) => v.id === id);
 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.documentElement.classList.add('staged');
   document.querySelectorAll<HTMLElement>('.stage[data-t]').forEach((el) => setTimeout(() => el.classList.add('on'), Number(el.dataset.t)));
+  // H1: words surface one by one, hold, dissolve, repeat (CSS keyframes per <span class="w">)
+  const h1 = document.querySelector<HTMLElement>('#hero h1');
+  if (h1 && !reduceMotion) {
+    let i = 0;
+    const wrap = (n: Node) => {
+      if (n.nodeType === 3) { const f = document.createDocumentFragment(); (n.textContent ?? '').split(/(\s+)/).forEach((w) => { if (!w.trim()) { f.append(w); return; } const sp = document.createElement('span'); sp.className = 'w'; sp.style.setProperty('--i', String(i++)); sp.textContent = w; f.append(sp); }); n.parentNode?.replaceChild(f, n); }
+      else Array.from(n.childNodes).forEach(wrap);
+    };
+    Array.from(h1.childNodes).forEach(wrap);
+    h1.classList.add('cycle');
+  }
 }
 
 const panel = document.getElementById('panel') as HTMLElement;
@@ -239,9 +260,25 @@ function openWrong(v: Value): void {
   };
 }
 wrongDlg.querySelector('.natal-close')?.addEventListener('click', () => wrongDlg.close());
+// «Что ещё подключить?» — пожелания по данным о себе; уходит как note без даты рождения.
+const wishDlg = document.getElementById('wishDlg') as HTMLDialogElement;
+const wishForm = document.getElementById('wishForm') as HTMLFormElement;
+const openWish = (): void => { wishDlg.showModal(); track('wish_open'); };
+document.getElementById('openWish')?.addEventListener('click', openWish);
+document.getElementById('openWishM')?.addEventListener('click', openWish);
+wishDlg.querySelector('.natal-close')?.addEventListener('click', () => wishDlg.close());
+wishForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const f = new FormData(wishForm);
+  const picked = f.getAll('w').map(String), own = String(f.get('own') ?? '').trim();
+  if (!picked.length && !own) { wishDlg.close(); return; }
+  await sendFeedback({ kind: 'note', text: `подключить: ${[...picked, own].filter(Boolean).join('; ')}` });
+  wishForm.innerHTML = '<p class="wish-done">Записано. Спасибо — что наберёт голоса, подключим.</p>';
+  setTimeout(() => wishDlg.close(), 1400);
+};
 
 // Живой слой (§3.1): NOAA Kp. Не блокирует и не роняет сцену — появляется, когда придёт.
-fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); } render(); });
+fetchKp().then((c) => { liveValues = [toValue(c)]; if (typeof c.value === 'number') { kpLive = c.value; ctx.kp = c.value; liveShapes.kp = c.value; scale.refresh(); oracle.say(oracle.kpLine(c.value)); } render(); });
 
 // --- «Показать, что происходит именно с тобой» → гео + сейчас (§2.4). Координаты не уходят на сервер. ---
 const btn = document.getElementById('reveal') as HTMLButtonElement;
@@ -277,6 +314,7 @@ btn.addEventListener('click', () => {
       liveShapes.bodies = bodies.filter((b) => b.alt > 0);
       Promise.all([import('../data/stars'), import('../compute/liveshapes')]).then(([st, ls]) => st.loadStars().then((cat) => { liveShapes.stars = ls.starsAltAz(cat, lat, lon, now); scale.refresh(); })).catch(() => scale.refresh());
       render();
+      oracle.say(...oracle.skyLines(sky));
       status.textContent = 'Твоё небо — сверху панели. Координаты остались в браузере.';
       btn.hidden = true;
     },
@@ -305,6 +343,41 @@ const showNatal = (): void => { const m = bf.moment(); track('natal'); openNatal
 openBtn.addEventListener('click', showNatal);
 // Шеринг-ссылка (§2.1): /?birth=… открывает карту сразу.
 if (bf.applyQuery(new URLSearchParams(location.search))) { birth.dispatchEvent(new Event('input')); showNatal(); }
+// Разговор с лицом: нажал — лицо слушает, отвечает и снова слушает, пока человек говорит; тишина или
+// повторное нажатие — конец. Кнопка есть только там, где браузер умеет слушать (не в Firefox).
+if (canListen()) {
+  const talkBtn = document.createElement('button');
+  talkBtn.id = 'talk'; talkBtn.type = 'button';
+  talkBtn.title = 'Речь распознаёт браузер (Google или Apple). Карта и координаты остаются у тебя.';
+  document.getElementById('stage')?.appendChild(talkBtn);
+  const label = (t: string, on = false): void => { talkBtn.textContent = t; talkBtn.classList.toggle('on', on); };
+  label('говорить с лицом');
+  let live = false, stopMic = (): void => {};
+  const conversation = async (): Promise<void> => {
+    const talk = import('./talk'); // грузится, пока человек говорит первую фразу
+    for (let first = true; live; first = false) {
+      label('слушаю… (нажми — закончить)', true);
+      const mic = listen(); stopMic = mic.stop;
+      const { text, error } = await mic.done;
+      if (!live) break;
+      if (error === 'not-allowed' || error === 'service-not-allowed') { if (first) oracle.sayOnly('Нужен доступ к микрофону — разреши его в адресной строке и нажми ещё раз.'); break; } // Safari не даёт слушать повторно без жеста — тихо ждём нажатия
+      if (!text) { if (first) oracle.sayOnly('Не расслышал. Нажми и скажи ещё раз.'); break; }
+      if (/^(стоп|хватит|замолчи|тихо|пока)/i.test(text)) { oracle.sayOnly('Хорошо. Я здесь, когда захочешь.'); break; }
+      label(`«${text.length > 42 ? text.slice(0, 40) + '…' : text}»`); // что расслышано — видно сразу, ошибку распознавания легко заметить
+      await (await talk).reply(text, bf, allValues);
+      await oracle.idle();
+    }
+    live = false; label('говорить с лицом');
+  };
+  talkBtn.addEventListener('click', () => {
+    if (live) { live = false; stopMic(); oracle.sayOnly(); label('говорить с лицом'); return; }
+    live = true;
+    oracle.enableVoice();
+    // iOS разрешает речь только из жеста: короткая пустая реплика «открывает» синтез, дальнейшие ответы звучат.
+    if (typeof speechSynthesis !== 'undefined') { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); }
+    void conversation();
+  });
+}
 
 // Esc закрывает любой открытый оверлей (§3.10).
 document.addEventListener('keydown', (e) => {

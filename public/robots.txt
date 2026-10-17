@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cosmos-alpha-three.vercel.app/sitemap-natal.xml
+Sitemap: https://astropro.tech/sitemap-natal.xml
 
-Sitemap: https://cosmos-alpha-three.vercel.app/sitemap-nebo.xml
+Sitemap: https://astropro.tech/sitemap-nebo.xml
+
+Sitemap: https://astropro.tech/sitemap-pages.xml

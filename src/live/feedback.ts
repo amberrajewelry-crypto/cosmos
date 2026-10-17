@@ -25,7 +25,13 @@ export function track(ev: string): void { counts[ev] = (counts[ev] ?? 0) + 1; }
 export function trackZoom(level: number): void { zoomMax = Math.max(zoomMax, level); zoomMin = Math.min(zoomMin, level); }
 export function flushEvents(): void {
   if (!Object.keys(counts).length && !zoomMax && !zoomMin) return;
-  const body = JSON.stringify({ kind: 'events', counts, zoomMax, zoomMin, tz: tz() });
+  const body = JSON.stringify({ kind: 'events', sid: SID, counts, zoomMax, zoomMin, tz: tz() });
   try { navigator.sendBeacon?.(URL, new Blob([body], { type: 'application/json' })); } catch { /* no-op */ }
 }
-if (typeof addEventListener === 'function') addEventListener('pagehide', flushEvents);
+// 16.10: на телефонах pagehide часто не приходит (ушли в другое приложение) — шлём и при сворачивании.
+// Счётчики накопительные, сервер перезаписывает запись сессии по sid — повторная отправка не создаёт новую сессию.
+const SID = Math.random().toString(16).slice(2, 10).padEnd(8, '0');
+if (typeof addEventListener === 'function') {
+  addEventListener('pagehide', flushEvents);
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushEvents(); });
+}
