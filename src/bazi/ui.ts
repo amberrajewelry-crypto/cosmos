@@ -26,6 +26,8 @@ import { calibrate, applyHypo, rankHours, encodeSet, SPHERE_RU, type LifeEvent, 
 import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, type DayInfo, dayInfo, prepOnly } from './days';
+import { lifeLine, lifeLineSvg } from './lifeline';
+import { shareCard, incomingRef, cameByRef } from './sharecard';
 
 import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
 import { dayCard, dayMore, dLabel, dayRu, secDays, WP_SHORTCUT } from './ui-days';
@@ -88,6 +90,7 @@ fp.addEventListener('input', async () => {
 fp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !fpl.hidden) { e.preventDefault(); (fpl.firstElementChild as HTMLElement)?.click(); } });
 document.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('.place')) fpl.hidden = true; });
 const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme']);
+if (incomingRef()) track('bazi:ref:in'); // пришёл по чужой карточке
 document.addEventListener('click', (e) => {
   const t = e.target as HTMLElement, b = t.closest<HTMLElement>('button[id]'), sm = t.closest('summary');
   if (b && TRACKED.has(b.id)) track(`bazi:${b.id}`);
@@ -204,7 +207,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым.</p></summary>`,
     secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
-  track('bazi:build');
+  track('bazi:build'); if (cameByRef()) track('bazi:ref:build');
   requestAnimationFrame(() => {
     out.querySelectorAll<HTMLElement>('.pillar').forEach((el, i, all) => setTimeout(() => el.classList.add('on'), 200 + (all.length - 1 - i) * 380));
     fold(out);
@@ -440,6 +443,7 @@ function secLuck(c: Chart, a: Analysis) {
   const sel = cur >= 0 ? cur : 0, rd = luckR(c, a, c.luck[sel].idx);
   return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>${evTag('periods')}
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
+    <div class="ll-box"><h3>Линия жизни</h3><p class="dhint">Выше середины — благоприятный фон, ниже — нагрузка. Такт и год вместе, сглажено по трём годам.</p>${lifeLineSvg(lifeLine(c, a), nowY)}</div>
     <div class="luck">${cards}</div>
     <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;
@@ -486,7 +490,7 @@ function pushCta() {
   return `<section class="block push-cta"><div class="card pane"><p class="eyebrow">Каждое утро</p><h3>Ваш день — в 8:00 на телефон</h3>
     <p>Короткая подсказка: сильный день или нагрузка, что делать, лучшие часы. Чтобы считать её, данные рождения хранятся у нас; отключить — той же кнопкой.</p>
     <button class="go" data-push type="button">Мой день — каждое утро</button><p class="dhint" data-pushmsg></p>
-    <div class="acts"><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
+    <div class="acts"><button class="ghost" id="scard" type="button">Картинка для Stories</button><button class="ghost" id="share" type="button">Поделиться разбором</button><button class="ghost" id="pdf" type="button">Сохранить в PDF</button></div></div></section>`;
 }
 function chartQuery(): string {
   const wq = new URLSearchParams(lastQuery || location.search.slice(1)), wp = new URLSearchParams();
@@ -623,6 +627,14 @@ function wireDays(c: Chart, a: Analysis) {
       if (navigator.share) await navigator.share({ title: document.title, url });
       else { await navigator.clipboard.writeText(url); sh.textContent = 'Ссылка скопирована'; }
     } catch { /* пользователь закрыл окно — ничего не делаем */ }
+  };
+  const sc = document.getElementById('scard');
+  if (sc) sc.onclick = async () => {
+    const Y = baziYear(), yf = yearForecast(c, a, Y), txt = lay(yf.text);
+    try {
+      const r = await shareCard({ title: DM_TEXT[a.dm].title, year: Y, yearTone: toneRu(yf.tone), yearLine: txt.charAt(0).toUpperCase() + txt.slice(1) + '.', pts: lifeLine(c, a), nowYear: new Date().getFullYear(), color: EL_COLOR[STEMS[a.dm].el] });
+      track(`bazi:scard:${r}`); if (r === 'saved') sc.textContent = 'Картинка сохранена, ссылка скопирована';
+    } catch { /* закрыл окно «поделиться» */ }
   };
   const pdf = document.getElementById('pdf');
   if (pdf) pdf.onclick = () => { document.querySelectorAll<HTMLDetailsElement>('#out details').forEach((d) => { if (!d.closest('.deep')) d.open = true; }); print(); };

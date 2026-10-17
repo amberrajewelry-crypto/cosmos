@@ -771,3 +771,14 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .about p { color: var(--ink-3); line-height: 1.55; margin: 0 0 10px; }
 /* Разбор показан — справка для новичка не нужна и не прыгает вниз (CLS 0,91 → ~0) */
 #out:not([hidden]) ~ #about { display: none; }
+
+/* Линия жизни (lifeline.ts) */
+.ll-box { margin: 6px 0 22px; }
+.ll-box h3 { margin: 0 0 4px; }
+.lifeline { width: 100%; height: auto; display: block; }
+.lifeline .ll-mid { stroke: rgba(255,255,255,.18); stroke-dasharray: 4 6; }
+.lifeline .ll-line { fill: none; stroke: #f3ead2; stroke-width: 2.2; stroke-linejoin: round; }
+.lifeline .ll-now { stroke: rgba(226,196,124,.55); stroke-width: 1.2; }
+.lifeline .ll-dot { fill: #e2c47c; }
+.lifeline text { fill: #9a96b8; font-size: 11px; }
+.lifeline .ll-lbl { fill: #e2c47c; }
