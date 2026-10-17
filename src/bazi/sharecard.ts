@@ -26,13 +26,27 @@ export const cameByRef = () => { try { return !!sessionStorage.getItem('bazi-ref
 export type CardData = { title: string; year: number; yearTone: string; yearLine: string; pts: LifePoint[]; nowYear: number; color: string };
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lh: number, maxLines = 4): number {
-  const words = text.split(/\s+/); let line = '', n = 0;
+  const words = text.split(/\s+/), lines: string[] = []; let line = '';
   for (const w of words) {
     const t = line ? line + ' ' + w : w;
-    if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, y); y += lh; line = w; if (++n >= maxLines - 1) break; } else line = t;
+    if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t;
   }
-  if (line) ctx.fillText(line, x, y);
-  return y + lh;
+  if (line) lines.push(line);
+  if (lines.length > maxLines) { // не рвать фразу молча: последняя строка с многоточием
+    let last = lines[maxLines - 1] + '…';
+    while (ctx.measureText(last).width > maxW && last.includes(' ')) last = last.slice(0, last.lastIndexOf(' ')) + '…';
+    lines.splice(maxLines - 1, lines.length, last);
+  }
+  for (const l of lines) { ctx.fillText(l, x, y); y += lh; }
+  return y;
+}
+
+/** Для картинки — только целые предложения до max знаков (длинный текст года не обрывать посередине). */
+export function teaser(text: string, max = 150): string {
+  const ss = text.match(/[^.!?]+[.!?]+/g) ?? [text];
+  let out = '';
+  for (const x of ss) { const t = (out + ' ' + x.trim()).trim(); if (t.length > max && out) break; out = t; }
+  return out;
 }
 
 export async function renderCard(d: CardData): Promise<Blob> {
@@ -48,8 +62,8 @@ export async function renderCard(d: CardData): Promise<Blob> {
   let y = wrap(ctx, d.title, W / 2, 420, 900, 110, 3);
   ctx.fillStyle = d.color; ctx.font = '600 58px system-ui, sans-serif';
   ctx.fillText(`${d.year}: ${d.yearTone}`, W / 2, y + 60);
-  ctx.fillStyle = '#cfcbe8'; ctx.font = '400 42px system-ui, sans-serif';
-  y = wrap(ctx, d.yearLine, W / 2, y + 150, 900, 58, 4);
+  ctx.fillStyle = '#cfcbe8'; ctx.font = '400 40px system-ui, sans-serif';
+  y = wrap(ctx, teaser(d.yearLine), W / 2, y + 150, 920, 56, 5);
   // линия жизни
   const top = Math.max(y + 140, 1160), gh = 360, gx = 90, gw = W - 180, mid = top + gh / 2;
   ctx.fillStyle = '#e2c47c'; ctx.font = '500 40px system-ui, sans-serif'; ctx.fillText('Линия жизни', W / 2, top - 100);
