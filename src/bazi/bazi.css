@@ -786,3 +786,11 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .ios-steps li { margin: 4px 0; }
 .pro .list { margin: 10px 0; }
 .pro h3 { margin-top: 4px; }
+
+/* 17.10: бесконечные декоративные анимации — на паузе до первого касания или 5 с после загрузки (anim-gate.ts),
+   чтобы первая отрисовка на слабом телефоне не делила процессор с перерисовкой. Анимации появления не трогаем. */
+html:not(.anim-on) :is(svg.wheel .flow, svg.wheel .ctl, svg.wheel .node, .o-ring, .o-ring img, .o-pent, .glyph.ani::before),
+html:not(.anim-on) :is(.dc.now, .bar .fill, .hero .form, .go, .who, .who-fx, .push-cta .card)::after,
+html:not(.anim-on) .who-fx::before { animation-play-state: paused; }
+html:not(.anim-on) .glyph.ani img { animation-play-state: paused; }
+html:not(.anim-on) .pillar.on .glyph.ani img { animation-play-state: running, paused, paused; }

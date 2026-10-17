@@ -1,5 +1,6 @@
 // Живые стихии: 10 стволов = 10 процедурных анимаций на canvas.
 // Огонь горит (частицы пламени и искры), вода течёт, дерево растёт и качается, металл блестит, земля дышит туманом.
+import { whenAnim } from './anim-gate';
 // Один общий цикл requestAnimationFrame; анимация идёт только пока холст виден.
 
 type Draw = (ctx: CanvasRenderingContext2D, t: number, dt: number, s: number, st: any) => void;
@@ -10,8 +11,8 @@ const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced
 let running = false, last = 0;
 // 16.10 (Lighthouse: главный поток 10 с, блокировка 1,3 с): 30 кадров в секунду вместо 60 и старт после загрузки страницы.
 const FRAME_MS = 1000 / 30 - 2;
-let ready = typeof document === 'undefined' || document.readyState === 'complete';
-if (!ready) addEventListener('load', () => setTimeout(() => { ready = true; kick(); }, 300), { once: true });
+let ready = false;
+whenAnim(() => { ready = true; kick(); });
 function loop(now: number) {
   if (now - last < FRAME_MS) { requestAnimationFrame(loop); return; }
   const dt = Math.min(0.05, (now - last) / 1000 || 0.033); last = now;
@@ -26,12 +27,13 @@ function loop(now: number) {
 }
 const kick = () => { if (!running && ready) { running = true; last = performance.now() - 40; requestAnimationFrame(loop); } };
 const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => {
-  for (const e of es) for (const f of fxs) if (f.cv === e.target) f.on = e.isIntersecting;
+  // холст нулевого размера (скрытая мандала) IntersectionObserver считает «видимым» — такие не рисуем
+  for (const e of es) for (const f of fxs) if (f.cv === e.target) f.on = e.isIntersecting && e.boundingClientRect.width > 0;
   kick();
 }, { rootMargin: '80px' }) : null;
 
 export function mountFx(cv: HTMLCanvasElement, stem: number) {
-  const s = cv.clientWidth || 120, d = Math.min(devicePixelRatio || 1, 2);
+  const s = cv.clientWidth || 120, d = Math.min(devicePixelRatio || 1, 1.5) // 1,5 вместо 2: в 1,8 раза меньше точек на кадр, на глаз то же;
   cv.width = s * d; cv.height = s * d;
   const ctx = cv.getContext('2d')!;
   ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -41,6 +43,7 @@ export function mountFx(cv: HTMLCanvasElement, stem: number) {
   f.draw = (c, t, dt, sz, st) => { c.setTransform(base); c.clearRect(0, 0, sz, sz); orig(c, t, dt, sz, st); };
   fxs.add(f); io?.observe(cv);
   if (reduce) { f.on = true; for (let i = 0; i < 90; i++) f.draw(ctx, i / 30, 1 / 30, s, f.st); f.on = false; }
+  else if (!ready && s > 1 && cv.clientWidth) { ctx.save(); f.draw(ctx, 0, 1 / 30, s, f.st); ctx.restore(); } // неподвижный кадр до пуска
   kick();
 }
 

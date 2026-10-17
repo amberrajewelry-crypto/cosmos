@@ -4,9 +4,6 @@ import { chartHash, answer, myAnswer, mySummary, globalSummary, myDays, sendReco
 import { reveal, wireMotion } from './motion';
 import './bazi.css';
 import { loadPlaces, findPlaces, placeLabel, placeDetail, type Place } from '../data/places';
-import { canListen, listen } from '../ui/listen';
-import { parseSpokenBirth, matchSpokenPlace } from '../ui/voice-parse';
-import { ask } from '../live/ask';
 import { track, sendFeedback } from '../live/feedback';
 import {
   STEMS, BRANCHES, EL, EL_RGB, EL_COLOR, GODS, godOf, senseFor, yearsRu, hiddenOf, stageOf, STAGES, nayinOf, TERMS, SEASON_STATE, type El,
@@ -31,6 +28,7 @@ import { lifeLine, lifeLineSvg } from './lifeline';
 import { shareCard, incomingRef, cameByRef, myRef } from './sharecard';
 
 import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
+import { whenAnim } from './anim-gate';
 import { dayCard, dayMore, dLabel, dayRu, secDays, WP_SHORTCUT } from './ui-days';
 // ——— Фон: поток ци ———
 const qi = (() => {
@@ -59,7 +57,7 @@ const qi = (() => {
     }
     if (!reduce) requestAnimationFrame(frame);
   };
-  frame();
+  whenAnim(() => frame());
   return { tint(w: number[]) { const s = w.reduce((a, b) => a + b, 0); weights = w.map((x) => x / s); ps.forEach((p) => (p.e = pickEl())); } };
 })();
 
@@ -106,9 +104,12 @@ document.addEventListener('submit', (e) => { const id = (e.target as HTMLElement
 fnt.addEventListener('change', () => (ft.disabled = fnt.checked));
 
 const voiceBtn = $<HTMLButtonElement>('voice');
-if (canListen() && new URLSearchParams(location.search).has('voice')) {
+// голос и «спросить карту» — отдельные модули по требованию, в первую загрузку не входят
+if (new URLSearchParams(location.search).has('voice')) void import('../ui/listen').then(({ canListen, listen }) => {
+  if (!canListen()) return;
   voiceBtn.hidden = false;
   voiceBtn.onclick = async () => {
+    const { parseSpokenBirth, matchSpokenPlace } = await import('../ui/voice-parse');
     voiceBtn.textContent = 'Слушаю…'; msg.textContent = 'Скажите, например: «двенадцатое мая девяностого года в половине третьего, Москва»';
     if (!places.length) places = await loadPlaces();
     const h = await listen().done;
@@ -121,7 +122,7 @@ if (canListen() && new URLSearchParams(location.search).has('voice')) {
     msg.textContent = `Услышал: «${h.text}»`;
     if (fd.value && chosen) $<HTMLFormElement>('f').requestSubmit();
   };
-}
+});
 
 $<HTMLFormElement>('f').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -880,6 +881,7 @@ function wire(c: Chart, a: Analysis, charts: { v: Variant; c: Chart; a: Analysis
     const q = (document.getElementById('askq') as HTMLInputElement).value.trim(), ans = document.getElementById('ans')!;
     if (!q) return;
     ans.textContent = 'Думаю над картой…';
+    const { ask } = await import('../live/ask');
     const r = await ask(`${q}\n(Отвечай как знаток Бацзы, опираясь на разбор карты.)`, [], ctx);
     ans.textContent = r.text;
   });
