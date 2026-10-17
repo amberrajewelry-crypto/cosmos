@@ -4,8 +4,9 @@
 // Рассылку делает VPS: tools/push_worker.ts (cron), в 8:00 по поясу z.
 import { put, del, list } from '@vercel/blob';
 import { createHash } from 'node:crypto';
+import { allow, ipOf } from './ratelimit';
 
-interface Req { method?: string; body?: unknown; }
+interface Req { method?: string; body?: unknown; headers?: Record<string, string | string[] | undefined>; }
 interface Res { setHeader(k: string, v: string): Res; status(n: number): Res; json(b: unknown): void; end(): void; }
 
 const MAX = 20000; // мёртвые и поддельные подписки воркер удаляет по 404/410 при первой отправке
@@ -19,6 +20,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   res.setHeader('Cache-Control', 'no-store');
   if (!process.env.BLOB_READ_WRITE_TOKEN) { res.status(503).json({ ok: false }); return; }
   if (req.method !== 'POST') { res.status(405).end(); return; }
+  if (!allow('push', ipOf(req.headers), 10, 3600e3)) { res.status(429).json({ ok: false, status: 'busy' }); return; } // 10 подписок/отписок в час с адреса
   let b: Record<string, unknown>;
   try { b = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body ?? {}) as Record<string, unknown>; } catch { res.status(400).end(); return; }
   if (okEndpoint(b.off)) {

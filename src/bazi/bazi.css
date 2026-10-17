@@ -786,3 +786,25 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .ios-steps li { margin: 4px 0; }
 .pro .list { margin: 10px 0; }
 .pro h3 { margin-top: 4px; }
+
+/* 17.10: бесконечные декоративные анимации — на паузе до первого касания или 5 с после загрузки (anim-gate.ts),
+   чтобы первая отрисовка на слабом телефоне не делила процессор с перерисовкой. Анимации появления не трогаем. */
+html:not(.anim-on) :is(svg.wheel .flow, svg.wheel .ctl, svg.wheel .node, .o-ring, .o-ring img, .o-pent, .glyph.ani::before),
+html:not(.anim-on) :is(.dc.now, .bar .fill, .hero .form, .go, .who, .who-fx, .push-cta .card)::after,
+html:not(.anim-on) .who-fx::before { animation-play-state: paused; }
+html:not(.anim-on) .glyph.ani img { animation-play-state: paused; }
+html:not(.anim-on) .pillar.on .glyph.ani img { animation-play-state: running, paused, paused; }
+
+/* 17.10: цели касания не меньше 44 px (мобилка 375); «не знаю» — отдельная подпись, нажатие по тексту ставит флажок */
+.form .tcell { display: flex; flex-direction: column; gap: 6px; min-width: 0; position: relative; font-size: 13px; color: var(--ink-3); letter-spacing: .04em; }
+.form .tcell > label.chk { flex-direction: row; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; color: var(--ink-2); }
+.form .tcell > label.chk input { width: 20px; height: 20px; accent-color: var(--gold); }
+.seg label { min-height: 44px; align-items: center; cursor: pointer; }
+.demo a { padding: 12px 0; } /* строчный отступ: зона касания больше, строки не раздвигает */
+nav.top a { min-height: 44px; display: inline-flex; align-items: center; }
+.foot a { padding: 13px 4px; }
+button.primary, button.ghost, a.ghost, button.go, #out select { min-height: 44px; }
+#out summary { min-height: 44px; }
+.dgrid { gap: 3px; }
+.dc { min-width: 0; width: 100%; min-height: 44px; }
+#fbf { margin-top: 10px; }

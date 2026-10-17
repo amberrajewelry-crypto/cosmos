@@ -49,6 +49,10 @@ async function funnel(days) {
   }
   return { days, total, byDay };
 }
+// Частота по IP (17.10): сообщения в Telegram — 10 в час с адреса, события воронки — 300 в час. Память экземпляра (см. scripts/ratelimit.ts).
+const rlHits = new Map();
+const rlAllow = (scope, ip, max, win, now = Date.now()) => { const k = scope + '|' + ip, a = (rlHits.get(k) ?? []).filter((t) => now - t < win); if (a.length >= max) { rlHits.set(k, a); return false; } a.push(now); rlHits.set(k, a); if (rlHits.size > 5000) for (const [kk, ts] of rlHits) if (!ts.length || now - ts[ts.length - 1] > win) rlHits.delete(kk); return true; };
+const rlIp = (h) => { const v = h?.['x-real-ip'] ?? h?.['x-forwarded-for']; return (Array.isArray(v) ? v[0] : v ?? '').split(',')[0].trim() || 'unknown'; };
 const KINDS = new Set(['wrong', 'clear', 'check', 'question', 'note', 'events']);
 const MAX = 4000;
 export default async function handler(req, res) {
@@ -64,6 +68,7 @@ export default async function handler(req, res) {
   if (raw.length > MAX) { res.status(413).end(); return; }
   let fb; try { fb = JSON.parse(raw); } catch { res.status(400).end(); return; }
   if (!fb || !KINDS.has(fb.kind)) { res.status(400).end(); return; }
+  if (!rlAllow(fb.kind === 'events' ? 'ev' : 'tg', rlIp(req.headers), fb.kind === 'events' ? 300 : 10, 3600e3)) { res.status(429).json({ ok: false }); return; }
   if (fb.kind === 'events' && (!okCounts(fb.counts) || !okOrigin(req))) { res.status(400).end(); return; }
   if (fb.kind === 'events' && await storeEvents(fb, String(req.headers?.['user-agent'] ?? ''))) { res.status(200).json({ ok: true }); return; }
   const token = process.env.TG_BOT_TOKEN, chat = process.env.TG_CHAT_ID;

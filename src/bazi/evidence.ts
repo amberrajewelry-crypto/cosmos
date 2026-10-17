@@ -38,9 +38,10 @@ export type EvKey = keyof typeof EVIDENCE;
 const escH = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Метка под заголовком блока: «Проверено — не подтвердилось. …». extra — уточнение для конкретной карты. */
-export function evTag(k: EvKey, extra = ''): string {
+/** brief — своя короткая строка вместо полной (когда та же проверка уже описана выше на странице). */
+export function evTag(k: EvKey, extra = '', brief = ''): string {
   const e: Evidence = EVIDENCE[k];
-  return `<p class="ev ev-${e.status}"><b>${EV_LABEL[e.status]}.</b> ${escH(e.text)}${extra ? ' ' + escH(extra) : ''}</p>`;
+  return `<p class="ev ev-${e.status}"><b>${EV_LABEL[e.status]}.</b> ${escH(brief || e.text)}${extra ? ' ' + escH(extra) : ''}</p>`;
 }
 
 /** Сводка для блока «Честно о Бацзы». */

@@ -1,6 +1,29 @@
 // scripts/journal-fn.ts
 import { put, list, del } from "@vercel/blob";
 import { createHash } from "node:crypto";
+
+// scripts/ratelimit.ts
+var hits = /* @__PURE__ */ new Map();
+function ipOf(h) {
+  const v = h?.["x-real-ip"] ?? h?.["x-forwarded-for"];
+  const s = Array.isArray(v) ? v[0] : v;
+  return (s ?? "").split(",")[0].trim() || "unknown";
+}
+function allow(scope, ip, max, windowMs, now = Date.now()) {
+  const k = scope + "|" + ip, arr = (hits.get(k) ?? []).filter((t) => now - t < windowMs);
+  if (arr.length >= max) {
+    hits.set(k, arr);
+    return false;
+  }
+  arr.push(now);
+  hits.set(k, arr);
+  if (hits.size > 5e3) {
+    for (const [kk, ts] of hits) if (!ts.length || now - ts[ts.length - 1] > windowMs) hits.delete(kk);
+  }
+  return true;
+}
+
+// scripts/journal-fn.ts
 var TYPES = /* @__PURE__ */ new Set(["peak", "peak-hit", "calm", "heavy"]);
 var TONES = /* @__PURE__ */ new Set(["good", "bad", "mixed", "calm", "-"]);
 var SPH = /* @__PURE__ */ new Set(["-", "work", "money", "love", "health", "mood", "family"]);
@@ -41,6 +64,11 @@ function aggregate(paths) {
 async function handler(req, res) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     res.status(503).json({ ok: false });
+    return;
+  }
+  if (!allow(req.method === "GET" ? "journal-get" : "journal-post", ipOf(req.headers), 60, 36e5)) {
+    res.setHeader("Cache-Control", "no-store");
+    res.status(429).json({ ok: false });
     return;
   }
   if (req.method === "GET") {

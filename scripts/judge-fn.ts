@@ -2,8 +2,9 @@
 // Ключ — четыре столпа (индексы 0–59: год_месяц_день_час). Запрос: jq/<key>.txt; ответ: jr/<key>/<стихия 0–4 | x>.txt.
 // Содержимое файлов не читается — всё в имени пути (хранилище приватное).
 import { put, list } from '@vercel/blob';
+import { allow, ipOf } from './ratelimit';
 
-type Req = { method?: string; query?: Record<string, string | string[]>; body?: unknown };
+type Req = { method?: string; query?: Record<string, string | string[]>; body?: unknown; headers?: Record<string, string | string[] | undefined> };
 type Res = { status: (n: number) => Res; json: (b: unknown) => void; setHeader: (k: string, v: string) => void; end: () => void };
 
 const KEY = /^([0-5]?\d)_([0-5]?\d)_([0-5]?\d)_([0-5]?\d)$/;
@@ -26,6 +27,8 @@ async function result(key: string): Promise<number | 'x' | null> {
 export default async function handler(req: Req, res: Res): Promise<void> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) { res.status(503).json({ ok: false }); return; }
   res.setHeader('Cache-Control', 'no-store');
+  // постановка в очередь — 20 в час с адреса, опрос статуса — 600 в час (клиент спрашивает раз в 8 с)
+  if (!allow(req.method === 'POST' ? 'judge-post' : 'judge-get', ipOf(req.headers), req.method === 'POST' ? 20 : 600, 3600e3)) { res.status(429).json({ ok: false, status: 'busy' }); return; }
   let raw: unknown = req.query?.p;
   if (req.method === 'POST') {
     try { const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body as Record<string, unknown>) ?? {}; raw = b.p; } catch { res.status(400).end(); return; }

@@ -1,6 +1,29 @@
 // scripts/push-fn.ts
 import { put, del, list } from "@vercel/blob";
 import { createHash } from "node:crypto";
+
+// scripts/ratelimit.ts
+var hits = /* @__PURE__ */ new Map();
+function ipOf(h) {
+  const v = h?.["x-real-ip"] ?? h?.["x-forwarded-for"];
+  const s = Array.isArray(v) ? v[0] : v;
+  return (s ?? "").split(",")[0].trim() || "unknown";
+}
+function allow(scope, ip, max, windowMs, now = Date.now()) {
+  const k = scope + "|" + ip, arr = (hits.get(k) ?? []).filter((t) => now - t < windowMs);
+  if (arr.length >= max) {
+    hits.set(k, arr);
+    return false;
+  }
+  arr.push(now);
+  hits.set(k, arr);
+  if (hits.size > 5e3) {
+    for (const [kk, ts] of hits) if (!ts.length || now - ts[ts.length - 1] > windowMs) hits.delete(kk);
+  }
+  return true;
+}
+
+// scripts/push-fn.ts
 var MAX = 2e4;
 var idOf = (endpoint) => createHash("sha256").update(endpoint).digest("hex").slice(0, 24);
 var okTz = (tz) => {
@@ -30,6 +53,10 @@ async function handler(req, res) {
   }
   if (req.method !== "POST") {
     res.status(405).end();
+    return;
+  }
+  if (!allow("push", ipOf(req.headers), 10, 36e5)) {
+    res.status(429).json({ ok: false, status: "busy" });
     return;
   }
   let b;

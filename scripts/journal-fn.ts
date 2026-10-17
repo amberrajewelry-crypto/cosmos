@@ -4,6 +4,7 @@
 // Все данные записи — в имени файла (статистика = только list, без чтения файлов); один ответ на карту и день.
 import { put, list, del } from '@vercel/blob';
 import { createHash } from 'node:crypto';
+import { allow, ipOf } from './ratelimit';
 
 interface Req { method?: string; body?: unknown; query: Record<string, string | string[] | undefined>; headers?: Record<string, string | string[] | undefined> }
 interface Res { setHeader(k: string, v: string): Res; status(n: number): Res; json(b: unknown): void; end(): void }
@@ -49,6 +50,9 @@ export function aggregate(paths: string[]) {
 
 export default async function handler(req: Req, res: Res): Promise<void> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) { res.status(503).json({ ok: false }); return; }
+  // GET (сводка) перебирает до 20 тыс. записей — 60 в час с адреса (кэш CDN обходится параметром в адресе);
+  // POST (ответы «день да/нет», слепой тест) — 60 в час: накрутка с одного адреса не испортит проверку сигнала
+  if (!allow(req.method === 'GET' ? 'journal-get' : 'journal-post', ipOf(req.headers), 60, 3600e3)) { res.setHeader('Cache-Control', 'no-store'); res.status(429).json({ ok: false }); return; }
   if (req.method === 'GET') {
     const paths: string[] = [];
     let cursor: string | undefined;

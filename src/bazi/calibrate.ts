@@ -68,7 +68,7 @@ export function calibrate(c: Chart, a: Analysis, evs: LifeEvent[], days: DayMark
   const base = score(b, c, a, evs, days, 'base', `как в разборе: ${EL[b.yong]}`);
   const hypos = [base];
   if (b.alt) hypos.push(score({ ...b, ...b.alt, alt: undefined }, c, a, evs, days, 'alt', `противоположный перевес: ${EL[b.alt.yong]}`));
-  for (let e = 0; e < 5; e++) if (e !== b.yong) hypos.push(score(setFor(e as El, b), c, a, evs, days, `el${e}`, `главная — ${EL[e]}`));
+  for (let e = 0; e < 5; e++) if (e !== b.yong) hypos.push(score(setFor(e as El, b), c, a, evs, days, `el${e}`, e === b.rival?.yong ? `выбор другой школы: главная — ${EL[e]}` : `главная — ${EL[e]}`));
   hypos.sort((x, y) => y.net - x.net || (x.id === 'base' ? -1 : y.id === 'base' ? 1 : 0));
   const best = hypos[0], ny = evs.length, nd = days.length, n = ny + DAY_W * nd;
   const w = (h: Hypo) => h.hits + DAY_W * h.dHits, decided = base.hits + base.miss + DAY_W * (base.dHits + base.dMiss);
