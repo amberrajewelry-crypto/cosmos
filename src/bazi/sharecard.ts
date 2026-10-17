@@ -64,7 +64,7 @@ export async function renderCard(d: CardData): Promise<Blob> {
   ctx.fillText('0', gx, top + gh + 40); ctx.fillText('40', gx + gw / 2, top + gh + 40); ctx.fillText('80 лет', gx + gw - 30, top + gh + 40);
   ctx.fillStyle = '#fff'; ctx.font = '600 50px system-ui'; ctx.fillText('А какая линия у тебя?', W / 2, H - 230);
   ctx.fillStyle = '#e2c47c'; ctx.font = '500 46px system-ui'; ctx.fillText('astropro.tech/bazi', W / 2, H - 150);
-  ctx.fillStyle = '#6f6b8f'; ctx.font = '400 26px system-ui'; ctx.fillText('Традиционный расчёт, не научный прогноз', W / 2, H - 90);
+  ctx.fillStyle = '#6f6b8f'; ctx.font = '400 26px system-ui'; ctx.fillText('По китайской традиции. Не прогноз — проверено на биографиях', W / 2, H - 90);
   return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('toBlob'))), 'image/png'));
 }
 

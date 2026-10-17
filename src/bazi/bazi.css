@@ -782,3 +782,5 @@ section.block.deep > details.more[open] > summary h2::after { content: '−'; }
 .lifeline .ll-dot { fill: #e2c47c; }
 .lifeline text { fill: #9a96b8; font-size: 11px; }
 .lifeline .ll-lbl { fill: #e2c47c; }
+.ios-steps { margin: 8px 0 0; padding-left: 20px; text-align: left; }
+.ios-steps li { margin: 4px 0; }

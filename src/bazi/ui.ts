@@ -27,7 +27,7 @@ import { daysIcs } from './ics';
 import { yearForecast, decade, baziYear, pillarZh, toneRu } from './forecast';
 import { daysFrom, type DayInfo, dayInfo, prepOnly } from './days';
 import { lifeLine, lifeLineSvg } from './lifeline';
-import { shareCard, incomingRef, cameByRef } from './sharecard';
+import { shareCard, incomingRef, cameByRef, myRef } from './sharecard';
 
 import { $, AMOUNT, esc, rgb, pol, lbl, ANIMAL, animalSrc, animalSm, lay, animalOf, luckR, thumb, ME_KEY } from './ui-kit';
 import { dayCard, dayMore, dLabel, dayRu, secDays, WP_SHORTCUT } from './ui-days';
@@ -91,6 +91,10 @@ fp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !fpl.hidden) { 
 document.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('.place')) fpl.hidden = true; });
 const TRACKED = new Set(['pdf', 'share', 'ics', 'addlist', 'saveme']);
 if (incomingRef()) track('bazi:ref:in'); // пришёл по чужой карточке
+// Приглашение «сравнить карты»: ?pair=<d,t,p,g пригласившего>. Держим до построения своей карты.
+{ const pr = new URLSearchParams(location.search).get('pair'); if (pr) { try { sessionStorage.setItem('bazi-pair', pr); } catch { /* нет хранилища */ } track('bazi:pair:in'); } }
+const pairInvite = (): URLSearchParams | null => { try { const v = sessionStorage.getItem('bazi-pair'); const q = v ? new URLSearchParams(v) : null; return q?.get('d') ? q : null; } catch { return null; } };
+if (pairInvite() && !new URLSearchParams(location.search).get('d')) msg.textContent = 'Вас пригласили сравнить карты. Введите свои данные — пару покажем сразу.';
 document.addEventListener('click', (e) => {
   const t = e.target as HTMLElement, b = t.closest<HTMLElement>('button[id]'), sm = t.closest('summary');
   if (b && TRACKED.has(b.id)) track(`bazi:${b.id}`);
@@ -203,7 +207,7 @@ function build(input: BirthInput, variant: Variant = DEFAULT_VARIANT) {
   out.hidden = false;
   // 08.10 «убери лишнее»: в основном потоке — кто вы, ответы на 7 вопросов, год, дни, пара. Остальное — в одной свёрнутой группе.
   const example = new URLSearchParams(location.search).has('ex');
-  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), example ? '' : pushCta(), secForecast(c, a), secRasklad(c, a), secCompat(),
+  out.innerHTML = [example ? '<section class="block ex-note"><div class="card pane"><p><b>Это пример</b> — разбор Стива Джобса (24.02.1955, 19:15, Сан-Франциско). Так будет выглядеть и ваш.</p><button class="go" id="ex-own" type="button">Построить свою карту</button></div></section>' : '', secWho(c, a), example ? '' : pushCta(), '<p class="fold-hint">Откройте нужный раздел</p>', secDays(c, a), secForecast(c, a), secRasklad(c, a), secCompat(),
     `<section class="block deep"><details class="more"><summary><h2>Для тех, кому интересно глубже</h2><p>Устройство карты, такты, сферы жизни, сверка с прошлым.</p></summary>`,
     secTrait(c, a), secSpheres(c, a), secLuck(c, a), secPast(c, past), secPillars(c, a), secElements(c, a, charts), secSeason(c), secRazbor(c, a),
     '</details></section>', secFeedback(), secHonest()].join('');
@@ -443,7 +447,7 @@ function secLuck(c: Chart, a: Analysis) {
   const sel = cur >= 0 ? cur : 0, rd = luckR(c, a, c.luck[sel].idx);
   return `<section class="block"><div class="bhead"><div><h2>Такты удачи</h2></div>${evTag('periods')}
     <p>Каждые 10 лет меняется фон жизни — это такты удачи. Зелёная черта — приходит полезная стихия, красная — нагрузка. Нажмите на такт.</p></div>
-    <div class="ll-box"><h3>Линия жизни</h3><p class="dhint">Выше середины — благоприятный фон, ниже — нагрузка. Такт и год вместе, сглажено по трём годам.</p>${lifeLineSvg(lifeLine(c, a), nowY)}</div>
+    <div class="ll-box"><h3>Линия жизни</h3><p class="dhint">Как старая традиция видит фон ваших лет: выше середины — легче, ниже — нагрузка. На биографиях известных людей эта линия важные годы не угадала — это картинка традиции, не прогноз.</p>${lifeLineSvg(lifeLine(c, a), nowY)}</div>
     <div class="luck">${cards}</div>
     <div class="reading" id="lkr"><b>${c.luck[sel].year}–${c.luck[sel].year + 9}${sel === cur ? ' · сейчас' : ''}.</b> ${esc(rd.text)} ${esc(luckDetail(c, a, c.luck[sel].idx).join(' '))}</div>
     <h3 style="margin-top:26px">Годы</h3><div class="years">${yrs}</div></section>`;
@@ -511,7 +515,7 @@ async function wirePush() {
   const label = (on: boolean) => btns.forEach((b) => (b.textContent = on ? 'Отключить утренний день' : 'Мой день — каждое утро'));
   const ios = /iP(hone|ad|od)/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    if (ios && !standalone) { btns.forEach((b) => (b.onclick = () => say('На iPhone уведомления работают из приложения: «Поделиться» → «На экран „Домой“», откройте сайт с иконки и нажмите эту кнопку там.'))); return; }
+    if (ios && !standalone) { btns.forEach((b) => (b.onclick = () => { say(''); msgs.forEach((m) => (m.innerHTML = '<ol class="ios-steps"><li>Внизу Safari нажмите «Поделиться» (квадрат со стрелкой).</li><li>Выберите «На экран „Домой“» → «Добавить».</li><li>Откройте сайт с новой иконки и нажмите эту кнопку ещё раз.</li></ol>')); track('bazi:push:ios-hint'); })); return; }
     document.querySelector('.push-cta')?.remove(); btns.forEach((b) => b.remove()); return;
   }
   let sub: PushSubscription | null = null;
@@ -636,6 +640,21 @@ function wireDays(c: Chart, a: Analysis) {
       track(`bazi:scard:${r}`); if (r === 'saved') sc.textContent = 'Картинка сохранена, ссылка скопирована';
     } catch { /* закрыл окно «поделиться» */ }
   };
+  const pinv = document.getElementById('pinv');
+  if (pinv) pinv.onclick = async () => {
+    const url = `${location.origin}/bazi?r=${myRef()}&pair=${encodeURIComponent(chartQuery())}`;
+    try { if (navigator.share) await navigator.share({ title: 'Сравним наши карты?', text: 'Посмотри, как сочетаются наши карты по бацзы:', url }); else { await navigator.clipboard.writeText(url); pinv.textContent = 'Ссылка скопирована'; } track('bazi:pair:sent'); } catch { /* закрыл окно */ }
+  };
+  const pi = pairInvite(), cfx = document.getElementById('cf') as HTMLFormElement | null;
+  if (pi && cfx && chartQuery() !== pi.toString()) setTimeout(() => {
+    const set = (id: string, v: string) => ((document.getElementById(id) as HTMLInputElement).value = v);
+    const pp = (pi.get('p') || '').split(',');
+    set('cf-d', pi.get('d')!); set('cf-t', pi.get('t') && pi.get('t') !== '-' ? pi.get('t')! : ''); set('cf-p', pp.slice(3).join(',')); set('cf-g', pi.get('g') === 'm' ? 'm' : 'f');
+    try { sessionStorage.removeItem('bazi-pair'); } catch { /* нет хранилища */ }
+    const det = document.querySelector<HTMLDetailsElement>('#s-compat details.fold'); if (det) det.open = true;
+    cfx.requestSubmit(); track('bazi:pair:build');
+    setTimeout(() => document.getElementById('s-compat')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
+  }, 0);
   const pdf = document.getElementById('pdf');
   if (pdf) pdf.onclick = () => { document.querySelectorAll<HTMLDetailsElement>('#out details').forEach((d) => { if (!d.closest('.deep')) d.open = true; }); print(); };
   const cf = document.getElementById('cf') as HTMLFormElement | null;
@@ -676,7 +695,8 @@ function secCompat() {
   return `<section class="block" id="s-compat"><div class="bhead"><div><h2>Совместимость</h2></div>${evTag('compat')}<p>Сравниваем две карты целиком: что каждый даёт другому в чувствах, поддержке и деньгах. Итог — легче или труднее, без «можно/нельзя».</p></div>
     <div class="card pane"><p class="dhint" style="margin-top:0">Данные партнёра: дата, время (если известно), город и пол.</p><form class="askf cf" id="cf"><input id="cf-d" type="date" required aria-label="Дата рождения партнёра" /><input id="cf-t" type="time" aria-label="Время (если известно)" />
       <input id="cf-p" aria-label="Город рождения партнёра" placeholder="Город (если пусто — как у вас)" /><select id="cf-g" aria-label="Пол"><option value="f">Женщина</option><option value="m">Мужчина</option></select><button class="go" type="submit">Сравнить</button></form>
-      <div class="ans" id="cf-out"></div></div></section>`;
+      <div class="ans" id="cf-out"></div>
+      <div class="acts"><button class="ghost" id="pinv" type="button">Пригласить партнёра сравнить</button></div><p class="dhint" id="pinv-m">Партнёр введёт свою дату сам — и вы оба увидите пару. В ссылке будут ваши дата, время и город рождения.</p></div></section>`;
 }
 
 export function secAsk() { // снят с экрана 16.10 (см. обработчик askf)

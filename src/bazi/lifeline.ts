@@ -9,7 +9,7 @@ export type LifePoint = { year: number; age: number; v: number };
 const W: Record<'good' | 'bad' | 'mixed' | 'calm', number> = { good: 1, calm: 0.3, mixed: 0, bad: -1 };
 
 export function lifeLine(c: Chart, a: Analysis, years = 80): LifePoint[] {
-  const by = +c.input.date.slice(0, 4);
+  const by = c.input?.date ? +c.input.date.slice(0, 4) : Math.round(c.luck[0].year - c.luck[0].age); // эталоны без даты — по первому такту
   const raw = Array.from({ length: years + 1 }, (_, age) => {
     const y = by + age;
     const L = [...c.luck].reverse().find((l) => y >= l.year);
